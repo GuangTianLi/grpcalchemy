@@ -1,7 +1,9 @@
 from collections import defaultdict, namedtuple
 from typing import NewType, Dict, List, DefaultDict, Union, Set, TypeVar
 
-__version__ = "0.1.0"
+__author__ = """GuangTian Li"""
+__email__ = 'guangtian_li@qq.com'
+__version__ = '0.1.0'
 
 GRPCMessage = TypeVar('GRPCMessage')
 
