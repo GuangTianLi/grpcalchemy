@@ -1,6 +1,8 @@
 from collections import defaultdict, namedtuple
 from typing import NewType, Dict, List, DefaultDict, Union, Set, TypeVar
 
+__version__ = "0.1.0"
+
 GRPCMessage = TypeVar('GRPCMessage')
 
 MessageMeta = namedtuple('MessageMeta', ['name', 'fields'])
