@@ -9,8 +9,8 @@ import grpc_tools.protoc
 import pkg_resources
 from jinja2 import Environment, FileSystemLoader
 
-from grpcalchemy import __meta__
 from .blueprint import Blueprint
+from .meta import __meta__
 
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
 

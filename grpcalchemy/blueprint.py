@@ -2,8 +2,8 @@ from collections import namedtuple
 from inspect import signature
 from typing import Tuple, Union, Type, List, Callable
 
-from grpcalchemy import ServiceMeta, __meta__, GRPCMessage
-from grpcalchemy.orm import Message
+from .meta import ServiceMeta, __meta__, GRPCMessage
+from .orm import Message
 
 Rpc = namedtuple('Rpc', ['name', 'request', 'response'])
 

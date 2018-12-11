@@ -1,6 +1,6 @@
 from typing import Tuple, List
 
-from grpcalchemy import __meta__, MessageMeta
+from .meta import __meta__, MessageMeta
 from .fields import BaseField, ReferenceField
 
 
