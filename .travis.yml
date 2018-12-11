@@ -16,4 +16,6 @@ deploy:
   on:
     tags: true
     repo: GuangTianLi/grpcalchemy
-    python: 3.6, 3.7
+    python:
+      - 3.6
+      - 3.7
