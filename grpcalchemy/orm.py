@@ -21,12 +21,12 @@ class DeclarativeMeta(type):
                         if issubclass(value.key_type, Message):
                             if value.key_type.__filename__ != file_name:
                                 __meta__[file_name]['import_files'].add(
-                                    value.key_type.file_name)
+                                    value.key_type.__filename__)
 
                         if issubclass(value.value_type, Message):
                             if value.value_type.__filename__ != file_name:
                                 __meta__[file_name]['import_files'].add(
-                                    value.value_type.file_name)
+                                    value.value_type.__filename__)
                     clsdict["__meta__"].append(key)
 
             __meta__[file_name]['messages'].append(message_meta)

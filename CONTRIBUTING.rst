@@ -64,11 +64,11 @@ Ready to contribute? Here's how to set up `grpcalchemy` for local development.
 
     $ git clone git@github.com:your_name_here/grpcalchemy.git
 
-3. Install your local copy into a virtualenv. Assuming you have virtualenvwrapper installed, this is how you set up your fork for local development::
+3. Install your local copy into a virtualenv. Assuming you have Pipenv installed, this is how you set up your fork for local development::
 
-    $ mkvirtualenv grpcalchemy
     $ cd grpcalchemy/
-    $ python setup.py develop
+    $ pipenv install
+    $ pipenv shell
 
 4. Create a branch for local development::
 
@@ -102,7 +102,7 @@ Before you submit a pull request, check that it meets these guidelines:
 2. If the pull request adds functionality, the docs should be updated. Put
    your new functionality into a function with a docstring, and add the
    feature to the list in README.rst.
-3. The pull request should work for Python 3.5, 3.6, and for PyPy. Check
+3. The pull request should work for Python 3.6+. Check
    https://travis-ci.org/GuangTianLi/grpcalchemy/pull_requests
    and make sure that the tests pass for all supported Python versions.
 
