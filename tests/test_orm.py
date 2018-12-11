@@ -6,8 +6,6 @@ from .test_grpcalchemy import TestGrpcalchemy
 
 class TestORM(TestGrpcalchemy):
     def test_message_with_default_filename(self):
-        """Test default filename."""
-
         class Test(Message):
             pass
 
@@ -15,8 +13,6 @@ class TestORM(TestGrpcalchemy):
         self.assertEqual("Test", Test.__name__)
 
     def test_message_with_specific_filename(self):
-        """Test specific filename."""
-
         class Test(Message):
             __filename__ = "specified"
 
