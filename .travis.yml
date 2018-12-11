@@ -4,6 +4,10 @@ python:
 - 3.6
 install: pip install -U tox-travis
 script: tox
+matrix:
+  include:
+    - python: 3.7
+      sudo: true
 deploy:
   provider: pypi
   distributions: sdist bdist_wheel

@@ -1,4 +1,5 @@
 class BaseField:
+    # TODO Use descriptors
     name = ""
     type_name = ""
 
@@ -37,13 +38,12 @@ class ReferenceField(BaseField):
 
         if value_type:
             self.value_type = value_type
-            self.value_type_name = value_type
-            self.value_name = self.get_type_name(value_type)
+            self.value_type_name = self.get_type_name(value_type)
         else:
             self.value_type = EmptyFile
 
     def get_type_name(self, field):
-        if isinstance(field, BaseField):
+        if issubclass(field, BaseField):
             return field.type_name
         else:
             return field.__name__

@@ -51,7 +51,8 @@ clean-test: ## remove test and coverage artifacts
 	rm -fr .pytest_cache
 
 lint: ## check style with flake8
-	flake8 grpcalchemy tests
+	flake8 grpcalchemy
+	flake8 --ignore F811 tests
 
 test: ## run tests quickly with the default Python
 	python setup.py test

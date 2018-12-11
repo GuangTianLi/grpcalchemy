@@ -16,12 +16,13 @@ _ONE_DAY_IN_SECONDS = 60 * 60 * 24
 
 
 class Server:
-    def __init__(self, template_path="protos"):
+    def __init__(self, template_path="protos", max_workers=10):
         self.template_path = template_path
         self.abs_template_path = join(getcwd(), template_path)
 
         self.generate_proto_file()
-        self.server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
+        self.server = grpc.server(
+            futures.ThreadPoolExecutor(max_workers=max_workers))
 
     def register(self, bp: Blueprint):
         grpc_pb2_module = importlib.import_module(f".{bp.file_name}_pb2_grpc",
@@ -36,8 +37,8 @@ class Server:
         getattr(grpc_pb2_module,
                 f"add_{bp.file_name}Servicer_to_server")(bp, self.server)
 
-    def run(self):
-        self.server.add_insecure_port('[::]:50051')
+    def run(self, port=50051):
+        self.server.add_insecure_port(f'[::]:{port}')
         self.server.start()
         try:
             while True:
@@ -54,7 +55,10 @@ class Server:
 
         if not exists(self.abs_template_path):
             mkdir(self.abs_template_path)
-            open(join(self.abs_template_path, "__init__.py"), 'a').close()
+            env.get_template('__init__.py.tmpl').stream().dump(
+                join(self.abs_template_path, "__init__.py"))
+            env.get_template('README.md.tmpl').stream().dump(
+                join(self.abs_template_path, "README.md"))
 
         template = env.get_template('rpc.proto.tmpl')
         for filename, meta in __meta__.items():

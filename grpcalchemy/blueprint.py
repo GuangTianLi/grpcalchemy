@@ -8,7 +8,15 @@ from .orm import Message
 Rpc = namedtuple('Rpc', ['name', 'request', 'response'])
 
 
-class RpcObject:
+class InvalidRPCMethod(Exception):
+    pass
+
+
+class DuplicatedRPCMethod(Exception):
+    pass
+
+
+class RPCObject:
     def __init__(self, func, request, response):
         self.func = func
         self.request: Type[Message] = request
@@ -17,10 +25,11 @@ class RpcObject:
         self.grpc_response: Type[GRPCMessage] = None
 
     def preprocess(self, origin_request: GRPCMessage) -> Message:
-        return self.request(**{
-            key: getattr(origin_request, key, None)
-            for key in self.request.__meta__
-        })
+        return self.request(
+            **{
+                key: getattr(origin_request, key, None)
+                for key in self.request.__meta__
+            })
 
     def postprocess(self, origin_response: Message) -> GRPCMessage:
         return self.grpc_response(**origin_response.to_grpc())
@@ -39,14 +48,15 @@ class Blueprint:
 
         self.name = name
         self.service_meta = ServiceMeta(name=self.name, rpcs=[])
-        self.rpc_list: List[RpcObject] = []
+        self.rpc_list: List[RPCObject] = []
 
-    def register(self, service: Callable = None):
-        status, request, response = self.check_service(service)
+    def register(self, rpc: Callable = None):
+        status, request, response = self.check_service(rpc)
         if not status:
-            raise Exception("注册服务不合法")
+            raise InvalidRPCMethod("注册服务不合法")
+
         self.service_meta.rpcs.append(
-            Rpc(name=service.__name__,
+            Rpc(name=rpc.__name__,
                 request=request.__name__,
                 response=response.__name__))
         if request.__filename__ != self.file_name:
@@ -57,12 +67,12 @@ class Blueprint:
 
         __meta__[self.file_name]['services'].append(self.service_meta)
 
-        if hasattr(self, service.__name__):
-            raise Exception("Service Duplicate!")
+        if hasattr(self, rpc.__name__):
+            raise DuplicatedRPCMethod("Service Duplicate!")
         else:
-            grpc_object = RpcObject(
-                func=service, request=request, response=response)
-            setattr(self, service.__name__, grpc_object)
+            grpc_object = RPCObject(
+                func=rpc, request=request, response=response)
+            setattr(self, rpc.__name__, grpc_object)
             self.rpc_list.append(grpc_object)
 
     def check_service(
