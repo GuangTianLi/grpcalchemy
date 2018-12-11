@@ -50,6 +50,8 @@ class Blueprint:
         self.service_meta = ServiceMeta(name=self.name, rpcs=[])
         self.rpc_list: List[RPCObject] = []
 
+        __meta__[self.file_name]['services'].append(self.service_meta)
+
     def register(self, rpc: Callable = None):
         status, request, response = self.check_service(rpc)
         if not status:
@@ -64,8 +66,6 @@ class Blueprint:
 
         if response.__filename__ != self.file_name:
             __meta__[self.file_name]['import_files'].add(response.__filename__)
-
-        __meta__[self.file_name]['services'].append(self.service_meta)
 
         if hasattr(self, rpc.__name__):
             raise DuplicatedRPCMethod("Service Duplicate!")

@@ -19,7 +19,7 @@ class Int64Field(BaseField):
     type_name = "int64"
 
 
-class BoolField(BaseField):
+class BooleanField(BaseField):
     type_name = "bool"
 
 
