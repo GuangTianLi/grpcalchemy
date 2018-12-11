@@ -1,10 +1,18 @@
 class BaseField:
     # TODO Use descriptors
-    name = ""
     type_name = ""
 
-    def __str__(self) -> str:
-        return f"{self.type_name} {self.name}"
+    def __init__(self, name=None):
+        self._name = name
+
+    def __set__(self, instance, value):
+        instance.__dict__[self._name] = value
+
+    def __get__(self, instance, owner):
+        if not instance:
+            return f"{self.type_name} {self._name}"
+        else:
+            return instance.__dict__.get(self._name)
 
 
 class StringField(BaseField):
@@ -42,6 +50,8 @@ class ReferenceField(BaseField):
         else:
             self.value_type = EmptyFile
 
+        super().__init__()
+
     def get_type_name(self, field):
         if issubclass(field, BaseField):
             return field.type_name
@@ -50,10 +60,16 @@ class ReferenceField(BaseField):
 
 
 class ListField(ReferenceField):
-    def __str__(self) -> str:
-        return f"repeated {super().__str__()}"
+    def __get__(self, instance, owner):
+        if not instance:
+            return f"repeated {self.type_name} {self._name}"
+        else:
+            return instance.__dict__.get(self._name)
 
 
 class MapField(ReferenceField):
-    def __str__(self) -> str:
-        return f"map<{self.type_name}, {self.value_type_name}> {self.name}"
+    def __get__(self, instance, owner):
+        if not instance:
+            return f"map<{self.type_name}, {self.value_type_name}> {self._name}"
+        else:
+            return instance.__dict__.get(self._name)

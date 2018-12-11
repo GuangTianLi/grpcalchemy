@@ -14,7 +14,7 @@ class DeclarativeMeta(type):
             message_meta = MessageMeta(name=clsname, fields=[])
             for key, value in clsdict.items():
                 if isinstance(value, BaseField):
-                    value.name = key
+                    value._name = key
                     message_meta.fields.append(value)
                     if isinstance(value, ReferenceField):
 
