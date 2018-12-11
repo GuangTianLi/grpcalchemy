@@ -17,3 +17,6 @@ grpcio = "*"
 protobuf = "*"
 grpcio-tools = "*"
 jinja2 = "*"
+
+[scripts]
+patch = "bumpversion patch"
