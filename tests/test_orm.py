@@ -1,5 +1,5 @@
 from grpcalchemy.fields import StringField, Int32Field, Int64Field, \
-    BoolField, BytesField, ReferenceField, ListField, MapField
+    BooleanField, BytesField, ReferenceField, ListField, MapField
 from grpcalchemy.orm import Message
 from .test_grpcalchemy import TestGrpcalchemy
 
@@ -29,7 +29,7 @@ class TestORM(TestGrpcalchemy):
             name = StringField()
             number = Int32Field()
             big_number = Int64Field()
-            sex = BoolField()
+            sex = BooleanField()
             raw_data = BytesField()
 
         self.assertEqual("string name", str(Test.name))
