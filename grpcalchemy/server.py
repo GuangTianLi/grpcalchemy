@@ -10,19 +10,18 @@ import pkg_resources
 from jinja2 import Environment, FileSystemLoader
 
 from .blueprint import Blueprint
-from .meta import __meta__
+from .meta import __meta__, config
 
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
 
 
 class Server:
     def __init__(self, template_path=None, max_workers=10):
-        global DEFAULT_TEMPLATE_PATH
         if template_path:
             self.template_path = template_path
-            DEFAULT_TEMPLATE_PATH = template_path
+            config.DEFAULT_TEMPLATE_PATH = template_path
         else:
-            self.template_path = template_path
+            self.template_path = config.DEFAULT_TEMPLATE_PATH
 
         self.abs_template_path = join(getcwd(), self.template_path)
 
@@ -64,6 +63,7 @@ class Server:
             template.stream(**meta).dump(
                 join(self.abs_template_path, f"{filename}.proto"))
 
+        # copy from grpc_tools
         protoc_file = pkg_resources.resource_filename('grpc_tools',
                                                       'protoc.py')
         proto_include = pkg_resources.resource_filename('grpc_tools', '_proto')

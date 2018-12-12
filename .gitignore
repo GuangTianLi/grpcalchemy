@@ -103,3 +103,6 @@ ENV/
 
 # idea
 .idea
+
+# proto
+protos/
