@@ -11,3 +11,5 @@ FileMeta = Dict[str, Union[List, Set]]
 
 __meta__: DefaultDict[FileName, FileMeta] = defaultdict(
     lambda: dict(import_files=set(), messages=[], services=[]))
+
+DEFAULT_TEMPLATE_PATH = "protos"

@@ -36,7 +36,7 @@ class RPCObject:
             })
 
     def postprocess(self, origin_response: Message) -> GRPCMessage:
-        return self.grpc_response(**origin_response.to_grpc())
+        return origin_response._message
 
     def __call__(self, origin_request: GRPCMessage, context) -> GRPCMessage:
         request = self.preprocess(origin_request)
@@ -63,8 +63,8 @@ class Blueprint:
 
         self.service_meta.rpcs.append(
             Rpc(name=rpc.__name__,
-                request=request.__name__,
-                response=response.__name__))
+                request=request._type_name,
+                response=response._type_name))
         if request.__filename__ != self.file_name:
             __meta__[self.file_name]['import_files'].add(request.__filename__)
 
