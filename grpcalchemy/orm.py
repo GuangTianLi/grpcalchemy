@@ -1,7 +1,7 @@
 import importlib
 from typing import Tuple, Set, Type
 
-from .meta import __meta__, MessageMeta, DEFAULT_TEMPLATE_PATH
+from .meta import __meta__, MessageMeta, config
 
 
 class InvalidMessage(Exception):
@@ -110,7 +110,7 @@ class Message(BaseField, metaclass=DeclarativeMeta):
 
     def __init__(self, **kwargs):
         gpr_message_module = importlib.import_module(
-            f".{self.__filename__}_pb2", DEFAULT_TEMPLATE_PATH)
+            f".{self.__filename__}_pb2", config.DEFAULT_TEMPLATE_PATH)
         gRPCMessageClass = getattr(gpr_message_module, f"{self._type_name}")
         object.__setattr__(self, "_message", gRPCMessageClass())
         for key, value in kwargs.items():
