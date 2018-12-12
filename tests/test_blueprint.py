@@ -14,6 +14,9 @@ class TestBlueprint(TestGrpcalchemy):
     def test_register(self):
         test = Blueprint("test")
 
+        import importlib
+        importlib.import_module = Mock(return_value=Mock(TestMessage=Mock))
+
         class TestMessage(Message):
             test_name = StringField()
 
@@ -23,8 +26,6 @@ class TestBlueprint(TestGrpcalchemy):
 
         self.assertIsInstance(test.test_message, RPCObject)
 
-        import importlib
-        importlib.import_module = Mock(return_value=Mock(TestMessage=Mock))
 
         grpc_message = Mock(test_name="mock_grpc_message", return_value=None)
         response = test.test_message(grpc_message, "")

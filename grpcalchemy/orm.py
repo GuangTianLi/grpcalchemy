@@ -108,19 +108,15 @@ class Message(BaseField, metaclass=DeclarativeMeta):
 
     __meta__: Set[str] = None
 
-    def __init__(self, **kwargs):
-        gpr_message_module = importlib.import_module(
-            f".{self.__filename__}_pb2", config.DEFAULT_TEMPLATE_PATH)
-        gRPCMessageClass = getattr(gpr_message_module, f"{self._type_name}")
-        for key, item in kwargs.items():
-            if isinstance(item, list):
-                for index, value in enumerate(item):
-                    if isinstance(value, Message):
-                        item[index] = value._message
-            elif isinstance(item, Message):
-                kwargs[key] = item._message
-
-        object.__setattr__(self, "_message", gRPCMessageClass(**kwargs))
+    def __init__(self, grpc_message=None, **kwargs):
+        if grpc_message:
+            object.__setattr__(self, "_message", grpc_message)
+        else:
+            gpr_message_module = importlib.import_module(
+                f".{self.__filename__}_pb2", config.DEFAULT_TEMPLATE_PATH)
+            gRPCMessageClass = getattr(gpr_message_module,
+                                       f"{self._type_name}")
+            object.__setattr__(self, "_message", gRPCMessageClass(**kwargs))
 
         super().__init__()
 
