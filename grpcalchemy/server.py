@@ -7,15 +7,12 @@ from os.path import join, abspath, dirname, exists
 import grpc
 import grpc_tools.protoc
 import pkg_resources
-from grpc._server import _Context
 from jinja2 import Environment, FileSystemLoader
 
 from .blueprint import Blueprint
 from .meta import __meta__
 
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
-
-Context = _Context
 
 
 class Server:

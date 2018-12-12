@@ -27,10 +27,10 @@ Example
 
 .. code-block:: python
 
-    from grpcalchemy.blueprint import Blueprint
+    from grpcalchemy.blueprint import Blueprint, Context
     from grpcalchemy.fields import StringField
     from grpcalchemy.orm import Message
-    from grpcalchemy.server import Server, Context
+    from grpcalchemy.server import Server
 
     class HelloRequest(Message):
         __filename__ = 'helloworld'
