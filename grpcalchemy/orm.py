@@ -12,11 +12,8 @@ class BaseField:
     def __set__(self, instance, value):
         instance.__dict__[self._name] = value
 
-    def __get__(self, instance, owner):
-        if not instance:
-            return f"{self._type_name} {self._name}"
-        else:
-            return instance.__dict__.get(self._name)
+    def __str__(self):
+        return f"{self._type_name} {self._name}"
 
 
 class StringField(BaseField):
@@ -60,19 +57,13 @@ class ReferenceField(BaseField):
 
 
 class ListField(ReferenceField):
-    def __get__(self, instance, owner):
-        if not instance:
-            return f"repeated {self._type_name} {self._name}"
-        else:
-            return instance.__dict__.get(self._name)
+    def __str__(self):
+        return f"repeated {super().__str__()}"
 
 
 class MapField(ReferenceField):
-    def __get__(self, instance, owner):
-        if not instance:
-            return f"map<{self._type_name}, {self._value_type_name}> {self._name}"
-        else:
-            return instance.__dict__.get(self._name)
+    def __str__(self):
+        return f"map<{self._type_name}, {self._value_type_name}> {self._name}"
 
 
 class DeclarativeMeta(type):
@@ -118,3 +109,6 @@ class Message(BaseField, metaclass=DeclarativeMeta):
 
     def to_grpc(self) -> dict:
         return {key: getattr(self, key) for key in self.__meta__}
+
+    def __str__(self):
+        return f"{self.to_grpc()}"

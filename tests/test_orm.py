@@ -1,9 +1,13 @@
+from grpcalchemy.meta import __meta__
 from grpcalchemy.orm import Message, StringField, Int32Field, Int64Field, \
     BooleanField, BytesField, ReferenceField, ListField, MapField
 from .test_grpcalchemy import TestGrpcalchemy
 
 
 class TestORM(TestGrpcalchemy):
+    def setUp(self):
+        __meta__.clear()
+
     def test_message_with_default_filename(self):
         class Test(Message):
             pass
@@ -27,11 +31,11 @@ class TestORM(TestGrpcalchemy):
             sex = BooleanField()
             raw_data = BytesField()
 
-        self.assertEqual("string name", Test.name)
-        self.assertEqual("int32 number", Test.number)
-        self.assertEqual("int64 big_number", Test.big_number)
-        self.assertEqual("bool sex", Test.sex)
-        self.assertEqual("bytes raw_data", Test.raw_data)
+        self.assertEqual("string name", str(Test.name))
+        self.assertEqual("int32 number", str(Test.number))
+        self.assertEqual("int64 big_number", str(Test.big_number))
+        self.assertEqual("bool sex", str(Test.sex))
+        self.assertEqual("bytes raw_data", str(Test.raw_data))
 
     def test_ReferenceField(self):
         """Test normal and list reference field"""
@@ -44,11 +48,11 @@ class TestORM(TestGrpcalchemy):
             list_test_field = ListField(Test)
             list_int32_field = ListField(Int32Field)
 
-        self.assertEqual("Test ref_field", TestRef.ref_field)
+        self.assertEqual("Test ref_field", str(TestRef.ref_field))
         self.assertEqual("repeated Test list_test_field",
-                         TestRef.list_test_field)
+                         str(TestRef.list_test_field))
         self.assertEqual("repeated int32 list_int32_field",
-                         TestRef.list_int32_field)
+                         str(TestRef.list_int32_field))
 
     def test_MapField(self):
         class Test(Message):
@@ -57,4 +61,4 @@ class TestORM(TestGrpcalchemy):
         class TestRef(Message):
             map_field = MapField(StringField, Test)
 
-        self.assertEqual("map<string, Test> map_field", TestRef.map_field)
+        self.assertEqual("map<string, Test> map_field", str(TestRef.map_field))
