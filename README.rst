@@ -30,7 +30,7 @@ Example
     from grpcalchemy.blueprint import Blueprint
     from grpcalchemy.fields import StringField
     from grpcalchemy.orm import Message
-    from grpcalchemy.server import Server
+    from grpcalchemy.server import Server, Context
 
     class HelloRequest(Message):
         __filename__ = 'helloworld'
@@ -39,7 +39,7 @@ Example
     hello_world = Blueprint("helloworld")
 
     @hello_world.register
-    def test(request: HelloRequest, context) -> HelloRequest:
+    def test(request: HelloRequest, context: Context) -> HelloRequest:
         return HelloRequest(name=request.name)
 
     if __name__ == '__main__':
