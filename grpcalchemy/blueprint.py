@@ -21,19 +21,12 @@ class DuplicatedRPCMethod(Exception):
 
 
 class RPCObject:
-    def __init__(self, func, request, response):
+    def __init__(self, func, request):
         self.func = func
         self.request: Type[Message] = request
-        self.response: Type[Message] = response
-
-        self.grpc_response: Type[GRPCMessage] = None
 
     def preprocess(self, origin_request: GRPCMessage) -> Message:
-        return self.request(
-            **{
-                key: getattr(origin_request, key, None)
-                for key in self.request.__meta__
-            })
+        return self.request(origin_request)
 
     def postprocess(self, origin_response: Message) -> GRPCMessage:
         return origin_response._message
@@ -74,8 +67,7 @@ class Blueprint:
         if hasattr(self, rpc.__name__):
             raise DuplicatedRPCMethod("Service Duplicate!")
         else:
-            grpc_object = RPCObject(
-                func=rpc, request=request, response=response)
+            grpc_object = RPCObject(func=rpc, request=request)
             setattr(self, rpc.__name__, grpc_object)
             self.rpc_list.append(grpc_object)
 
