@@ -3,6 +3,10 @@ from typing import Tuple, List, Type
 from .meta import __meta__, MessageMeta
 
 
+class InvalidMessage(Exception):
+    pass
+
+
 class BaseField:
     _type_name = ""
 
@@ -68,7 +72,7 @@ class MapField(ReferenceField):
 
 class DeclarativeMeta(type):
     def __new__(cls, clsname: str, bases: Tuple, clsdict: dict):
-        if bases:
+        if clsname != "Message":
             file_name = (clsdict.get("__filename__", clsname)
                          or clsname).lower()
             clsdict["__filename__"] = file_name
