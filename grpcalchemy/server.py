@@ -16,9 +16,15 @@ _ONE_DAY_IN_SECONDS = 60 * 60 * 24
 
 
 class Server:
-    def __init__(self, template_path="protos", max_workers=10):
-        self.template_path = template_path
-        self.abs_template_path = join(getcwd(), template_path)
+    def __init__(self, template_path=None, max_workers=10):
+        global DEFAULT_TEMPLATE_PATH
+        if template_path:
+            self.template_path = template_path
+            DEFAULT_TEMPLATE_PATH = template_path
+        else:
+            self.template_path = template_path
+
+        self.abs_template_path = join(getcwd(), self.template_path)
 
         self.generate_proto_file()
         self.server = grpc.server(
@@ -27,13 +33,6 @@ class Server:
     def register(self, bp: Blueprint):
         grpc_pb2_module = importlib.import_module(f".{bp.file_name}_pb2_grpc",
                                                   self.template_path)
-
-        for rpc in bp.rpc_list:
-            message_model = importlib.import_module(
-                f".{rpc.response.__filename__}_pb2", self.template_path)
-            response_message = getattr(message_model,
-                                       f"{rpc.response.__name__}")
-            rpc.grpc_response = response_message
         getattr(grpc_pb2_module,
                 f"add_{bp.file_name}Servicer_to_server")(bp, self.server)
 

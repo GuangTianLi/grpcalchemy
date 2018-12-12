@@ -1,6 +1,7 @@
-from typing import Tuple, List, Type
+import importlib
+from typing import Tuple, Set, Type
 
-from .meta import __meta__, MessageMeta
+from .meta import __meta__, MessageMeta, DEFAULT_TEMPLATE_PATH
 
 
 class InvalidMessage(Exception):
@@ -76,7 +77,7 @@ class DeclarativeMeta(type):
             file_name = (clsdict.get("__filename__", clsname)
                          or clsname).lower()
             clsdict["__filename__"] = file_name
-            clsdict["__meta__"] = []
+            clsdict["__meta__"] = set()
             clsdict["_type_name"] = clsname
 
             message_meta = MessageMeta(name=clsname, fields=[])
@@ -94,7 +95,7 @@ class DeclarativeMeta(type):
                             if value._value_type.__filename__ != file_name:
                                 __meta__[file_name]['import_files'].add(
                                     value._value_type.__filename__)
-                    clsdict["__meta__"].append(key)
+                    clsdict["__meta__"].add(key)
 
             __meta__[file_name]['messages'].append(message_meta)
         return super().__new__(cls, clsname, bases, clsdict)
@@ -103,16 +104,27 @@ class DeclarativeMeta(type):
 class Message(BaseField, metaclass=DeclarativeMeta):
     __filename__ = ""
     _type_name = ""
+    _message = None
 
-    __meta__: List[str] = None
+    __meta__: Set[str] = None
 
     def __init__(self, **kwargs):
-        for key in self.__meta__:
-            setattr(self, key, kwargs.get(key))
+        gpr_message_module = importlib.import_module(
+            f".{self.__filename__}_pb2", DEFAULT_TEMPLATE_PATH)
+        gRPCMessageClass = getattr(gpr_message_module, f"{self._type_name}")
+        object.__setattr__(self, "_message", gRPCMessageClass())
+        for key, value in kwargs.items():
+            setattr(self, key, value)
         super().__init__()
 
-    def to_grpc(self) -> dict:
-        return {key: getattr(self, key) for key in self.__meta__}
+    def __setattr__(self, key, value):
+        if key in object.__getattribute__(self, "__meta__"):
+            setattr(self._message, key, value)
+        else:
+            object.__setattr__(self, key, value)
 
-    def __str__(self):
-        return f"{self.to_grpc()}"
+    def __getattribute__(self, item):
+        if item in object.__getattribute__(self, "__meta__"):
+            return getattr(object.__getattribute__(self, "_message"), item)
+        else:
+            return object.__getattribute__(self, item)
