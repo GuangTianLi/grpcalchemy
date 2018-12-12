@@ -2,8 +2,7 @@ from unittest.mock import Mock
 
 from grpcalchemy.blueprint import Blueprint, RPCObject
 from grpcalchemy.blueprint import InvalidRPCMethod, DuplicatedRPCMethod
-from grpcalchemy.fields import StringField
-from grpcalchemy.orm import Message
+from grpcalchemy.orm import Message, StringField
 from .test_grpcalchemy import TestGrpcalchemy
 
 

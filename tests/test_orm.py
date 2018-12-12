@@ -1,6 +1,5 @@
-from grpcalchemy.fields import StringField, Int32Field, Int64Field, \
+from grpcalchemy.orm import Message, StringField, Int32Field, Int64Field, \
     BooleanField, BytesField, ReferenceField, ListField, MapField
-from grpcalchemy.orm import Message
 from .test_grpcalchemy import TestGrpcalchemy
 
 

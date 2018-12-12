@@ -1,7 +1,6 @@
 from grpcalchemy.blueprint import Blueprint
-from grpcalchemy.fields import StringField, ReferenceField
 from grpcalchemy.meta import __meta__
-from grpcalchemy.orm import Message
+from grpcalchemy.orm import Message, StringField, ReferenceField
 from .test_grpcalchemy import TestGrpcalchemy
 
 
