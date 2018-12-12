@@ -2,10 +2,14 @@ from collections import namedtuple
 from inspect import signature
 from typing import Tuple, Union, Type, List, Callable
 
+from grpc._server import _Context
+
 from .meta import ServiceMeta, __meta__, GRPCMessage
 from .orm import Message
 
 Rpc = namedtuple('Rpc', ['name', 'request', 'response'])
+
+Context = _Context
 
 
 class InvalidRPCMethod(Exception):
