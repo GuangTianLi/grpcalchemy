@@ -16,7 +16,7 @@ _ONE_DAY_IN_SECONDS = 60 * 60 * 24
 
 
 class Server:
-    def __init__(self, template_path=None, max_workers=10):
+    def __init__(self, template_path: str = None, max_workers: int = 10):
         if template_path:
             self.template_path = template_path
             config.DEFAULT_TEMPLATE_PATH = template_path
@@ -35,7 +35,7 @@ class Server:
         getattr(grpc_pb2_module,
                 f"add_{bp.file_name}Servicer_to_server")(bp, self.server)
 
-    def run(self, port=50051):
+    def run(self, port: int=50051):
         self.server.add_insecure_port(f'[::]:{port}')
         self.server.start()
         try:

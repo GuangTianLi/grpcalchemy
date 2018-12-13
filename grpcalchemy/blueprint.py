@@ -21,9 +21,9 @@ class DuplicatedRPCMethod(Exception):
 
 
 class RPCObject:
-    def __init__(self, func, request):
+    def __init__(self, func: Callable, request: Type[Message]):
         self.func = func
-        self.request: Type[Message] = request
+        self.request = request
 
     def preprocess(self, origin_request: GRPCMessage) -> Message:
         return self.request(origin_request)
@@ -37,7 +37,7 @@ class RPCObject:
 
 
 class Blueprint:
-    def __init__(self, name: str, file_name=None):
+    def __init__(self, name: str, file_name: str = None):
         if file_name is None:
             self.file_name = name.lower()
         else:
@@ -71,8 +71,8 @@ class Blueprint:
             setattr(self, rpc.__name__, grpc_object)
             self.rpc_list.append(grpc_object)
 
-    def check_service(
-            self, func) -> Tuple[bool, Union[type, None], Union[type, None]]:
+    def check_service(self, func: Callable
+                      ) -> Tuple[bool, Union[type, None], Union[type, None]]:
         sig = signature(func)
 
         if len(sig.parameters) != 2:
