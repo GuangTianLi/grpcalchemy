@@ -19,10 +19,10 @@ grpcalchemy.blueprint module
     :undoc-members:
     :show-inheritance:
 
-grpcalchemy.fields module
+grpcalchemy.client module
 -------------------------
 
-.. automodule:: grpcalchemy.fields
+.. automodule:: grpcalchemy.client
     :members:
     :undoc-members:
     :show-inheritance:
@@ -47,6 +47,14 @@ grpcalchemy.server module
 -------------------------
 
 .. automodule:: grpcalchemy.server
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+grpcalchemy.utils module
+------------------------
+
+.. automodule:: grpcalchemy.utils
     :members:
     :undoc-members:
     :show-inheritance:
