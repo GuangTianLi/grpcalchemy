@@ -7,6 +7,7 @@ History
 
 * various bug-fixes
 * improve tests
+* add Client
 
 0.1.4 (2018-12-11)
 ------------------
