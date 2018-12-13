@@ -13,6 +13,8 @@ _ONE_DAY_IN_SECONDS = 60 * 60 * 24
 
 class Server:
     def __init__(self, max_workers: int = 10):
+        generate_proto_file()
+
         self.server = grpc.server(
             futures.ThreadPoolExecutor(max_workers=max_workers))
 
@@ -23,7 +25,6 @@ class Server:
                 f"add_{bp.file_name}Servicer_to_server")(bp, self.server)
 
     def run(self, port: int = 50051):
-        generate_proto_file()
 
         self.server.add_insecure_port(f'[::]:{port}')
         self.server.start()
