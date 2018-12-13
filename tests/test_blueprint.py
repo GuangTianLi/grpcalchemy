@@ -11,27 +11,6 @@ class TestBlueprint(TestGrpcalchemy):
         test = Blueprint("test")
         self.assertEqual("test", test.file_name)
 
-    def test_register(self):
-        test = Blueprint("test")
-
-        import importlib
-        importlib.import_module = Mock(return_value=Mock(TestMessage=Mock))
-
-        class TestMessage(Message):
-            test_name = StringField()
-
-        @test.register
-        def test_message(request: TestMessage, context) -> TestMessage:
-            return TestMessage(test_name=request.test_name)
-
-        self.assertIsInstance(test.test_message, RPCObject)
-
-
-        grpc_message = Mock(test_name="mock_grpc_message", return_value=None)
-        response = test.test_message(grpc_message, "")
-
-        self.assertEqual("mock_grpc_message", response.test_name)
-
     def test_register_invalid_rpc_method(self):
         test = Blueprint("test")
 
