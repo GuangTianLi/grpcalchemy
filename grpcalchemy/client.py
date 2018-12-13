@@ -28,7 +28,7 @@ class Client:
         grpc_pb2_module = importlib.import_module(f".{bp.file_name}_pb2_grpc",
                                                   self.config.template_path)
         stub = getattr(grpc_pb2_module, f"{bp.name}Stub")(self.channel)
-        setattr(self, bp.__name__, gRPCRequest(stub))
+        setattr(self, bp.name, gRPCRequest(stub))
 
 
 class gRPCRequest:
@@ -36,9 +36,10 @@ class gRPCRequest:
         self.stub = stub
 
     def __getattribute__(self, item):
-        func = getattr(self.stub, item)
+        stub = object.__getattribute__(self, "stub")
+        func = getattr(stub, item)
 
         def warp(func, message: Message):
-            func(message._message)
+            return func(message._message)
 
         return partial(warp, func)
