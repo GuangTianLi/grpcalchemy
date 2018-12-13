@@ -14,7 +14,6 @@ __meta__: DefaultDict[FileName, FileMeta] = defaultdict(
 
 
 class Config:
-    DEFAULT_TEMPLATE_PATH = "protos"
+    template_path = "protos"
 
-
-config = Config()
+default_config = Config()
