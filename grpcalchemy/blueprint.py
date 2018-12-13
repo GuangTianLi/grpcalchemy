@@ -71,8 +71,9 @@ class Blueprint:
             setattr(self, rpc.__name__, grpc_object)
             self.rpc_list.append(grpc_object)
 
-    def check_service(self, func: Callable
-                      ) -> Tuple[bool, Union[type, None], Union[type, None]]:
+    def check_service(
+            self, func: Callable
+    ) -> Tuple[bool, Union[Type[Message], None], Union[Type[Message], None]]:
         sig = signature(func)
 
         if len(sig.parameters) != 2:
