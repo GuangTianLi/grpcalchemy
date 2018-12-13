@@ -24,16 +24,17 @@ class Server:
         getattr(grpc_pb2_module,
                 f"add_{bp.file_name}Servicer_to_server")(bp, self.server)
 
-    def run(self, port: int = 50051):
+    def run(self, port: int = 50051, test=False):
 
         self.server.add_insecure_port(f'[::]:{port}')
         self.server.start()
 
-        try:
-            while True:
-                time.sleep(_ONE_DAY_IN_SECONDS)
-        except KeyboardInterrupt:
-            self.server.stop(0)
+        if not test:
+            try:
+                while True:
+                    time.sleep(_ONE_DAY_IN_SECONDS)
+            except KeyboardInterrupt:
+                self.server.stop(0)
 
     @property
     def config(self):
