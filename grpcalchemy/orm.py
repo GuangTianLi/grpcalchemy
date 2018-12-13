@@ -108,7 +108,7 @@ class Message(BaseField, metaclass=DeclarativeMeta):
 
     __meta__: Set[str] = None
 
-    def __init__(self, grpc_message=None, **kwargs):
+    def __init__(self, grpc_message: object = None, **kwargs):
         if grpc_message:
             object.__setattr__(self, "_message", grpc_message)
         else:
