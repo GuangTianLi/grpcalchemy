@@ -29,6 +29,7 @@ def generate_proto_file():
 
     template = env.get_template('rpc.proto.tmpl')
     for filename, meta in __meta__.items():
+        meta["import_files"] = sorted(meta["import_files"])
         template.stream(**meta).dump(
             join(abs_template_path, f"{filename}.proto"))
 
