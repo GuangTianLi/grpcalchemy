@@ -51,13 +51,13 @@ Server
 
     class HelloMessage(Message):
         __filename__ = 'hello'
-        name = StringField()
+        text = StringField()
 
     hello = Blueprint("hello")
 
     @hello.register
     def test(request: HelloMessage, context: Context) -> HelloMessage:
-        return HelloMessage(name=f"Hello {request.name}")
+        return HelloMessage(text=f"Hello {request.text}")
 
     if __name__ == '__main__':
         app = Server()
@@ -76,7 +76,7 @@ Client
 
     class HelloMessage(Message):
         __filename__ = 'hello'
-        name = StringField()
+        text = StringField()
 
 
     hello = Blueprint("hello")
@@ -84,14 +84,14 @@ Client
 
     @hello.register
     def test(request: HelloMessage, context: Context) -> HelloMessage:
-        return HelloMessage(name=f"Hello {request.name}")
+        return HelloMessage(text=f"Hello {request.text}")
 
 
     if __name__ == '__main__':
         with Client("localhost:50051") as client:
             client.register(hello)
-            response = client.hello.test(HelloMessage(name="world"))
-            print(response.name)  # Hello world
+            response: HelloMessageg = client.hello.test(HelloMessage(text="world"))
+            print(response.text)  # Hello world
 
 Features
 --------
