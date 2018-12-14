@@ -5,9 +5,6 @@ from .test_grpcalchemy import TestGrpcalchemy
 
 
 class TestMeta(TestGrpcalchemy):
-    def setUp(self):
-        __meta__.clear()
-
     def test_single_message(self):
         class TestMessage(Message):
             name = StringField()

@@ -1,6 +1,5 @@
 from grpcalchemy.blueprint import Blueprint
 from grpcalchemy.client import Client
-from grpcalchemy.meta import __meta__
 from grpcalchemy.orm import Message, StringField
 from grpcalchemy.server import Server
 from .test_grpcalchemy import TestGrpcalchemy
@@ -8,7 +7,7 @@ from .test_grpcalchemy import TestGrpcalchemy
 
 class TestServer(TestGrpcalchemy):
     def setUp(self):
-        __meta__.clear()
+        super().setUp()
 
         class TestMessage(Message):
             test_name = StringField()
