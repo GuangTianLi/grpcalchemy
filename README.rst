@@ -46,19 +46,18 @@ Server
 .. code-block:: python
 
     from grpcalchemy.blueprint import Blueprint, Context
-    from grpcalchemy.fields import StringField
-    from grpcalchemy.orm import Message
+    from grpcalchemy.orm import Message, StringField
     from grpcalchemy.server import Server
 
-    class HelloRequest(Message):
-        __filename__ = 'hello_world'
+    class HelloMessage(Message):
+        __filename__ = 'hello'
         name = StringField()
 
-    hello_world = Blueprint("hello_world")
+    hello = Blueprint("hello")
 
-    @hello_world.register
-    def test(request: HelloRequest, context: Context) -> HelloRequest:
-        return HelloRequest(name=request.name)
+    @hello.register
+    def test(request: HelloMessage, context: Context) -> HelloMessage:
+        return HelloMessage(name=f"Hello {request.name}")
 
     if __name__ == '__main__':
         app = Server()
@@ -71,30 +70,43 @@ Client
 .. code-block:: python
 
     from grpcalchemy.blueprint import Blueprint, Context
-    from grpcalchemy.fields import StringField
-    from grpcalchemy.orm import Message
-    from grpcalchemy.server import Client
+    from grpcalchemy.client import Client
+    from grpcalchemy.orm import Message, StringField
 
-    class HelloRequest(Message):
-        __filename__ = 'hello_world'
+
+    class HelloMessage(Message):
+        __filename__ = 'hello'
         name = StringField()
 
-    hello_world = Blueprint("hello_world")
 
-    @hello_world.register
-    def test(request: HelloRequest, context: Context) -> HelloRequest:
-        return HelloRequest(name=request.name)
+    hello = Blueprint("hello")
+
+
+    @hello.register
+    def test(request: HelloMessage, context: Context) -> HelloMessage:
+        return HelloMessage(name=f"Hello {request.name}")
+
 
     if __name__ == '__main__':
         with Client("localhost:50051") as client:
-            client.register(hello_world)
-            response = client.hello_world.test(
-                HelloRequest(name="test"))
+            client.register(hello)
+            response = client.hello.test(HelloMessage(name="world"))
+            print(response.name)  # Hello world
 
 Features
 --------
 
-* TODO
+* gPRC Service Support
+* gRPC Client Support
+* gRPC Message Support
+    * Scalar Value Types
+    * Message Types
+    * Repeated Field
+
+TODO
+-------
+
+* All Types Support
 
 Credits
 -------
