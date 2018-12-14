@@ -1,13 +1,9 @@
-from grpcalchemy.meta import __meta__
 from grpcalchemy.orm import Message, StringField, Int32Field, Int64Field, \
     BooleanField, BytesField, ReferenceField, ListField, MapField
 from .test_grpcalchemy import TestGrpcalchemy
 
 
 class TestORM(TestGrpcalchemy):
-    def setUp(self):
-        __meta__.clear()
-
     def test_message_with_default_filename(self):
         class Test(Message):
             pass

@@ -5,9 +5,6 @@ from .test_grpcalchemy import TestGrpcalchemy
 
 
 class TestMeta(TestGrpcalchemy):
-    def setUp(self):
-        __meta__.clear()
-
     def test_single_message(self):
         class TestMessage(Message):
             name = StringField()
@@ -35,7 +32,9 @@ class TestMeta(TestGrpcalchemy):
         def test_message(request: TestMessage, context) -> TestMessage:
             return TestMessage(test_name=request.name)
 
-        self.assertListEqual([test_blueprint.file_name, TestMessage.__filename__], list(__meta__.keys()))
+        self.assertListEqual(
+            [test_blueprint.file_name, TestMessage.__filename__],
+            list(__meta__.keys()))
         self.assertEqual(
             1, len(__meta__[test_blueprint.file_name]["import_files"]))
         self.assertEqual(0,
