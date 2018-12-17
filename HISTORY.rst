@@ -2,7 +2,14 @@
 History
 =======
 
-0.1.5 (2018)
+0.1.6 (2018)
+------------------
+
+* Various bug-fixes
+* Improve tests
+* Change Client API
+
+0.1.5 (2018-12-14)
 ------------------
 
 * Various bug-fixes

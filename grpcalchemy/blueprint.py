@@ -21,12 +21,14 @@ class DuplicatedRPCMethod(Exception):
 
 
 class RPCObject:
-    def __init__(self, func: Callable, request: Type[Message]):
+    def __init__(self, func: Callable, request: Type[Message],
+                 response: Type[Message]):
         self.func = func
         self.request = request
+        self.response = response
 
     def preprocess(self, origin_request: GRPCMessage) -> Message:
-        return self.request(origin_request)
+        return self.request(grpc_message=origin_request)
 
     def postprocess(self, origin_response: Message) -> GRPCMessage:
         return origin_response._message
@@ -49,7 +51,7 @@ class Blueprint:
 
         __meta__[self.file_name]['services'].append(self.service_meta)
 
-    def register(self, rpc: Callable = None):
+    def register(self, rpc: Callable = None) -> RPCObject:
         status, request, response = self.check_service(rpc)
         if not status:
             raise InvalidRPCMethod("注册服务不合法")
@@ -67,9 +69,11 @@ class Blueprint:
         if hasattr(self, rpc.__name__):
             raise DuplicatedRPCMethod("Service Duplicate!")
         else:
-            grpc_object = RPCObject(func=rpc, request=request)
+            grpc_object = RPCObject(
+                func=rpc, request=request, response=response)
             setattr(self, rpc.__name__, grpc_object)
             self.rpc_list.append(grpc_object)
+            return grpc_object
 
     def check_service(
             self, func: Callable

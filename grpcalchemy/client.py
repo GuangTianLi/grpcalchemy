@@ -1,7 +1,6 @@
 import importlib
-from functools import partial
 
-from .blueprint import Blueprint
+from .blueprint import Blueprint, RPCObject
 from .meta import default_config
 from .orm import Message
 from .utils import generate_proto_file
@@ -35,11 +34,8 @@ class gRPCRequest:
     def __init__(self, stub):
         self.stub = stub
 
-    def __getattribute__(self, item):
+    def __call__(self, rpc: RPCObject, message: Message) -> Message:
         stub = object.__getattribute__(self, "stub")
-        func = getattr(stub, item)
+        func = getattr(stub, rpc.func.__name__)
 
-        def warp(func, message: Message):
-            return func(message._message)
-
-        return partial(warp, func)
+        return rpc.response(grpc_message=func(message._message))

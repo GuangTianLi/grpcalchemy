@@ -18,6 +18,7 @@ class TestServer(TestGrpcalchemy):
         def test_message(request: TestMessage, context) -> TestMessage:
             return TestMessage(test_name=request.test_name)
 
+        self.test_message = test_message
         self.Message = TestMessage
         self.app = Server()
         self.app.register(self.test_blueprint)
@@ -30,6 +31,6 @@ class TestServer(TestGrpcalchemy):
         test_name = "Hello World!"
         with Client("localhost:50051") as client:
             client.register(self.test_blueprint)
-            response = client.test_blueprint.test_message(
-                self.Message(test_name=test_name))
+            response = client.test_blueprint(self.test_message,
+                                             self.Message(test_name=test_name))
             self.assertEqual(test_name, response.test_name)
