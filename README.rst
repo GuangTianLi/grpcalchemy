@@ -90,7 +90,8 @@ Client
     if __name__ == '__main__':
         with Client("localhost:50051") as client:
             client.register(hello)
-            response: HelloMessage = client.hello.test(HelloMessage(text="world"))
+            response: HelloMessage = client.hello(
+                rpc=test, message=HelloMessage(text="world"))
             print(response.text)  # Hello world
 
 Features
