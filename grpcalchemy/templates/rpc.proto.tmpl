@@ -2,7 +2,7 @@ syntax = "proto3";
 
 {% block import %}
     {% for file in import_files %}
-import "protos/{{ file }}.proto";
+import "{{ file_path }}/{{ file }}.proto";
     {% endfor %}
 {% endblock %}
 

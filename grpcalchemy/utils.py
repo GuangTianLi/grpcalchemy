@@ -30,8 +30,9 @@ def generate_proto_file():
     template = env.get_template('rpc.proto.tmpl')
     for filename, meta in __meta__.items():
         meta["import_files"] = sorted(meta["import_files"])
-        template.stream(**meta).dump(
-            join(abs_template_path, f"{filename}.proto"))
+        template.stream(
+            file_path=template_path, **meta).dump(
+                join(abs_template_path, f"{filename}.proto"))
 
     # copy from grpc_tools
     protoc_file = pkg_resources.resource_filename('grpc_tools', 'protoc.py')
