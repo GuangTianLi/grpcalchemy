@@ -11,7 +11,7 @@ from .meta import __meta__, default_config
 
 
 def generate_proto_file():
-    template_path = default_config.template_path
+    template_path = default_config["TEMPLATE_PATH"]
     abs_template_path = join(getcwd(), template_path)
 
     env = Environment(

@@ -14,13 +14,13 @@ _ONE_DAY_IN_SECONDS = 60 * 60 * 24
 class Server:
     def __init__(self, max_workers: int = 10):
         generate_proto_file()
-
+        self.config = default_config
         self.server = grpc.server(
             futures.ThreadPoolExecutor(max_workers=max_workers))
 
     def register(self, bp: Blueprint):
         grpc_pb2_module = importlib.import_module(f".{bp.file_name}_pb2_grpc",
-                                                  self.config.template_path)
+                                                  self.config["TEMPLATE_PATH"])
         getattr(grpc_pb2_module,
                 f"add_{bp.file_name}Servicer_to_server")(bp, self.server)
 
@@ -35,7 +35,3 @@ class Server:
                     time.sleep(_ONE_DAY_IN_SECONDS)
             except KeyboardInterrupt:
                 self.server.stop(0)
-
-    @property
-    def config(self):
-        return default_config

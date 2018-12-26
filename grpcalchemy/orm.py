@@ -113,7 +113,7 @@ class Message(BaseField, metaclass=DeclarativeMeta):
             object.__setattr__(self, "_message", grpc_message)
         else:
             gpr_message_module = importlib.import_module(
-                f".{self.__filename__}_pb2", default_config.template_path)
+                f".{self.__filename__}_pb2", default_config["TEMPLATE_PATH"])
             gRPCMessageClass = getattr(gpr_message_module,
                                        f"{self._type_name}")
             # TODO Handle map field

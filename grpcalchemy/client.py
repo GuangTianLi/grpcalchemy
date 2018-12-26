@@ -25,7 +25,7 @@ class Client:
 
     def register(self, bp: Blueprint):
         grpc_pb2_module = importlib.import_module(f".{bp.file_name}_pb2_grpc",
-                                                  self.config.template_path)
+                                                  self.config["TEMPLATE_PATH"])
         stub = getattr(grpc_pb2_module, f"{bp.name}Stub")(self.channel)
         setattr(self, bp.name, gRPCRequest(stub))
 
