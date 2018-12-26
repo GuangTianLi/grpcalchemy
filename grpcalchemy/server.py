@@ -5,18 +5,20 @@ from concurrent import futures
 import grpc
 
 from .blueprint import Blueprint
-from .meta import default_config
+from .meta import default_config, Config
 from .utils import generate_proto_file
 
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
 
 
 class Server:
-    def __init__(self, max_workers: int = 10):
-        generate_proto_file()
+    def __init__(self, max_workers: int = 10, config: Config = None):
         self.config = default_config
+        if config:
+            self.config.from_object(config)
         self.server = grpc.server(
             futures.ThreadPoolExecutor(max_workers=max_workers))
+        generate_proto_file()
 
     def register(self, bp: Blueprint):
         grpc_pb2_module = importlib.import_module(f".{bp.file_name}_pb2_grpc",
