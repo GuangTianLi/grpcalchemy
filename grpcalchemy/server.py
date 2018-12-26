@@ -1,18 +1,19 @@
 import importlib
 import time
 from concurrent import futures
+from typing import Type, Union
 
 import grpc
 
 from .blueprint import Blueprint
-from .meta import default_config, Config
+from .meta import default_config
 from .utils import generate_proto_file
 
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
 
 
 class Server:
-    def __init__(self, max_workers: int = 10, config: Config = None):
+    def __init__(self, max_workers: int = 10, config: Union[str, Type] = None):
         self.config = default_config
         if config:
             self.config.from_object(config)

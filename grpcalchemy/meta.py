@@ -1,6 +1,6 @@
 import sys
 from collections import defaultdict, namedtuple
-from typing import NewType, Dict, List, DefaultDict, Union, Set, TypeVar
+from typing import NewType, Dict, List, DefaultDict, Union, Set, TypeVar, Type
 
 GRPCMessage = TypeVar('GRPCMessage')
 
@@ -50,7 +50,7 @@ def import_string(import_name: str):
 
 
 class Config(dict):
-    def from_object(self, obj):
+    def from_object(self, obj: Union[str, Type]):
         """Updates the values from the given object.  An object can be of one
         of the following two types:
 
