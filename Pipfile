@@ -11,6 +11,7 @@ tox = "*"
 coverage = "*"
 sphinx = "*"
 twine = "*"
+sphinx-rtd-theme = "*"
 
 [packages]
 grpcio = "*"

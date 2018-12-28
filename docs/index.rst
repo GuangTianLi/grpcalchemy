@@ -1,5 +1,5 @@
 Welcome to gRPCAlchemy's documentation!
-======================================
+=========================================
 
 .. toctree::
    :maxdepth: 2

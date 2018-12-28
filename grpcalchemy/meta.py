@@ -70,10 +70,9 @@ class Config(dict):
 
         You should not use this function to load the actual configuration but
         rather configuration defaults.  The actual config should be loaded
-        with :meth:`from_pyfile` and ideally from a location not within the
+        with :meth:`from_object` and ideally from a location not within the
         package because the package might be installed system wide.
 
-        See :ref:`config-dev-prod` for an example of class-based configuration
         using :meth:`from_object`.
 
         :param obj: an import name or object
