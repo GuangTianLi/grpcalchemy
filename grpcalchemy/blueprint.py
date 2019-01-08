@@ -1,7 +1,7 @@
 from collections import namedtuple
 from functools import update_wrapper
 from inspect import signature
-from typing import Tuple, Union, Type, Callable
+from typing import Tuple, Union, Type, Callable, Generic, TypeVar
 
 from grpc._server import _Context
 
@@ -12,6 +12,8 @@ Rpc = namedtuple('Rpc', ['name', 'request', 'response'])
 
 Context = _Context
 
+_T = TypeVar("_T")
+
 
 class InvalidRPCMethod(Exception):
     pass
@@ -21,8 +23,24 @@ class DuplicatedRPCMethod(Exception):
     pass
 
 
+class RpcWrappedCallable(Generic[_T]):
+    name: str = ...
+    request: Type[Message] = ...
+    response: Type[Message] = ...
+
+    def preprocess(origin_request: GRPCMessage) -> Message:
+        ...
+
+    def postprocess(origin_response: Message) -> GRPCMessage:
+        ...
+
+    def __call__(origin_request: GRPCMessage, context: Context) -> GRPCMessage:
+        ...
+
+
 def rpc_call_wrap(func: Callable[[Message, Context], Message],
-                  request: Type[Message], response: Type[Message]):
+                  request: Type[Message],
+                  response: Type[Message]) -> RpcWrappedCallable:
     def preprocess(origin_request: GRPCMessage) -> Message:
         return request(grpc_message=origin_request)
 
@@ -58,10 +76,9 @@ class Blueprint:
         if not status:
             raise InvalidRPCMethod("注册服务不合法")
 
-        self.service_meta.rpcs.append(
-            Rpc(name=rpc.__name__,
-                request=request._type_name,
-                response=response._type_name))
+        rpc_call: RpcWrappedCallable = rpc_call_wrap(
+            func=rpc, request=request, response=response)
+        self.service_meta.rpcs.append(rpc_call)
         if request.__filename__ != self.file_name:
             __meta__[self.file_name]['import_files'].add(request.__filename__)
 
@@ -71,9 +88,7 @@ class Blueprint:
         if hasattr(self, rpc.__name__):
             raise DuplicatedRPCMethod("Service Duplicate!")
         else:
-            rpc_call = rpc_call_wrap(
-                func=rpc, request=request, response=response)
-            setattr(self, rpc.__name__, rpc_call)
+            setattr(self, rpc_call.name, rpc_call)
             return rpc_call
 
     def check_service(

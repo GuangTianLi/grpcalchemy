@@ -1,6 +1,7 @@
 from grpcalchemy.blueprint import Blueprint
 from grpcalchemy.meta import __meta__
 from grpcalchemy.orm import Message, StringField, ReferenceField
+
 from .test_grpcalchemy import TestGrpcalchemy
 
 
@@ -50,8 +51,8 @@ class TestMeta(TestGrpcalchemy):
         self.assertEqual(1, len(services[0].rpcs))
 
         self.assertEqual("test_message", services[0].rpcs[0].name)
-        self.assertEqual("TestMessage", services[0].rpcs[0].request)
-        self.assertEqual("TestMessage", services[0].rpcs[0].response)
+        self.assertEqual("TestMessage", services[0].rpcs[0].request.__name__)
+        self.assertEqual("TestMessage", services[0].rpcs[0].response.__name__)
 
     def test_multiple_messages(self):
         class TestMessageOne(Message):
