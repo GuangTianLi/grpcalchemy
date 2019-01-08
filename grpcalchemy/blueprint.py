@@ -1,4 +1,5 @@
 from collections import namedtuple
+from functools import update_wrapper
 from inspect import signature
 from typing import Tuple, Union, Type, List, Callable
 
@@ -20,22 +21,23 @@ class DuplicatedRPCMethod(Exception):
     pass
 
 
-class RPCObject:
-    def __init__(self, func: Callable, request: Type[Message],
-                 response: Type[Message]):
-        self.func = func
-        self.request = request
-        self.response = response
+def rpc_call_wrap(func: Callable[[Message, Context], Message],
+                  request: Type[Message], response: Type[Message]):
+    def preprocess(origin_request: GRPCMessage) -> Message:
+        return request(grpc_message=origin_request)
 
-    def preprocess(self, origin_request: GRPCMessage) -> Message:
-        return self.request(grpc_message=origin_request)
-
-    def postprocess(self, origin_response: Message) -> GRPCMessage:
+    def postprocess(origin_response: Message) -> GRPCMessage:
         return origin_response._message
 
-    def __call__(self, origin_request: GRPCMessage, context) -> GRPCMessage:
-        request = self.preprocess(origin_request)
-        return self.postprocess(self.func(request, context))
+    def call(origin_request: GRPCMessage, context: Context) -> GRPCMessage:
+        request = preprocess(origin_request)
+        return postprocess(func(request, context))
+
+    call.request = request
+    call.response = response
+    update_wrapper(call, func)
+
+    return call
 
 
 class Blueprint:
@@ -47,11 +49,10 @@ class Blueprint:
 
         self.name = name
         self.service_meta = ServiceMeta(name=self.name, rpcs=[])
-        self.rpc_list: List[RPCObject] = []
 
         __meta__[self.file_name]['services'].append(self.service_meta)
 
-    def register(self, rpc: Callable = None) -> RPCObject:
+    def register(self, rpc: Callable = None) -> Callable:
         status, request, response = self.check_service(rpc)
         if not status:
             raise InvalidRPCMethod("注册服务不合法")
@@ -69,11 +70,10 @@ class Blueprint:
         if hasattr(self, rpc.__name__):
             raise DuplicatedRPCMethod("Service Duplicate!")
         else:
-            grpc_object = RPCObject(
+            rpc_call = rpc_call_wrap(
                 func=rpc, request=request, response=response)
-            setattr(self, rpc.__name__, grpc_object)
-            self.rpc_list.append(grpc_object)
-            return grpc_object
+            setattr(self, rpc.__name__, rpc_call)
+            return rpc_call
 
     def check_service(
             self, func: Callable
