@@ -1,7 +1,7 @@
 from collections import namedtuple
 from functools import update_wrapper
 from inspect import signature
-from typing import Tuple, Union, Type, List, Callable
+from typing import Tuple, Union, Type, Callable
 
 from grpc._server import _Context
 
@@ -33,6 +33,7 @@ def rpc_call_wrap(func: Callable[[Message, Context], Message],
         request = preprocess(origin_request)
         return postprocess(func(request, context))
 
+    call.name = func.__name__
     call.request = request
     call.response = response
     update_wrapper(call, func)

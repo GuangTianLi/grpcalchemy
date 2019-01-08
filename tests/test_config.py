@@ -1,4 +1,8 @@
-from grpcalchemy.orm import default_config
+import json
+import os
+
+from grpcalchemy.config import default_config
+
 from .test_grpcalchemy import TestGrpcalchemy
 
 
@@ -7,7 +11,18 @@ class TestStrObject:
     TEST = "test"
 
 
-class TestMeta(TestGrpcalchemy):
+class TestConfig(TestGrpcalchemy):
+    json_file = "test.json"
+
+    @classmethod
+    def setUpClass(cls):
+        with open(cls.json_file, "w") as fp:
+            json.dump({"JSON_TEST": "JSON_TEST"}, fp)
+
+    @classmethod
+    def tearDownClass(cls):
+        os.remove(cls.json_file)
+
     def test_default_config_update_from_object(self):
         class TestObject:
             TEMPLATE_PATH = "test"
@@ -17,6 +32,14 @@ class TestMeta(TestGrpcalchemy):
 
         self.assertEqual("test", default_config["TEMPLATE_PATH"])
         self.assertEqual("test", default_config["TEST"])
+
+    def test_default_config_update_from_json_file(self):
+        class TestObject:
+            __json_file__ = self.json_file
+
+        default_config.from_object(TestObject)
+
+        self.assertEqual("JSON_TEST", default_config["JSON_TEST"])
 
     def test_default_config_update_from_str(self):
 

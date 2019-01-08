@@ -7,7 +7,8 @@ import grpc_tools.protoc
 import pkg_resources
 from jinja2 import Environment, FileSystemLoader
 
-from .meta import __meta__, default_config
+from .config import default_config
+from .meta import __meta__
 
 
 def generate_proto_file():

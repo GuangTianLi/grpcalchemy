@@ -1,7 +1,8 @@
 import importlib
-from typing import Callable
-from .blueprint import Blueprint, rpc_call_wrap
-from .meta import default_config
+from typing import Any
+
+from .blueprint import Blueprint
+from .config import default_config
 from .orm import Message
 from .utils import generate_proto_file
 
@@ -34,7 +35,7 @@ class gRPCRequest:
     def __init__(self, stub):
         self.stub = stub
 
-    def __call__(self, rpc: Callable, message: Message) -> Message:
+    def __call__(self, rpc: Any, message: Message) -> Message:
         stub = object.__getattribute__(self, "stub")
         func = getattr(stub, rpc.__name__)
 

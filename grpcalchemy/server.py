@@ -6,7 +6,7 @@ from typing import Type, Union
 import grpc
 
 from .blueprint import Blueprint
-from .meta import default_config
+from .config import default_config
 from .utils import generate_proto_file
 
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24

@@ -1,7 +1,8 @@
 import importlib
 from typing import Tuple, Set, Type
 
-from .meta import __meta__, MessageMeta, default_config
+from .config import default_config
+from .meta import __meta__, MessageMeta
 
 
 class InvalidMessage(Exception):

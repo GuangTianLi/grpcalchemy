@@ -26,7 +26,7 @@ The Python micro framework for building gPRC application.
 * Documentation: https://grpcalchemy.readthedocs.io.
 
 Installation
---------
+----------------
 
  | Disclaimer: Still at an early stage of development. Rapidly evolving APIs.
 
@@ -95,7 +95,7 @@ Client
             print(response.text)  # Hello world
 
 Features
---------
+----------
 
 * gPRC Service Support
 * gRPC Client Support
@@ -110,7 +110,7 @@ TODO
 * All Types Support
 
 Credits
--------
+---------
 
 This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypackage`_ project template.
 
