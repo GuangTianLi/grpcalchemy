@@ -8,6 +8,7 @@ History
 * Various bug-fixes
 * Improve tests
 * Change Client API
+* Add PreProcess And PostProcess
 * Import Config Object
 
 0.1.5 (2018-12-14)
