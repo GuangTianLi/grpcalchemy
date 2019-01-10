@@ -107,3 +107,6 @@ ENV/
 
 # proto
 protos/
+
+# pyre
+.pyre/

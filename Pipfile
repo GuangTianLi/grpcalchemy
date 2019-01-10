@@ -12,6 +12,10 @@ coverage = "*"
 sphinx = "*"
 twine = "*"
 sphinx-rtd-theme = "*"
+pre-commit = "*"
+isort = "*"
+yapf = "*"
+pyre-check = "*"
 
 [packages]
 grpcio = "*"
@@ -21,3 +25,4 @@ jinja2 = "*"
 
 [scripts]
 patch = "bumpversion patch"
+init-pre-commit = "pre-commit install"

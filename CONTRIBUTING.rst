@@ -67,7 +67,7 @@ Ready to contribute? Here's how to set up `grpcalchemy` for local development.
 3. Install your local copy into a virtualenv. Assuming you have Pipenv installed, this is how you set up your fork for local development::
 
     $ cd grpcalchemy/
-    $ pipenv install
+    $ make init
     $ pipenv shell
 
 4. Create a branch for local development::

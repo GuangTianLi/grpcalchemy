@@ -25,6 +25,7 @@ endef
 export PRINT_HELP_PYSCRIPT
 
 BROWSER := python -c "$$BROWSER_PYSCRIPT"
+ENV_PATH := pipenv --venv
 
 help:
 	@python -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
@@ -51,9 +52,12 @@ clean-test: ## remove test and coverage artifacts
 	rm -fr .pytest_cache
 	rm -fr protos/
 
-lint: ## check style with flake8
+lint: ## check style with flake8 and check type with pyre
 	flake8 grpcalchemy
 	flake8 --ignore F811 tests
+	pyre --search-path=$$(pipenv --venv)/lib/python3.7/site-packages \
+	--source-directory grpcalchemy \
+	--typeshed $$(pipenv --venv)/lib/pyre_check/typeshed check
 
 test: ## run tests quickly with the default Python
 	python setup.py test
@@ -85,3 +89,7 @@ dist: clean ## builds source and wheel package
 
 install: clean ## install the package to the active Python's site-packages
 	python setup.py install
+
+init: ## init the development environment
+	pipenv sync
+	pipenv run init-pre-commit

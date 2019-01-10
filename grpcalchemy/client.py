@@ -38,4 +38,4 @@ class gRPCRequest:
         stub = object.__getattribute__(self, "stub")
         func = getattr(stub, rpc.name)
 
-        return rpc.response(grpc_message=func(message._message))
+        return rpc.response_type(grpc_message=func(message._message))

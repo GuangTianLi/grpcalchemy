@@ -2,7 +2,7 @@ import errno
 import json
 import os
 import sys
-from typing import Dict, Union, Type
+from typing import Dict, Type, Union
 
 
 def import_string(import_name: str) -> Type:
@@ -27,7 +27,7 @@ def import_string(import_name: str) -> Type:
         if '.' not in import_name:
             raise
     else:
-        return sys.modules[import_name]
+        return sys.modules[import_name]  # pyre-ignore
 
     module_name, obj_name = import_name.rsplit('.', 1)
     try:
