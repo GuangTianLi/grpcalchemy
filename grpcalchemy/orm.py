@@ -30,6 +30,14 @@ class Int32Field(BaseField):
     _type_name = "int32"
 
 
+class FloatField(BaseField):
+    _type_name = "float"
+
+
+class DoubleField(BaseField):
+    _type_name = "double"
+
+
 class Int64Field(BaseField):
     _type_name = "int64"
 
@@ -125,6 +133,10 @@ class Message(BaseField, metaclass=DeclarativeMeta):
                             item[index] = value._message
                 elif isinstance(item, Message):
                     kwargs[key] = item._message
+                elif isinstance(item, dict):
+                    for key, tmp in item.items():
+                        if isinstance(tmp, Message):
+                            item[key] = tmp._message
 
             object.__setattr__(self, "_message", gRPCMessageClass(**kwargs))
 
