@@ -132,4 +132,7 @@ class Config(dict):
         return self.from_json(load_from_json) if load_from_json else True
 
 
-default_config = Config(defaults=dict(TEMPLATE_PATH="protos"))
+default_config = Config(defaults=dict(
+    TEMPLATE_PATH="protos",
+    MAX_WORKERS=10,
+))

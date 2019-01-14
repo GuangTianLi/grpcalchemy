@@ -37,3 +37,20 @@ class TestServer(TestGrpcalchemy):
                 rpc=self.test_message,
                 message=self.Message(test_name=test_name))
             self.assertEqual(test_name, response.test_name)
+
+    def test_server_listener(self):
+        test_app = Server()
+
+        @test_app.listener("before_server_start")
+        def before_server_start(app: Server):
+            pass
+
+        def after_server_stop(app: Server):
+            pass
+
+        test_app.listener("after_server_stop", after_server_stop)
+
+        self.assertListEqual([before_server_start],
+                             test_app.listeners["before_server_start"])
+        self.assertEqual([after_server_stop],
+                         test_app.listeners["after_server_stop"])

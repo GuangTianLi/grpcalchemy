@@ -15,7 +15,7 @@ _ONE_DAY_IN_SECONDS = 60 * 60 * 24
 
 
 class Server:
-    def __init__(self, max_workers: int = 10, config: Union[str, Type] = None):
+    def __init__(self, config: Union[str, Type] = None):
 
         #: The configuration dictionary as :class:`Config`.  This behaves
         #: exactly like a regular dictionary but supports additional methods
@@ -26,7 +26,7 @@ class Server:
             self.config.from_object(config)
 
         self.server = grpc.server(
-            futures.ThreadPoolExecutor(max_workers=max_workers))
+            futures.ThreadPoolExecutor(max_workers=self.config["MAX_WORKERS"]))
 
         #: all the attached blueprints in a dictionary by name.
         #:
@@ -68,14 +68,18 @@ class Server:
                 for func in self.listeners["after_server_stop"]:
                     func(self)
 
-    def listener(self, event: str,
-                 listener: Callable[[Any], None] = None) -> partial:
+    def listener(self,
+                 event: str,
+                 listener: Union[Callable[[Any], None], None] = None
+                 ) -> Union[partial, Callable[[Any], None]]:
         """
         Create a listener from a decorated function.
 
         :param event: event to listen to
         """
         if listener is None:
-            return partial(self, event)
+            return partial(self.listener, event)
 
         self.listeners[event].append(listener)
+
+        return listener
