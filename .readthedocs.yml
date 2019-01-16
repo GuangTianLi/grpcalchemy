@@ -3,9 +3,4 @@ build:
 
 python:
   version: 3.6
-  install:
-  - pipfile: .
-    skip_lock: true
-    dev: true
-  - path: .
-    method: pip
+  pip_install: true

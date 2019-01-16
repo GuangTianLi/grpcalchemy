@@ -1,12 +1,20 @@
-from grpcalchemy.orm import Message, StringField, Int32Field, Int64Field, \
-    BooleanField, BytesField, ReferenceField, ListField, MapField
+from grpcalchemy.orm import (
+    BooleanField,
+    BytesField,
+    Int32Field,
+    Int64Field,
+    ListField,
+    MapField,
+    Message,
+    ReferenceField,
+    StringField,
+)
 from grpcalchemy.utils import generate_proto_file
 
 from .test_grpcalchemy import TestGrpcalchemy
 
 
 class TestORM(TestGrpcalchemy):
-
     def setUp(self):
         super().setUp()
 
@@ -39,6 +47,8 @@ class TestORM(TestGrpcalchemy):
         self.assertEqual("Test", test.name)
         test.name = "Changed_name"
         self.assertEqual("Changed_name", test.name)
+        self.assertEqual("Changed_name", test._message.name)
+
         self.assertEqual("string name", str(Test.name))
         self.assertEqual("int32 number", str(Test.number))
         self.assertEqual("int64 big_number", str(Test.big_number))
@@ -85,5 +95,6 @@ class TestORM(TestGrpcalchemy):
 
         test = TestMapRef(map_field={"test": Test(name="test")})
         self.assertEqual("test", test.map_field["test"].name)
+        self.assertEqual("test", test._message.map_field["test"].name)
         self.assertEqual("map<string, Test> map_field",
                          str(TestMapRef.map_field))

@@ -1,9 +1,9 @@
 import importlib
 from threading import RLock
-from typing import Tuple, Set, Type
+from typing import Set, Tuple, Type
 
 from .config import default_config
-from .meta import __meta__, MessageMeta
+from .meta import MessageMeta, __meta__
 
 # sentinel
 _missing = object()
@@ -142,7 +142,7 @@ class Message(BaseField, metaclass=DeclarativeMeta):
                 f".{self.__filename__}_pb2", default_config["TEMPLATE_PATH"])
             gRPCMessageClass = getattr(gpr_message_module,
                                        f"{self._type_name}")
-            # TODO Handle map field
+
             for key, item in kwargs.items():
                 if isinstance(item, list):
                     for index, value in enumerate(item):
