@@ -10,7 +10,6 @@ class TestORM(TestGrpcalchemy):
     def setUp(self):
         super().setUp()
 
-
     def test_message_with_default_filename(self):
         class Test(Message):
             pass
@@ -86,4 +85,5 @@ class TestORM(TestGrpcalchemy):
 
         test = TestMapRef(map_field={"test": Test(name="test")})
         self.assertEqual("test", test.map_field["test"].name)
-        self.assertEqual("map<string, Test> map_field", str(TestMapRef.map_field))
+        self.assertEqual("map<string, Test> map_field",
+                         str(TestMapRef.map_field))
