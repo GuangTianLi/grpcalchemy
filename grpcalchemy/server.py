@@ -4,7 +4,7 @@ from collections import defaultdict
 from concurrent import futures
 from functools import partial
 from typing import Type, Union, Dict, Callable, List, DefaultDict, Any
-
+import logging
 import grpc
 
 from .blueprint import Blueprint
@@ -42,6 +42,11 @@ class Server:
         self.listeners: DefaultDict[str, List[
             Callable[[Server], None]]] = defaultdict(list)
 
+        #: init logger
+        self.logger = logging.getLogger()
+        self.logger.setLevel(logging.DEBUG)
+        self.logger.addHandler(logging.StreamHandler())
+
         generate_proto_file()
 
     def register(self, bp: Blueprint):
@@ -52,12 +57,13 @@ class Server:
         self.blueprints[bp.name] = bp
 
     def run(self, port: int = 50051, test=False):
-
         for func in self.listeners["before_server_start"]:
             func(self)
 
         self.server.add_insecure_port(f'[::]:{port}')
         self.server.start()
+
+        self.logger.info(f"gRPC server is running on 0.0.0.0:{port}")
 
         if not test:
             try:

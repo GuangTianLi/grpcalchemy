@@ -1,9 +1,16 @@
 from grpcalchemy.orm import Message, StringField, Int32Field, Int64Field, \
     BooleanField, BytesField, ReferenceField, ListField, MapField
+from grpcalchemy.utils import generate_proto_file
+
 from .test_grpcalchemy import TestGrpcalchemy
 
 
 class TestORM(TestGrpcalchemy):
+
+    def setUp(self):
+        super().setUp()
+
+
     def test_message_with_default_filename(self):
         class Test(Message):
             pass
@@ -27,6 +34,12 @@ class TestORM(TestGrpcalchemy):
             sex = BooleanField()
             raw_data = BytesField()
 
+        generate_proto_file()
+
+        test = Test(name="Test")
+        self.assertEqual("Test", test.name)
+        test.name = "Changed_name"
+        self.assertEqual("Changed_name", test.name)
         self.assertEqual("string name", str(Test.name))
         self.assertEqual("int32 number", str(Test.number))
         self.assertEqual("int64 big_number", str(Test.big_number))
@@ -44,6 +57,18 @@ class TestORM(TestGrpcalchemy):
             list_test_field = ListField(Test)
             list_int32_field = ListField(Int32Field)
 
+        generate_proto_file()
+
+        test = TestRef(
+            ref_field=Test(name="Test"),
+            list_test_field=[Test(name="Test")],
+            list_int32_field=[1])
+        self.assertEqual("Test", test.ref_field.name)
+        test.ref_field.name = "Changed_name"
+        self.assertEqual("Changed_name", test.ref_field.name)
+        self.assertListEqual([1], list(test.list_int32_field))
+        self.assertEqual("Test", test.list_test_field[0].name)
+
         self.assertEqual("Test ref_field", str(TestRef.ref_field))
         self.assertEqual("repeated Test list_test_field",
                          str(TestRef.list_test_field))
@@ -54,7 +79,11 @@ class TestORM(TestGrpcalchemy):
         class Test(Message):
             name = StringField()
 
-        class TestRef(Message):
+        class TestMapRef(Message):
             map_field = MapField(StringField, Test)
 
-        self.assertEqual("map<string, Test> map_field", str(TestRef.map_field))
+        generate_proto_file()
+
+        test = TestMapRef(map_field={"test": Test(name="test")})
+        self.assertEqual("test", test.map_field["test"].name)
+        self.assertEqual("map<string, Test> map_field", str(TestMapRef.map_field))

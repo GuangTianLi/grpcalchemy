@@ -1,8 +1,12 @@
 import importlib
+from threading import RLock
 from typing import Tuple, Set, Type
 
 from .config import default_config
 from .meta import __meta__, MessageMeta
+
+# sentinel
+_missing = object()
 
 
 class InvalidMessage(Exception):
@@ -14,9 +18,22 @@ class BaseField:
 
     def __init__(self, name=None):
         self._name = name
+        self.lock = RLock()
+
+    def __get__(self, obj, type=None):
+        if obj is None:
+            return self
+        with self.lock:
+            value = obj.__dict__.get(self._name, _missing)
+            if value is _missing:
+                value = getattr(obj._message, self._name)
+                obj.__dict__[self._name] = value
+            return value
 
     def __set__(self, instance, value):
-        instance.__dict__[self._name] = value
+        with self.lock:
+            setattr(instance._message, self._name, value)
+            instance.__dict__[self._name] = value
 
     def __str__(self):
         return f"{self._type_name} {self._name}"
@@ -138,18 +155,6 @@ class Message(BaseField, metaclass=DeclarativeMeta):
                         if isinstance(tmp, Message):
                             item[key] = tmp._message
 
-            object.__setattr__(self, "_message", gRPCMessageClass(**kwargs))
+            self._message = gRPCMessageClass(**kwargs)
 
         super().__init__()
-
-    def __setattr__(self, key, value):
-        if key in object.__getattribute__(self, "__meta__"):
-            setattr(self._message, key, value)
-        else:
-            object.__setattr__(self, key, value)
-
-    def __getattribute__(self, item):
-        if item in object.__getattribute__(self, "__meta__"):
-            return getattr(object.__getattribute__(self, "_message"), item)
-        else:
-            return object.__getattribute__(self, item)
