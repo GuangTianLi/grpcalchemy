@@ -1,6 +1,6 @@
 import importlib
 from threading import RLock
-from typing import Set, Tuple, Type
+from typing import Any, Dict, List, Set, Tuple, Type
 
 from .config import default_config
 from .meta import MessageMeta, __meta__
@@ -20,7 +20,7 @@ class BaseField:
         self._name = name
         self.lock = RLock()
 
-    def __get__(self, obj, type=None):
+    def __get__(self, obj: Any, type: Type) -> Any:
         if obj is None:
             return self
         with self.lock:
@@ -30,7 +30,7 @@ class BaseField:
                 obj.__dict__[self._name] = value
             return value
 
-    def __set__(self, instance, value):
+    def __set__(self, instance, value) -> None:
         with self.lock:
             setattr(instance._message, self._name, value)
             instance.__dict__[self._name] = value
@@ -42,57 +42,104 @@ class BaseField:
 class StringField(BaseField):
     _type_name = "string"
 
+    def __get__(self, obj: Any, type: Type) -> str:
+        return super().__get__(obj, type)
+
+    def __set__(self, instance, value: str) -> None:
+        super().__set__(instance, value)
+
 
 class Int32Field(BaseField):
     _type_name = "int32"
+
+    def __get__(self, obj: Any, type: Type) -> int:
+        return super().__get__(obj, type)
+
+    def __set__(self, instance, value: int) -> None:
+        super().__set__(instance, value)
 
 
 class FloatField(BaseField):
     _type_name = "float"
 
+    def __get__(self, obj: Any, type: Type) -> float:
+        return super().__get__(obj, type)
+
+    def __set__(self, instance, value: float) -> None:
+        super().__set__(instance, value)
+
 
 class DoubleField(BaseField):
     _type_name = "double"
+
+    def __get__(self, obj: Any, type: Type) -> float:
+        return super().__get__(obj, type)
+
+    def __set__(self, instance, value: float) -> None:
+        super().__set__(instance, value)
 
 
 class Int64Field(BaseField):
     _type_name = "int64"
 
+    def __get__(self, obj: Any, type: Type) -> int:
+        return super().__get__(obj, type)
+
+    def __set__(self, instance, value: int) -> None:
+        super().__set__(instance, value)
+
 
 class BooleanField(BaseField):
     _type_name = "bool"
+
+    def __get__(self, obj: Any, type: Type) -> bool:
+        return super().__get__(obj, type)
+
+    def __set__(self, instance, value: bool) -> None:
+        super().__set__(instance, value)
 
 
 class BytesField(BaseField):
     _type_name = "bytes"
 
+    def __get__(self, obj: Any, type: Type) -> bytes:
+        return super().__get__(obj, type)
 
-class EmptyFile:
-    pass
+    def __set__(self, instance, value: bytes) -> None:
+        super().__set__(instance, value)
 
 
 class ReferenceField(BaseField):
-    def __init__(self,
-                 key_type: Type[BaseField],
-                 value_type: Type[BaseField] = None):
+    def __init__(self, key_type: Type[BaseField]):
         self._key_type = key_type
         self._type_name = key_type._type_name
-
-        if value_type:
-            self._value_type = value_type
-            self._value_type_name = value_type._type_name
-        else:
-            self._value_type = EmptyFile
 
         super().__init__()
 
 
 class ListField(ReferenceField):
+    def __get__(self, obj: Any, type: Type) -> List[Any]:
+        return super().__get__(obj, type)
+
     def __str__(self):
         return f"repeated {super().__str__()}"
 
+    def __set__(self, instance, value: List) -> None:
+        super().__set__(instance, value)
+
 
 class MapField(ReferenceField):
+    def __init__(self, key_type: Type[BaseField], value_type: Type[BaseField]):
+        super().__init__(key_type)
+        self._value_type = value_type
+        self._value_type_name = value_type._type_name
+
+    def __get__(self, obj: Any, type: Type) -> Dict:
+        return super().__get__(obj, type)
+
+    def __set__(self, instance, value: Dict) -> None:
+        super().__set__(instance, value)
+
     def __str__(self):
         return f"map<{self._type_name}, {self._value_type_name}> {self._name}"
 
@@ -116,11 +163,11 @@ class DeclarativeMeta(type):
                             if value._key_type.__filename__ != file_name:
                                 __meta__[file_name]['import_files'].add(
                                     value._key_type.__filename__)
-
-                        if issubclass(value._value_type, Message):
-                            if value._value_type.__filename__ != file_name:
-                                __meta__[file_name]['import_files'].add(
-                                    value._value_type.__filename__)
+                        if isinstance(value, MapField):
+                            if issubclass(value._value_type, Message):
+                                if value._value_type.__filename__ != file_name:
+                                    __meta__[file_name]['import_files'].add(
+                                        value._value_type.__filename__)
                     clsdict["__meta__"].add(key)
 
             __meta__[file_name]['messages'].append(message_meta)
