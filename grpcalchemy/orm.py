@@ -146,7 +146,7 @@ class MapField(ReferenceField):
 
 class DeclarativeMeta(type):
     def __new__(cls, clsname: str, bases: Tuple, clsdict: dict):
-        if clsname != "Message":
+        if bases[0] is not BaseField:
             file_name = (clsdict.get("__filename__", clsname)
                          or clsname).lower()
             clsdict["__filename__"] = file_name

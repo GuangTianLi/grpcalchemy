@@ -103,6 +103,9 @@ Features
     * Scalar Value Types
     * Message Types
     * Repeated Field
+    * Maps
+* Middleware And Listeners
+
 
 TODO
 -------
