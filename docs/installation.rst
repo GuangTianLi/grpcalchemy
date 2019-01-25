@@ -12,7 +12,8 @@ To install gRPCAlchemy, run this command in your terminal:
 
 .. code-block:: console
 
-    $ pip install grpcalchemy
+    $ pipenv install grpcalchemy
+    ✨🍰✨
 
 This is the preferred method to install gRPCAlchemy, as it will always install the most recent stable release.
 
@@ -49,3 +50,9 @@ Once you have a copy of the source, you can install it with:
 
 .. _Github repo: https://github.com/GuangTianLi/grpcalchemy
 .. _tarball: https://github.com/GuangTianLi/grpcalchemy/tarball/master
+
+Or using pipenv install straightly:
+
+.. code-block:: console
+
+    $ pipenv install -e git+https://github.com/GuangTianLi/grpcalchemy#egg=grpcalchemy

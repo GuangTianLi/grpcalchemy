@@ -32,7 +32,7 @@ Installation
 
 .. code-block:: shell
 
-    $ pipenv install -e git+https://github.com/GuangTianLi/grpcalchemy#egg=grpcalchemy
+    $ pipenv install grpcalchemy
     ✨🍰✨
 
 Only **Python 3.6+** is supported.
