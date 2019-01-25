@@ -98,3 +98,16 @@ class TestORM(TestGrpcalchemy):
         self.assertEqual("test", test._message.map_field["test"].name)
         self.assertEqual("map<string, Test> map_field",
                          str(TestMapRef.map_field))
+
+    def test_inheritance(self):
+        class Post(Message):
+            title = StringField()
+
+        class TextPost(Post):
+            content = StringField()
+
+        generate_proto_file()
+
+        test = TextPost(content="test", title="test_title")
+        self.assertEqual("test", test.content)
+        self.assertEqual("test_title", test.title)

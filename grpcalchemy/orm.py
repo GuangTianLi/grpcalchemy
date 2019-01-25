@@ -1,6 +1,7 @@
 import importlib
+from itertools import chain
 from threading import RLock
-from typing import Any, Dict, List, Set, Tuple, Type
+from typing import Any, Dict, Iterator, List, Tuple, Type
 
 from .config import default_config
 from .meta import MessageMeta, __meta__
@@ -150,11 +151,17 @@ class DeclarativeMeta(type):
             file_name = (clsdict.get("__filename__", clsname)
                          or clsname).lower()
             clsdict["__filename__"] = file_name
-            clsdict["__meta__"] = set()
+            clsdict["__meta__"]: Dict[str, BaseField] = {}
             clsdict["_type_name"] = clsname
 
             message_meta = MessageMeta(name=clsname, fields=[])
-            for key, value in clsdict.items():
+
+            def iter_base_meta() -> Iterator:
+                for base in bases:
+                    if base.__meta__:
+                        yield from base.__meta__.items()
+
+            for key, value in chain(clsdict.items(), iter_base_meta()):
                 if isinstance(value, BaseField):
                     value._name = key
                     message_meta.fields.append(value)
@@ -168,8 +175,7 @@ class DeclarativeMeta(type):
                                 if value._value_type.__filename__ != file_name:
                                     __meta__[file_name]['import_files'].add(
                                         value._value_type.__filename__)
-                    clsdict["__meta__"].add(key)
-
+                    clsdict["__meta__"][key] = value
             __meta__[file_name]['messages'].append(message_meta)
         return super().__new__(cls, clsname, bases, clsdict)
 
@@ -179,7 +185,7 @@ class Message(BaseField, metaclass=DeclarativeMeta):
     _type_name = ""
     _message = None
 
-    __meta__: Set[str] = None
+    __meta__: Dict[str, BaseField] = {}
 
     def __init__(self, grpc_message: object = None, **kwargs):
         if grpc_message:

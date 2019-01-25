@@ -16,6 +16,7 @@ pre-commit = "*"
 isort = "*"
 yapf = "*"
 pyre-check = "*"
+ipdb = "*"
 
 [packages]
 grpcio = "*"
