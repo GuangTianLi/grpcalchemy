@@ -111,7 +111,7 @@ class Blueprint:
         self.pre_processes = _validate_rpc_processes(pre_processes)
         self.post_processes = _validate_rpc_processes(post_processes)
 
-        __meta__[self.file_name]['services'].append(self.service_meta)
+        __meta__[self.file_name].services.append(self.service_meta)
 
     def register(
             self,
@@ -140,11 +140,11 @@ class Blueprint:
         )
         self.service_meta.rpcs.append(rpc_call)
         if request_type.__filename__ != self.file_name:
-            __meta__[self.file_name]['import_files'].add(
+            __meta__[self.file_name].import_files.add(
                 request_type.__filename__)
 
         if response_type.__filename__ != self.file_name:
-            __meta__[self.file_name]['import_files'].add(
+            __meta__[self.file_name].import_files.add(
                 response_type.__filename__)
 
         if hasattr(self, rpc.__name__):

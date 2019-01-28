@@ -168,15 +168,15 @@ class DeclarativeMeta(type):
                     if isinstance(value, ReferenceField):
                         if issubclass(value._key_type, Message):
                             if value._key_type.__filename__ != file_name:
-                                __meta__[file_name]['import_files'].add(
+                                __meta__[file_name].import_files.add(
                                     value._key_type.__filename__)
                         if isinstance(value, MapField):
                             if issubclass(value._value_type, Message):
                                 if value._value_type.__filename__ != file_name:
-                                    __meta__[file_name]['import_files'].add(
+                                    __meta__[file_name].import_files.add(
                                         value._value_type.__filename__)
                     clsdict["__meta__"][key] = value
-            __meta__[file_name]['messages'].append(message_meta)
+            __meta__[file_name].messages.append(message_meta)
         return super().__new__(cls, clsname, bases, clsdict)
 
 

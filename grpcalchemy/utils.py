@@ -1,7 +1,5 @@
-from os import getcwd
-from os import mkdir, walk
-from os.path import abspath, dirname, exists
-from os.path import join
+from os import getcwd, mkdir, walk
+from os.path import abspath, dirname, exists, join
 
 import grpc_tools.protoc
 import pkg_resources
@@ -30,9 +28,12 @@ def generate_proto_file():
 
     template = env.get_template('rpc.proto.tmpl')
     for filename, meta in __meta__.items():
-        meta["import_files"] = sorted(meta["import_files"])
+        meta.import_files = sorted(meta.import_files)
         template.stream(
-            file_path=template_path, **meta).dump(
+            file_path=template_path,
+            import_files=meta.import_files,
+            messages=meta.messages,
+            services=meta.services).dump(
                 join(abs_template_path, f"{filename}.proto"))
 
     # copy from grpc_tools

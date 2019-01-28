@@ -11,14 +11,12 @@ class TestMeta(TestGrpcalchemy):
             name = StringField()
 
         self.assertEqual(1, len(__meta__.keys()))
-        self.assertEqual(
-            0, len(__meta__[TestMessage.__filename__]["import_files"]))
-        self.assertEqual(1,
-                         len(__meta__[TestMessage.__filename__]["messages"]))
         self.assertEqual(0,
-                         len(__meta__[TestMessage.__filename__]["services"]))
+                         len(__meta__[TestMessage.__filename__].import_files))
+        self.assertEqual(1, len(__meta__[TestMessage.__filename__].messages))
+        self.assertEqual(0, len(__meta__[TestMessage.__filename__].services))
 
-        messages = __meta__[TestMessage.__filename__]["messages"]
+        messages = __meta__[TestMessage.__filename__].messages
 
         self.assertEqual("TestMessage", messages[0].name)
         self.assertEqual(1, len(messages[0].fields))
@@ -36,15 +34,13 @@ class TestMeta(TestGrpcalchemy):
         self.assertListEqual(
             [test_blueprint.file_name, TestMessage.__filename__],
             list(__meta__.keys()))
-        self.assertEqual(
-            1, len(__meta__[test_blueprint.file_name]["import_files"]))
-        self.assertEqual(0,
-                         len(__meta__[test_blueprint.file_name]["messages"]))
         self.assertEqual(1,
-                         len(__meta__[test_blueprint.file_name]["services"]))
+                         len(__meta__[test_blueprint.file_name].import_files))
+        self.assertEqual(0, len(__meta__[test_blueprint.file_name].messages))
+        self.assertEqual(1, len(__meta__[test_blueprint.file_name].services))
 
-        import_files = __meta__[test_blueprint.file_name]["import_files"]
-        services = __meta__[test_blueprint.file_name]["services"]
+        import_files = __meta__[test_blueprint.file_name].import_files
+        services = __meta__[test_blueprint.file_name].services
 
         self.assertSetEqual({TestMessage.__filename__}, import_files)
         self.assertEqual(test_blueprint.name, services[0].name)
@@ -71,12 +67,12 @@ class TestMeta(TestGrpcalchemy):
 
         self.assertEqual(2, len(__meta__.keys()))
         self.assertEqual(
-            1, len(__meta__[TestMessageThree.__filename__]["import_files"]))
+            1, len(__meta__[TestMessageThree.__filename__].import_files))
 
-        self.assertEqual(
-            2, len(__meta__[TestMessageOne.__filename__]["messages"]))
-        self.assertEqual(
-            1, len(__meta__[TestMessageThree.__filename__]["messages"]))
+        self.assertEqual(2,
+                         len(__meta__[TestMessageOne.__filename__].messages))
+        self.assertEqual(1,
+                         len(__meta__[TestMessageThree.__filename__].messages))
 
     def test_multiple_services(self):
         test_blueprint = Blueprint("test", file_name="test")
@@ -92,7 +88,7 @@ class TestMeta(TestGrpcalchemy):
         def test_message_two(request: TestMessage, context) -> TestMessage:
             return TestMessage(test_name=request.name)
 
-        services = __meta__[test_blueprint.file_name]["services"]
+        services = __meta__[test_blueprint.file_name].services
 
         self.assertEqual(1, len(services))
         self.assertEqual(2, len(services[0].rpcs))
@@ -103,7 +99,7 @@ class TestMeta(TestGrpcalchemy):
         def test_message_three(request: TestMessage, context) -> TestMessage:
             return TestMessage(test_name=request.name)
 
-        services = __meta__[test_blueprint.file_name]["services"]
+        services = __meta__[test_blueprint.file_name].services
 
         self.assertEqual(2, len(services))
         self.assertEqual(2, len(services[0].rpcs))
