@@ -10,11 +10,11 @@ root_path = cwd[:cwd.rfind("grpcalchemy") + len("grpcalchemy")]
 chdir(root_path)
 
 
-class TestMessage(Message):
+class TestServerMessage(Message):
     num = Int32Field()
 
 
-test_blueprint = Blueprint("test_blueprint")
+test_server_blueprint = Blueprint("test_server_blueprint")
 
 
 def fib(n: int) -> int:
@@ -24,14 +24,15 @@ def fib(n: int) -> int:
         return fib(n - 1) + fib(n - 2)
 
 
-@test_blueprint.register
-def test_message(request: TestMessage, context: Context) -> TestMessage:
-    return TestMessage(num=fib(request.num))
+@test_server_blueprint.register
+def test_message(request: TestServerMessage,
+                 context: Context) -> TestServerMessage:
+    return TestServerMessage(num=fib(request.num))
 
 
 def main(_):
     app = Server()
-    app.register(test_blueprint)
+    app.register(test_server_blueprint)
     app.run()
 
 

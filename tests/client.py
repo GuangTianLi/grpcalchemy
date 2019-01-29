@@ -3,13 +3,14 @@ from concurrent import futures
 
 import grpc
 
-from protos import test_blueprint_pb2_grpc, testmessage_pb2
+from protos import test_server_blueprint_pb2_grpc, testservermessage_pb2
 
 
 def grpc_call(_):
     with grpc.insecure_channel("localhost:50051") as channel:
-        stub = test_blueprint_pb2_grpc.test_blueprintStub(channel)
-        request = testmessage_pb2.TestMessage(num=33)
+        stub = test_server_blueprint_pb2_grpc.test_server_blueprintStub(
+            channel)
+        request = testservermessage_pb2.TestServerMessage(num=33)
         num = stub.test_message(request).num
         return num
 
