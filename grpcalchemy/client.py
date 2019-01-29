@@ -37,5 +37,6 @@ class gRPCRequest:
     def __call__(self, rpc: RpcWrappedCallable, message: Message) -> Message:
         stub = object.__getattribute__(self, "stub")
         func = getattr(stub, rpc.name)
-
-        return rpc.response_type(grpc_message=func(message._message))
+        response = rpc.response_type()
+        response.init_grpc_message(grpc_message=func(message._message))
+        return response

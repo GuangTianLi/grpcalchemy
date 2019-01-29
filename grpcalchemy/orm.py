@@ -3,11 +3,27 @@ from itertools import chain
 from threading import RLock
 from typing import Any, Dict, Iterator, List, Tuple, Type
 
+from google.protobuf.reflection import GeneratedProtocolMessageType
+
 from .config import default_config
 from .meta import MessageMeta, __meta__
 
 # sentinel
 _missing = object()
+
+
+class lazyproperty:
+    def __init__(self, func):
+        self.func = func
+
+    def __get__(self, instance, cls):
+        if instance is None:
+            return self
+        else:
+            value = self.func(instance)
+            if value is not None:
+                setattr(instance, self.func.__name__, value)
+            return value
 
 
 class InvalidMessage(Exception):
@@ -182,20 +198,15 @@ class DeclarativeMeta(type):
 
 class Message(BaseField, metaclass=DeclarativeMeta):
     __filename__ = ""
-    _type_name = ""
-    _message = None
-
+    _message: GeneratedProtocolMessageType = None
     __meta__: Dict[str, BaseField] = {}
 
-    def __init__(self, grpc_message: object = None, **kwargs):
-        if grpc_message:
-            object.__setattr__(self, "_message", grpc_message)
-        else:
+    def __init__(self, **kwargs):
+        if kwargs:
             gpr_message_module = importlib.import_module(
                 f".{self.__filename__}_pb2", default_config["TEMPLATE_PATH"])
             gRPCMessageClass = getattr(gpr_message_module,
                                        f"{self._type_name}")
-
             for key, item in kwargs.items():
                 if isinstance(item, list):
                     for index, value in enumerate(item):
@@ -207,7 +218,8 @@ class Message(BaseField, metaclass=DeclarativeMeta):
                     for key, tmp in item.items():
                         if isinstance(tmp, Message):
                             item[key] = tmp._message
-
             self._message = gRPCMessageClass(**kwargs)
-
         super().__init__()
+
+    def init_grpc_message(self, grpc_message: GeneratedProtocolMessageType):
+        self._message = grpc_message

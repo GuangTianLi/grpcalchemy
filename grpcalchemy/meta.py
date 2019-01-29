@@ -1,7 +1,5 @@
 from collections import defaultdict, namedtuple
-from typing import DefaultDict, List, Set, TypeVar
-
-GRPCMessage = TypeVar('GRPCMessage')
+from typing import DefaultDict, List, Set
 
 MessageMeta = namedtuple('MessageMeta', ['name', 'fields'])
 ServiceMeta = namedtuple('Service', ['name', 'rpcs'])

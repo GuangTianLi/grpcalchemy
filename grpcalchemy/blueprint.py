@@ -3,9 +3,10 @@ from functools import partial, update_wrapper
 from inspect import signature
 from typing import Callable, Generic, List, Tuple, Type, TypeVar, Union
 
+from google.protobuf.reflection import GeneratedProtocolMessageType
 from grpc._server import _Context
 
-from .meta import GRPCMessage, ServiceMeta, __meta__
+from .meta import ServiceMeta, __meta__
 from .orm import Message
 
 Rpc = namedtuple('Rpc', ['name', 'request', 'response'])
@@ -30,13 +31,14 @@ class RpcWrappedCallable(Generic[_T]):
     pre_processes: List[Callable[[Message, Context], Message]] = ...
     post_processes: List[Callable[[Message, Context], Message]] = ...
 
-    def preprocess(origin_request: GRPCMessage) -> Message:
+    def preprocess(origin_request: GeneratedProtocolMessageType) -> Message:
         ...
 
-    def postprocess(origin_response: Message) -> GRPCMessage:
+    def postprocess(origin_response: Message) -> GeneratedProtocolMessageType:
         ...
 
-    def __call__(origin_request: GRPCMessage, context: Context) -> GRPCMessage:
+    def __call__(origin_request: GeneratedProtocolMessageType,
+                 context: Context) -> GeneratedProtocolMessageType:
         ...
 
 
@@ -67,19 +69,23 @@ def rpc_call_wrap(func: Callable[[Message, Context], Message],
                   pre_processes: List[Callable[[Message, Context], Message]],
                   post_processes: List[Callable[[Message, Context], Message]]
                   ) -> RpcWrappedCallable:
-    def preprocess(origin_request: GRPCMessage, context: Context) -> Message:
-        current_request = request_type(grpc_message=origin_request)
+    def preprocess(origin_request: GeneratedProtocolMessageType,
+                   context: Context) -> Message:
+        current_request = request_type()
+        current_request.init_grpc_message(grpc_message=origin_request)
         for pre_process in pre_processes:
             current_request = pre_process(current_request, context)
         return current_request
 
-    def postprocess(origin_response: Message, context: Context) -> GRPCMessage:
+    def postprocess(origin_response: Message,
+                    context: Context) -> GeneratedProtocolMessageType:
         current_response = origin_response
         for post_process in post_processes:
             current_response = post_process(current_response, context)
         return current_response._message
 
-    def call(origin_request: GRPCMessage, context: Context) -> GRPCMessage:
+    def call(origin_request: GeneratedProtocolMessageType,
+             context: Context) -> GeneratedProtocolMessageType:
         request = preprocess(origin_request, context)
         return postprocess(func(request, context), context)
 
