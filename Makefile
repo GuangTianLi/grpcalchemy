@@ -53,7 +53,7 @@ clean-test: ## remove test and coverage artifacts
 	rm -fr protos/
 
 lint: ## check style with flake8 and check type with pyre
-	flake8 grpcalchemy
+	flake8 --ignore E501 grpcalchemy
 	flake8 --ignore F811 tests
 	pyre --search-path=$$(pipenv --venv)/lib/python3.7/site-packages \
 	--source-directory grpcalchemy \

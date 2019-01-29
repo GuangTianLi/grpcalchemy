@@ -118,14 +118,14 @@ class TestORM(TestGrpcalchemy):
         class Test(Message):
             name = StringField()
 
-        class TestRef(Message):
+        class TestJsonFormat(Message):
             ref_field = ReferenceField(Test)
             list_test_field = ListField(Test)
             list_int32_field = ListField(Int32Field)
             map_field = MapField(StringField, Test)
 
         generate_proto_file()
-        test = TestRef(
+        test = TestJsonFormat(
             ref_field=Test(name="Test"),
             list_test_field=[Test(name="Test")],
             list_int32_field=[1],

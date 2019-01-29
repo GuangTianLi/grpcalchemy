@@ -3,7 +3,7 @@ from functools import partial, update_wrapper
 from inspect import signature
 from typing import Callable, Generic, List, Tuple, Type, TypeVar, Union
 
-from google.protobuf.reflection import GeneratedProtocolMessageType
+from google.protobuf.message import Message as GeneratedProtocolMessageType
 from grpc._server import _Context
 
 from .meta import ServiceMeta, __meta__
@@ -56,7 +56,7 @@ def _validate_rpc_method(rpc_method: Callable[[Message, Context], Message]
 
 
 def _validate_rpc_processes(
-        rpc_processes: List[Callable[[Message, Context], Message]]
+        rpc_processes: Union[List[Callable[[Message, Context], Message]], None]
 ) -> List[Callable[[Message, Context], Message]]:
     rpc_processes = rpc_processes or []
     for rpc_process in rpc_processes:
@@ -134,16 +134,16 @@ class Blueprint:
                 pre_processes=pre_processes,
                 post_processes=post_processes)
         request_type, response_type = _validate_rpc_method(rpc)
-
+        current_pre_process = self.pre_processes + _validate_rpc_processes(
+            pre_processes)
+        current_post_processes = self.post_processes + _validate_rpc_processes(
+            post_processes)
         rpc_call: RpcWrappedCallable = rpc_call_wrap(
             func=rpc,
             request_type=request_type,
             response_type=response_type,
-            pre_processes=self.pre_processes +
-            _validate_rpc_processes(pre_processes),  # pyre-ignore
-            post_processes=self.post_processes + _validate_rpc_processes(
-                post_processes)  # pyre-ignore
-        )
+            pre_processes=current_pre_process,
+            post_processes=current_post_processes)
         self.service_meta.rpcs.append(rpc_call)
         if request_type.__filename__ != self.file_name:
             __meta__[self.file_name].import_files.add(

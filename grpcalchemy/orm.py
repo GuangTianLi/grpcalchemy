@@ -4,7 +4,7 @@ from threading import RLock
 from typing import Any, Dict, Iterator, List, Tuple, Type
 
 from google.protobuf.json_format import MessageToDict, MessageToJson
-from google.protobuf.reflection import GeneratedProtocolMessageType
+from google.protobuf.message import Message as GeneratedProtocolMessageType
 
 from .config import default_config
 from .meta import MessageMeta, __meta__
@@ -165,8 +165,7 @@ class MapField(ReferenceField):
 class DeclarativeMeta(type):
     def __new__(cls, clsname: str, bases: Tuple, clsdict: dict):
         if bases[0] is not BaseField:
-            file_name = (clsdict.get("__filename__", clsname)
-                         or clsname).lower()
+            file_name = clsdict.get("__filename__", clsname).lower()
             clsdict["__filename__"] = file_name
             clsdict["__meta__"]: Dict[str, BaseField] = {}
             clsdict["_type_name"] = clsname
@@ -229,7 +228,8 @@ class Message(BaseField, metaclass=DeclarativeMeta):
                         including_default_value_fields: bool = False,
                         preserving_proto_field_name: bool = False,
                         use_integers_for_enums: bool = False) -> dict:
-        """Converts protobuf message to a dictionary.
+        """
+        Converts protobuf message to a dictionary.
 
         When the dictionary is encoded to JSON, it conforms to proto3 JSON spec.
 
