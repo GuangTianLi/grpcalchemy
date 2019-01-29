@@ -3,6 +3,7 @@ from itertools import chain
 from threading import RLock
 from typing import Any, Dict, Iterator, List, Tuple, Type
 
+from google.protobuf.json_format import MessageToDict, MessageToJson
 from google.protobuf.reflection import GeneratedProtocolMessageType
 
 from .config import default_config
@@ -223,3 +224,64 @@ class Message(BaseField, metaclass=DeclarativeMeta):
 
     def init_grpc_message(self, grpc_message: GeneratedProtocolMessageType):
         self._message = grpc_message
+
+    def message_to_dict(self,
+                        including_default_value_fields: bool = False,
+                        preserving_proto_field_name: bool = False,
+                        use_integers_for_enums: bool = False) -> dict:
+        """Converts protobuf message to a dictionary.
+
+        When the dictionary is encoded to JSON, it conforms to proto3 JSON spec.
+
+        Args:
+          message: The protocol buffers message instance to serialize.
+          including_default_value_fields: If True, singular primitive fields,
+              repeated fields, and map fields will always be serialized.  If
+              False, only serialize non-empty fields.  Singular message fields
+              and oneof fields are not affected by this option.
+          preserving_proto_field_name: If True, use the original proto field
+              names as defined in the .proto file. If False, convert the field
+              names to lowerCamelCase.
+          use_integers_for_enums: If true, print integers instead of enum names.
+
+        Returns:
+          A dict representation of the protocol buffer message.
+        """
+        return MessageToDict(
+            self._message,
+            including_default_value_fields=including_default_value_fields,
+            preserving_proto_field_name=preserving_proto_field_name,
+            use_integers_for_enums=use_integers_for_enums)
+
+    def message_to_json(self,
+                        including_default_value_fields: bool = False,
+                        preserving_proto_field_name: bool = False,
+                        indent: int = 2,
+                        sort_keys: bool = False,
+                        use_integers_for_enums: bool = False) -> str:
+        """Converts protobuf message to JSON format.
+
+          Args:
+            message: The protocol buffers message instance to serialize.
+            including_default_value_fields: If True, singular primitive fields,
+                repeated fields, and map fields will always be serialized.  If
+                False, only serialize non-empty fields.  Singular message fields
+                and oneof fields are not affected by this option.
+            preserving_proto_field_name: If True, use the original proto field
+                names as defined in the .proto file. If False, convert the field
+                names to lowerCamelCase.
+            indent: The JSON object will be pretty-printed with this indent level.
+                An indent level of 0 or negative will only insert newlines.
+            sort_keys: If True, then the output will be sorted by field names.
+            use_integers_for_enums: If true, print integers instead of enum names.
+
+          Returns:
+            A string containing the JSON formatted protocol buffer message.
+          """
+        return MessageToJson(
+            self._message,
+            including_default_value_fields=including_default_value_fields,
+            preserving_proto_field_name=preserving_proto_field_name,
+            indent=indent,
+            sort_keys=sort_keys,
+            use_integers_for_enums=use_integers_for_enums)

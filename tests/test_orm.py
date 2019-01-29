@@ -1,3 +1,5 @@
+import json
+
 from grpcalchemy.orm import (
     BooleanField,
     BytesField,
@@ -111,3 +113,40 @@ class TestORM(TestGrpcalchemy):
         test = TextPost(content="test", title="test_title")
         self.assertEqual("test", test.content)
         self.assertEqual("test_title", test.title)
+
+    def test_json_format(self):
+        class Test(Message):
+            name = StringField()
+
+        class TestRef(Message):
+            ref_field = ReferenceField(Test)
+            list_test_field = ListField(Test)
+            list_int32_field = ListField(Int32Field)
+            map_field = MapField(StringField, Test)
+
+        generate_proto_file()
+        test = TestRef(
+            ref_field=Test(name="Test"),
+            list_test_field=[Test(name="Test")],
+            list_int32_field=[1],
+            map_field={"test": Test(name="Test")})
+
+        dict_test = {
+            "ref_field": {
+                "name": "Test"
+            },
+            "list_test_field": [{
+                "name": "Test"
+            }],
+            "list_int32_field": [1],
+            "map_field": {
+                "test": {
+                    "name": "Test"
+                }
+            },
+        }
+        self.assertDictEqual(
+            dict_test, test.message_to_dict(preserving_proto_field_name=True))
+        self.assertDictEqual(
+            dict_test,
+            json.loads(test.message_to_json(preserving_proto_field_name=True)))

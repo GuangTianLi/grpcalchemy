@@ -5,6 +5,7 @@ History
 0.1.7 (2019)
 ------------------
 
+* Support Json Format
 * Support Inheritance Message
 
 0.1.6 (2019-01-21)
