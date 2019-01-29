@@ -10,13 +10,10 @@ if __name__ == '__main__':
     root_path = cwd[:cwd.rfind("grpcalchemy") + len("grpcalchemy")]
     chdir(root_path)
 
-
     class TestServerMessage(Message):
         num = Int32Field()
 
-
     test_server_blueprint = Blueprint("test_server_blueprint")
-
 
     def fib(n: int) -> int:
         if n <= 1:
@@ -24,18 +21,15 @@ if __name__ == '__main__':
         else:
             return fib(n - 1) + fib(n - 2)
 
-
     @test_server_blueprint.register
     def test_message(request: TestServerMessage,
                      context: Context) -> TestServerMessage:
         return TestServerMessage(num=fib(request.num))
 
-
     def main(_):
         app = Server()
         app.register(test_server_blueprint)
         app.run()
-
 
     with ProcessPoolExecutor(max_workers=4) as executor:
         for _ in executor.map(main, range(1)):

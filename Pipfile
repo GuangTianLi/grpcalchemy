@@ -24,6 +24,9 @@ protobuf = "*"
 grpcio-tools = "*"
 jinja2 = "*"
 
+[requires]
+python_version = "3.7"
+
 [scripts]
 patch = "bumpversion patch"
 init-pre-commit = "pre-commit install"
