@@ -1,9 +1,18 @@
 import timeit
 from concurrent import futures
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+from typing import Type, Union
 
 import grpc
 
 from protos import test_server_blueprint_pb2_grpc, testservermessage_pb2
+
+
+def fib(n: int) -> int:
+    if n <= 1:
+        return 1
+    else:
+        return fib(n - 1) + fib(n - 2)
 
 
 def grpc_call(_):
@@ -21,5 +30,21 @@ def main():
             print(result)
 
 
+def test_concurrent(
+        Executor: Union[Type[ProcessPoolExecutor], Type[ThreadPoolExecutor]]):
+    with Executor(max_workers=5) as executor:
+        for result in executor.map(fib, range(33)):
+            pass
+
+
 if __name__ == '__main__':
-    print(timeit.timeit('main()', globals=globals(), number=1))
+    # print(timeit.timeit('main()', globals=globals(), number=1))
+    print(
+        timeit.timeit(
+            'test_concurrent(ProcessPoolExecutor)',
+            globals=globals(),
+            number=1))
+    print(
+        timeit.timeit(
+            'test_concurrent(ThreadPoolExecutor)', globals=globals(),
+            number=1))
