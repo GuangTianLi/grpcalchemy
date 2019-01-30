@@ -6,23 +6,20 @@ To use gRPCAlchemy in a project:
 
 .. code-block:: python
 
-    from grpcalchemy.blueprint import Blueprint, Context
     from grpcalchemy.orm import Message, StringField
-    from grpcalchemy.server import Server
+    from grpcalchemy import Server, Context
+
+    app = Server('server')
 
     class HelloMessage(Message):
         __filename__ = 'hello'
         name = StringField()
 
-    hello = Blueprint("hello")
-
-    @hello.register
+    @app.register
     def test(request: HelloMessage, context: Context) -> HelloMessage:
         return HelloMessage(name=f"Hello {request.name}")
 
     if __name__ == '__main__':
-        app = Server()
-        app.register(hello_world)
         app.run()
 
 
@@ -142,9 +139,9 @@ to define the type of request and return value.
 
 .. code-block:: python
 
-    hello = Blueprint("hello")
+    app = Server("hello")
 
-    @hello.register
+    @app.register
     def test(request: HelloMessage, context: Context) -> HelloMessage: ...
 
 The above code is equal to an RPC service with a method::

@@ -6,7 +6,6 @@ verify_ssl = true
 [dev-packages]
 bumpversion = "*"
 watchdog = "*"
-flake8 = "*"
 tox = "*"
 coverage = "*"
 sphinx = "*"

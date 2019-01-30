@@ -45,23 +45,20 @@ Server
 
 .. code-block:: python
 
-    from grpcalchemy.blueprint import Blueprint, Context
     from grpcalchemy.orm import Message, StringField
-    from grpcalchemy.server import Server
+    from grpcalchemy import Server, Context
+
+    app = Server('server')
 
     class HelloMessage(Message):
         __filename__ = 'hello'
         text = StringField()
 
-    hello = Blueprint("hello")
-
-    @hello.register
+    @app.register
     def test(request: HelloMessage, context: Context) -> HelloMessage:
         return HelloMessage(text=f"Hello {request.text}")
 
     if __name__ == '__main__':
-        app = Server()
-        app.register(hello_world)
         app.run()
 
 Client
@@ -69,8 +66,7 @@ Client
 
 .. code-block:: python
 
-    from grpcalchemy.blueprint import Blueprint, Context
-    from grpcalchemy.client import Client
+    from grpcalchemy import Server, Context
     from grpcalchemy.orm import Message, StringField
 
 
@@ -79,7 +75,7 @@ Client
         text = StringField()
 
 
-    hello = Blueprint("hello")
+    hello = Server("hello")
 
 
     @hello.register
