@@ -100,20 +100,38 @@ def rpc_call_wrap(func: Callable[[Message, Context], Message],
 
 
 class Blueprint:
+    """gRPCAlchemy uses a concept of blueprints for making gRPC services and
+    supporting common patterns within an application or across applications.
+    Blueprints can greatly simplify how large applications work. A Blueprint object
+    can be registered with :meth:`grpcalchemy.server.register_blueprint`.
+    """
+
     def __init__(
             self,
             name: str,
-            file_name: str = None,
+            file_name: str = '',
             pre_processes: List[Callable[[Message, Context], Message]] = None,
             post_processes: List[
                 Callable[[Message, Context], Message]] = None):
-        if file_name is None:
+        """
+
+        :param str name:
+        :param str file_name:
+        :param List[Callable[[Message, Context], Message]] pre_processes:
+        :param List[Callable[[Message, Context], Message]] post_processes:
+        """
+        if file_name == '':
             self.file_name = name.lower()
         else:
             self.file_name = file_name
-
+        self.file_name.replace('.', '_')
         self.name = name
         self.service_meta = ServiceMeta(name=self.name, rpcs=[])
+
+        #: all the processes function in a list.
+        #: And the function must be Callable[[`Message`, Context], `Message`]:
+        #:
+        #: .. versionadded:: 0.1.6
         self.pre_processes = _validate_rpc_processes(pre_processes)
         self.post_processes = _validate_rpc_processes(post_processes)
 

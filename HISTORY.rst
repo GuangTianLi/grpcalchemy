@@ -2,9 +2,11 @@
 History
 =======
 
-0.1.7 (2019)
+0.2.0 (2019)
 ------------------
 
+* Change gRPCAlchemy Server register to register_blueprint
+* Make gRPCAlchemy Server inherit from Blueprint
 * Support Json Format
 * Support Inheritance Message
 

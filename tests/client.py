@@ -6,7 +6,7 @@ if __name__ == '__main__':
 
     import grpc
 
-    from protos import test_server_blueprint_pb2_grpc, testservermessage_pb2
+    from protos import test_concurrent_blueprint_pb2_grpc, testservermessage_pb2
 
     def fib(n: int) -> int:
         if n <= 1:
@@ -16,7 +16,7 @@ if __name__ == '__main__':
 
     def grpc_call(_):
         with grpc.insecure_channel("localhost:50051") as channel:
-            stub = test_server_blueprint_pb2_grpc.test_server_blueprintStub(
+            stub = test_concurrent_blueprint_pb2_grpc.test_concurrent_blueprintStub(
                 channel)
             request = testservermessage_pb2.TestServerMessage(num=33)
             num = stub.test_message(request).num

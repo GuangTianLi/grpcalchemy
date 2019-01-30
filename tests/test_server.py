@@ -9,6 +9,7 @@ from .test_grpcalchemy import TestGrpcalchemy
 class TestServer(TestGrpcalchemy):
     def setUp(self):
         super().setUp()
+        self.app = Server('test_server')
 
         class TestMessage(Message):
             test_name = StringField()
@@ -20,10 +21,14 @@ class TestServer(TestGrpcalchemy):
                          context: Context) -> TestMessage:
             return TestMessage(test_name=request.test_name)
 
+        @self.app.register
+        def test_message(request: TestMessage,
+                         context: Context) -> TestMessage:
+            return TestMessage(test_name=request.test_name)
+
         self.test_message = test_message
         self.Message = TestMessage
-        self.app = Server()
-        self.app.register(self.test_blueprint)
+        self.app.register_blueprint(self.test_blueprint)
         self.app.run(test=True)
 
     def tearDown(self):
@@ -33,13 +38,18 @@ class TestServer(TestGrpcalchemy):
         test_name = "Hello World!"
         with Client("localhost:50051") as client:
             client.register(self.test_blueprint)
+            client.register(self.app)
             response = client.test_blueprint(
+                rpc=self.test_message,
+                message=self.Message(test_name=test_name))
+            self.assertEqual(test_name, response.test_name)
+            response = client.test_server(
                 rpc=self.test_message,
                 message=self.Message(test_name=test_name))
             self.assertEqual(test_name, response.test_name)
 
     def test_server_listener(self):
-        test_app = Server()
+        test_app = Server('test_server')
 
         @test_app.listener("before_server_start")
         def before_server_start(app: Server):

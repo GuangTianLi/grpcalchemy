@@ -13,7 +13,7 @@ if __name__ == '__main__':
     class TestServerMessage(Message):
         num = Int32Field()
 
-    test_server_blueprint = Blueprint("test_server_blueprint")
+    test_server_blueprint = Blueprint("test_concurrent_blueprint")
 
     def fib(n: int) -> int:
         if n <= 1:
@@ -27,8 +27,8 @@ if __name__ == '__main__':
         return TestServerMessage(num=fib(request.num))
 
     def main(_):
-        app = Server()
-        app.register(test_server_blueprint)
+        app = Server('test_concurrent_server')
+        app.register_blueprint(test_server_blueprint)
         app.run()
 
     with ProcessPoolExecutor(max_workers=4) as executor:

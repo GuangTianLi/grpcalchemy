@@ -13,8 +13,8 @@ def import_string(import_name: str) -> Type:
 
     If `silent` is True the return value will be `None` if the import fails.
 
-    :param import_name: the dotted name for the object to import.
-    :return: imported object
+    :param str import_name: the dotted name for the object to import.
+    :return Type: imported object
     """
     # force the import name to automatically convert to strings
     # __import__ is not able to handle unicode strings in the fromlist
@@ -50,10 +50,10 @@ class Config(dict):
         behaves as if the JSON object was a dictionary and passed to the
         :meth:`from_mapping` function.
 
-        :param filename: the filename of the JSON file.  This can either be an
+        :param str filename: the filename of the JSON file.  This can either be an
                          absolute filename or a filename relative to the
                          root path.
-        :param silent: set to ``True`` if you want silent failure for missing
+        :param bool silent: set to ``True`` if you want silent failure for missing
                        files.
 
         .. versionadded:: 0.1.6
@@ -132,7 +132,8 @@ class Config(dict):
         return self.from_json(load_from_json) if load_from_json else True
 
 
-default_config = Config(defaults=dict(
-    TEMPLATE_PATH="protos",
-    MAX_WORKERS=10,
-))
+default_config = Config(
+    defaults=dict(
+        TEMPLATE_PATH="protos",
+        MAX_WORKERS=10,
+    ))

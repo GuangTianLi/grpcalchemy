@@ -228,13 +228,11 @@ class Message(BaseField, metaclass=DeclarativeMeta):
                         including_default_value_fields: bool = False,
                         preserving_proto_field_name: bool = False,
                         use_integers_for_enums: bool = False) -> dict:
-        """
-        Converts protobuf message to a dictionary.
+        """Converts protobuf message to a dictionary.
 
         When the dictionary is encoded to JSON, it conforms to proto3 JSON spec.
 
         Args:
-          message: The protocol buffers message instance to serialize.
           including_default_value_fields: If True, singular primitive fields,
               repeated fields, and map fields will always be serialized.  If
               False, only serialize non-empty fields.  Singular message fields
@@ -246,6 +244,8 @@ class Message(BaseField, metaclass=DeclarativeMeta):
 
         Returns:
           A dict representation of the protocol buffer message.
+
+        #: .. versionadded:: 0.1.7
         """
         return MessageToDict(
             self._message,
@@ -262,7 +262,6 @@ class Message(BaseField, metaclass=DeclarativeMeta):
         """Converts protobuf message to JSON format.
 
           Args:
-            message: The protocol buffers message instance to serialize.
             including_default_value_fields: If True, singular primitive fields,
                 repeated fields, and map fields will always be serialized.  If
                 False, only serialize non-empty fields.  Singular message fields
@@ -277,7 +276,9 @@ class Message(BaseField, metaclass=DeclarativeMeta):
 
           Returns:
             A string containing the JSON formatted protocol buffer message.
-          """
+
+        #: .. versionadded:: 0.1.7
+        """
         return MessageToJson(
             self._message,
             including_default_value_fields=including_default_value_fields,
