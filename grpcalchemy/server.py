@@ -17,6 +17,28 @@ _ONE_DAY_IN_SECONDS = 60 * 60 * 24
 
 
 class Server(Blueprint):
+    """The Server object implements a base application and acts as the central
+    object. It is passed the name of gRPC Service of the application. Once it is
+    created it will act as a central registry for the gRPC Service.
+
+    Usually you create a :class:`Server` instance in your main module or
+    in the :file:`__init__.py` file of your package like this::
+
+        from grpcalchemy import Server
+        app = Server('server')
+
+    :param str name:
+    :param str file_name:
+    :param pre_processes:
+    :type pre_processes: List[Callable[[Message, Context], Message]]
+    :param post_processes:
+    :type post_processes: List[Callable[[Message, Context], Message]]
+    :param config:
+    :type config: Union[str, Type]
+
+    .. versionadded:: 0.2.0
+    """
+
     def __init__(
             self,
             name: str,
@@ -24,24 +46,6 @@ class Server(Blueprint):
             pre_processes: List[Callable[[Message, Context], Message]] = None,
             post_processes: List[Callable[[Message, Context], Message]] = None,
             config: Union[str, Type] = ''):
-        """The Server object implements a base application and acts as the central
-        object. It is passed the name of gRPC Service of the application. Once it is
-        created it will act as a central registry for the gRPC Service.
-
-        Usually you create a :class:`Server` instance in your main module or
-        in the :file:`__init__.py` file of your package like this::
-
-            from grpcalchemy import Server
-            app = Server('server')
-
-        :param str name:
-        :param str file_name:
-        :param List[Callable[[Message, Context], Message]] pre_processes:
-        :param List[Callable[[Message, Context], Message]] post_processes:
-        :param Union[str, Type] config:
-
-        .. versionadded:: 0.2.0
-        """
         super().__init__(
             name=name,
             file_name=file_name,
@@ -80,13 +84,18 @@ class Server(Blueprint):
 
         self.register_blueprint(self)
 
-    def register_blueprint(self, bp: Blueprint):
-        #: all the gRPC service register in a dictionary by name.
-        #:
-        #: .. versionadded:: 0.2.0
+    def register_blueprint(self, bp: Blueprint) -> None:
+        """
+        all the gRPC service register in a dictionary by name.
+
+        :param Blueprint bp:
+        :rtype: None
+
+        .. versionadded:: 0.2.0
+        """
         self.blueprints[bp.name] = bp
 
-    def run(self, port: int = 50051, test=False):
+    def run(self, port: int = 50051, test=False) -> None:
         generate_proto_file()
         for name, bp in self.blueprints.items():
             grpc_pb2_module = importlib.import_module(
