@@ -136,4 +136,6 @@ default_config = Config(
     defaults=dict(
         TEMPLATE_PATH="protos",
         MAX_WORKERS=10,
+        OPTIONS=(),
+        MAXIMUM_CONCURRENT_RPCS=None,
     ))

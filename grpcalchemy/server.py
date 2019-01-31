@@ -4,9 +4,17 @@ import time
 from collections import defaultdict
 from concurrent import futures
 from functools import partial
-from typing import Any, Callable, DefaultDict, Dict, List, Type, Union
+from typing import Any, Callable, DefaultDict, Dict, List, Tuple, Type, Union
 
-import grpc
+from grpc import GenericRpcHandler
+from grpc._cython import cygrpc
+from grpc._server import (
+    _add_generic_handlers,
+    _ServerState,
+    _start,
+    _stop,
+    _validate_generic_rpc_handlers,
+)
 
 from .blueprint import Blueprint, Context
 from .config import default_config
@@ -60,8 +68,14 @@ class Server(Blueprint):
         if config:
             self.config.from_object(config)
 
-        self.server = grpc.server(
-            futures.ThreadPoolExecutor(max_workers=self.config["MAX_WORKERS"]))
+        thread_pool = futures.ThreadPoolExecutor(
+            max_workers=self.config["MAX_WORKERS"])
+        completion_queue = cygrpc.CompletionQueue()
+        server = cygrpc.Server(self.config["OPTIONS"])
+        server.register_completion_queue(completion_queue)
+        self._state = _ServerState(completion_queue, server, (), None,
+                                   thread_pool,
+                                   self.config["MAXIMUM_CONCURRENT_RPCS"])
 
         #: all the attached blueprints in a dictionary by name.
         #:
@@ -101,13 +115,14 @@ class Server(Blueprint):
             grpc_pb2_module = importlib.import_module(
                 f".{bp.file_name}_pb2_grpc", self.config["TEMPLATE_PATH"])
             getattr(grpc_pb2_module,
-                    f"add_{bp.file_name}Servicer_to_server")(bp, self.server)
+                    f"add_{bp.file_name}Servicer_to_server")(bp, self)
 
         for func in self.listeners["before_server_start"]:
             func(self)
 
-        self.server.add_insecure_port(f'[::]:{port}')
-        self.server.start()
+        with self._state.lock:
+            self._state.server.add_http2_port(f'[::]:{port}'.encode("utf-8"))
+        self.start()
 
         self.logger.info(f"gRPC server is running on 0.0.0.0:{port}")
 
@@ -116,7 +131,7 @@ class Server(Blueprint):
                 while True:
                     time.sleep(_ONE_DAY_IN_SECONDS)
             finally:
-                self.server.stop(0)
+                self.stop(0)
                 for func in self.listeners["after_server_stop"]:
                     func(self)
 
@@ -135,3 +150,20 @@ class Server(Blueprint):
         self.listeners[event].append(listener)
 
         return listener
+
+    def start(self):
+        _start(self._state)
+
+    def stop(self, grace: int):
+        return _stop(self._state, grace)
+
+    def add_generic_rpc_handlers(
+            self, generic_rpc_handlers: Tuple[GenericRpcHandler]):
+        _validate_generic_rpc_handlers(generic_rpc_handlers)
+        _add_generic_handlers(self._state, generic_rpc_handlers)
+
+    def __del__(self):
+        if hasattr(self, '_state'):
+            # We can not grab a lock in __del__(), so set a flag to signal the
+            # serving daemon thread (if it exists) to initiate shutdown.
+            self._state.server_deallocated = True

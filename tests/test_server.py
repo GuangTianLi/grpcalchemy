@@ -32,7 +32,7 @@ class TestServer(TestGrpcalchemy):
         self.app.run(test=True)
 
     def tearDown(self):
-        self.app.server.stop(0)
+        self.app.stop(0)
 
     def test_server(self):
         test_name = "Hello World!"

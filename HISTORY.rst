@@ -2,7 +2,12 @@
 History
 =======
 
-0.2.0 (2019)
+0.2.1 (2019-02)
+------------------
+
+* Implement Own gRPC Server
+
+0.2.0 (2019-01-30)
 ------------------
 
 * Change gRPCAlchemy Server register to register_blueprint
