@@ -104,6 +104,13 @@ class Blueprint:
     supporting common patterns within an application or across applications.
     Blueprints can greatly simplify how large applications work. A Blueprint object
     can be registered with :meth:`Server.register_blueprint`.
+
+    :param str name:
+    :param str file_name:
+    :param pre_processes:
+    :type pre_processes: List[Callable[[Message, Context], Message]]
+    :param post_processes:
+    :type post_processes: List[Callable[[Message, Context], Message]]
     """
 
     def __init__(
@@ -113,13 +120,6 @@ class Blueprint:
             pre_processes: List[Callable[[Message, Context], Message]] = None,
             post_processes: List[
                 Callable[[Message, Context], Message]] = None):
-        """
-
-        :param str name:
-        :param str file_name:
-        :param List[Callable[[Message, Context], Message]] pre_processes:
-        :param List[Callable[[Message, Context], Message]] post_processes:
-        """
         if file_name == '':
             self.file_name = name.lower()
         else:

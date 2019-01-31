@@ -4,6 +4,7 @@ import time
 from collections import defaultdict
 from concurrent import futures
 from functools import partial
+from threading import Event
 from typing import Any, Callable, DefaultDict, Dict, List, Tuple, Type, Union
 
 from grpc import GenericRpcHandler
@@ -73,6 +74,10 @@ class Server(Blueprint):
         completion_queue = cygrpc.CompletionQueue()
         server = cygrpc.Server(self.config["OPTIONS"])
         server.register_completion_queue(completion_queue)
+
+        #: gRPC Server State
+        #:
+        #: .. versionadded:: 0.2.1
         self._state = _ServerState(completion_queue, server, (), None,
                                    thread_pool,
                                    self.config["MAXIMUM_CONCURRENT_RPCS"])
@@ -151,18 +156,69 @@ class Server(Blueprint):
 
         return listener
 
-    def start(self):
+    def start(self) -> None:
+        """Starts this Server.
+
+        This method may only be called once. (i.e. it is not idempotent).
+        .. versionadded:: 0.2.1
+        """
         _start(self._state)
 
-    def stop(self, grace: int):
+    def stop(self, grace: int) -> Event:
+        """Stops this Server.
+
+        This method immediately stop service of new RPCs in all cases.
+
+        If a grace period is specified, this method returns immediately
+        and all RPCs active at the end of the grace period are aborted.
+        If a grace period is not specified (by passing None for `grace`),
+        all existing RPCs are aborted immediately and this method
+        blocks until the last RPC handler terminates.
+
+        This method is idempotent and may be called at any time.
+        Passing a smaller grace value in a subsequent call will have
+        the effect of stopping the Server sooner (passing None will
+        have the effect of stopping the server immediately). Passing
+        a larger grace value in a subsequent call *will not* have the
+        effect of stopping the server later (i.e. the most restrictive
+        grace value is used).
+
+        :param int grace: A duration of time in seconds or None.
+
+        :return:
+          A threading.Event that will be set when this Server has completely
+          stopped, i.e. when running RPCs either complete or are aborted and
+          all handlers have terminated.
+        :rtype: Event
+
+        .. versionadded:: 0.2.1
+        """
         return _stop(self._state, grace)
 
     def add_generic_rpc_handlers(
-            self, generic_rpc_handlers: Tuple[GenericRpcHandler]):
+            self, generic_rpc_handlers: Tuple[GenericRpcHandler]) -> None:
+        """Registers GenericRpcHandlers with this Server.
+
+        This method is only safe to call before the server is started.
+
+        Args:
+          generic_rpc_handlers: An iterable of GenericRpcHandlers that will be
+          used to service RPCs.
+
+        :param generic_rpc_handlers: An Tuple of GenericRpcHandlers that will be
+          used to service RPCs.
+        :type generic_rpc_handlers: Tuple[GenericRpcHandler]
+        :rtype: None
+
+        .. versionadded:: 0.2.1
+        """
         _validate_generic_rpc_handlers(generic_rpc_handlers)
         _add_generic_handlers(self._state, generic_rpc_handlers)
 
     def __del__(self):
+        """
+        .. versionadded:: 0.2.1
+        """
         if hasattr(self, '_state'):
             # We can not grab a lock in __del__(), so set a flag to signal the
             # serving daemon thread (if it exists) to initiate shutdown.
