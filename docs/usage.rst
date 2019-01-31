@@ -17,7 +17,7 @@ To use gRPCAlchemy in a project:
 
     @app.register
     def test(request: HelloMessage, context: Context) -> HelloMessage:
-        return HelloMessage(name=f"Hello {request.name}")
+        return HelloMessage(name=f'Hello {request.name}')
 
     if __name__ == '__main__':
         app.run()
@@ -139,7 +139,7 @@ to define the type of request and return value.
 
 .. code-block:: python
 
-    app = Server("hello")
+    app = Server('hello')
 
     @app.register
     def test(request: HelloMessage, context: Context) -> HelloMessage: ...
@@ -152,3 +152,33 @@ The above code is equal to an RPC service with a method::
         rpc test (HelloMessage) returns (HelloMessage) {
         }
     }
+
+
+Using Blueprint to Construct Your Large Application
+=========================================================
+
+gRPCAlchemy uses a concept of blueprints for making gRPC services and
+supporting common patterns within an application or across applications.
+:any:`Blueprint` can greatly simplify how large applications work.
+
+.. code-block:: python
+
+    from grpcalchemy.orm import Message, StringField
+    from grpcalchemy import Server, Context, Blueprint
+
+    app = Server('server')
+
+    first_blueprint = Blueprint('first_blueprint')
+
+    class HelloMessage(Message):
+        __filename__ = 'hello'
+        name = StringField()
+
+    @first_blueprint.register
+    def test(request: HelloMessage, context: Context) -> HelloMessage:
+        return HelloMessage(name=f'Hello {request.name}')
+
+    if __name__ == '__main__':
+        app.register_blueprint(first_blueprint)
+        app.run()
+

@@ -103,7 +103,11 @@ class Blueprint:
     """gRPCAlchemy uses a concept of blueprints for making gRPC services and
     supporting common patterns within an application or across applications.
     Blueprints can greatly simplify how large applications work. A Blueprint object
-    can be registered with :meth:`Server.register_blueprint`.
+    can be registered with :meth:`Server.register_blueprint`::
+
+        from grpcalchemy import Blueprint
+        the_blueprint = Blueprint('blueprint')
+        app.register_blueprint(the_blueprint)
 
     :param str name:
     :param str file_name:
@@ -150,6 +154,20 @@ class Blueprint:
             post_processes: Union[List[Callable[[Message, Context], Message]],
                                   None] = None
     ) -> Union[RpcWrappedCallable, partial]:
+        """Any gRPC method can be defined like this::
+
+            @app.register
+            def test(request: Message, context) -> Message:
+                pass
+
+        :param rpc:
+        :type rpc: Callable[[Message, Context], Message]
+        :param pre_processes:
+        :type pre_processes: List[Callable[[Message, Context], Message]
+        :param post_processes:
+        :type post_processes: List[Callable[[Message, Context], Message]
+        :return:
+        """
         if rpc is None:
             return partial(
                 self.register,
