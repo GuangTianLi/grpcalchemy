@@ -538,10 +538,10 @@
         },
         "requests-toolbelt": {
             "hashes": [
-                "sha256:a582006f08e12d871fcaa746c4a0ff16313312d18964a2f42a8ba9c8b3ece571",
-                "sha256:dc5b3660764fd224495575e2190ef53d3f8228e4e080ac92c9fa9420dc777c18"
+                "sha256:380606e1d10dc85c3bd47bf5a6095f815ec007be7a8b69c878507068df059e6f",
+                "sha256:968089d4584ad4ad7c171454f0a5c6dac23971e9472521ea3b6d49d610aa6fc0"
             ],
-            "version": "==0.9.0"
+            "version": "==0.9.1"
         },
         "six": {
             "hashes": [
@@ -559,11 +559,10 @@
         },
         "sphinx": {
             "hashes": [
-                "sha256:429e3172466df289f0f742471d7e30ba3ee11f3b5aecd9a840480d03f14bcfe5",
-                "sha256:c4cb17ba44acffae3d3209646b6baec1e215cad3065e852c68cc569d4df1b9f8"
+                "sha256:b53904fa7cb4b06a39409a492b949193a1b68cc7241a1a8ce9974f86f0d24287",
+                "sha256:c1c00fc4f6e8b101a0d037065043460dffc2d507257f2f11acaed71fd2b0c83c"
             ],
-            "index": "pypi",
-            "version": "==1.8.3"
+            "version": "==1.8.4"
         },
         "sphinx-rtd-theme": {
             "hashes": [
