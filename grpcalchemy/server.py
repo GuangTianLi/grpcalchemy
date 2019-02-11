@@ -5,7 +5,7 @@ from collections import defaultdict
 from concurrent import futures
 from functools import partial
 from threading import Event
-from typing import Any, Callable, DefaultDict, Dict, List, Tuple, Type, Union
+from typing import Any, Callable, DefaultDict, Dict, List, Tuple, Union
 
 from grpc import GenericRpcHandler
 from grpc._cython import cygrpc
@@ -54,20 +54,20 @@ class Server(Blueprint):
             file_name: str = '',
             pre_processes: List[Callable[[Message, Context], Message]] = None,
             post_processes: List[Callable[[Message, Context], Message]] = None,
-            config: Union[str, Type] = ''):
+            config: Dict[str, Any] = None):
         super().__init__(
             name=name,
             file_name=file_name,
             pre_processes=pre_processes,
             post_processes=post_processes)
 
+        if config is not None:
+            default_config.update(config)
+
         #: The configuration dictionary as :class:`Config`.  This behaves
         #: exactly like a regular dictionary but supports additional methods
         #: to load a config from files.
         self.config = default_config
-
-        if config:
-            self.config.from_object(config)
 
         thread_pool = futures.ThreadPoolExecutor(
             max_workers=self.config["MAX_WORKERS"])
@@ -135,6 +135,8 @@ class Server(Blueprint):
             try:
                 while True:
                     time.sleep(_ONE_DAY_IN_SECONDS)
+            except:
+                pass
             finally:
                 self.stop(0)
                 for func in self.listeners["after_server_stop"]:

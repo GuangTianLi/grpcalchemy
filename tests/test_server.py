@@ -1,5 +1,6 @@
 from grpcalchemy.blueprint import Blueprint, Context
 from grpcalchemy.client import Client
+from grpcalchemy.config import Config
 from grpcalchemy.orm import Message, StringField
 from grpcalchemy.server import Server
 
@@ -64,3 +65,9 @@ class TestServer(TestGrpcalchemy):
                              test_app.listeners["before_server_start"])
         self.assertEqual([after_server_stop],
                          test_app.listeners["after_server_stop"])
+
+    def test_server_config(self):
+        test_app = Server(
+            'test_server', config=Config(defaults={"TEST": "TEST"}))
+
+        self.assertEqual("TEST", test_app.config["TEST"])

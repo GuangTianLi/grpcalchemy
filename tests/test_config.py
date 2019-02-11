@@ -1,7 +1,7 @@
 import json
 import os
 
-from grpcalchemy.config import default_config
+from grpcalchemy.config import Config
 
 from .test_grpcalchemy import TestGrpcalchemy
 
@@ -28,22 +28,24 @@ class TestConfig(TestGrpcalchemy):
             TEMPLATE_PATH = "test"
             TEST = "test"
 
-        default_config.from_object(TestObject)
+        config = Config()
+        config.from_object(TestObject)
 
-        self.assertEqual("test", default_config["TEMPLATE_PATH"])
-        self.assertEqual("test", default_config["TEST"])
+        self.assertEqual("test", config["TEMPLATE_PATH"])
+        self.assertEqual("test", config["TEST"])
 
     def test_default_config_update_from_json_file(self):
         class TestObject:
             __json_file__ = self.json_file
 
-        default_config.from_object(TestObject)
+        config = Config()
+        config.from_object(TestObject)
 
-        self.assertEqual("JSON_TEST", default_config["JSON_TEST"])
+        self.assertEqual("JSON_TEST", config["JSON_TEST"])
 
     def test_default_config_update_from_str(self):
+        config = Config()
+        config.from_object("tests.test_config.TestStrObject")
 
-        default_config.from_object("tests.test_config.TestStrObject")
-
-        self.assertEqual("test", default_config["TEMPLATE_PATH"])
-        self.assertEqual("test", default_config["TEST"])
+        self.assertEqual("test", config["TEMPLATE_PATH"])
+        self.assertEqual("test", config["TEST"])
