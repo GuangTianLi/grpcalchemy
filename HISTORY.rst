@@ -6,6 +6,7 @@ History
 ------------------
 
 * Implement Own gRPC Server
+* Implement gRPC Server Test Client
 
 0.2.0 (2019-01-30)
 ------------------

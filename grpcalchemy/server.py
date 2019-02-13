@@ -119,8 +119,8 @@ class Server(Blueprint):
         for name, bp in self.blueprints.items():
             grpc_pb2_module = importlib.import_module(
                 f".{bp.file_name}_pb2_grpc", self.config["TEMPLATE_PATH"])
-            getattr(grpc_pb2_module,
-                    f"add_{bp.file_name}Servicer_to_server")(bp, self)
+            getattr(grpc_pb2_module, f"add_{bp.name}Servicer_to_server")(bp,
+                                                                         self)
 
         for func in self.listeners["before_server_start"]:
             func(self)

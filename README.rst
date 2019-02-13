@@ -61,35 +61,6 @@ Server
     if __name__ == '__main__':
         app.run()
 
-Client
-========
-
-.. code-block:: python
-
-    from grpcalchemy import Server, Context
-    from grpcalchemy.orm import Message, StringField
-
-
-    class HelloMessage(Message):
-        __filename__ = 'hello'
-        text = StringField()
-
-
-    hello = Server('hello')
-
-
-    @hello.register
-    def test(request: HelloMessage, context: Context) -> HelloMessage:
-        return HelloMessage(text=f'Hello {request.text}')
-
-
-    if __name__ == '__main__':
-        with Client('localhost:50051') as client:
-            client.register(hello)
-            response: HelloMessage = client.hello(
-                rpc=test, message=HelloMessage(text='world'))
-            print(response.text)  # Hello world
-
 Features
 ----------
 

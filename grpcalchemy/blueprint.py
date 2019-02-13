@@ -1,17 +1,17 @@
 from collections import namedtuple
 from functools import partial, update_wrapper
 from inspect import signature
-from typing import Callable, Generic, List, Tuple, Type, TypeVar, Union
+from typing import Callable, List, Tuple, Type, TypeVar, Union
 
 from google.protobuf.message import Message as GeneratedProtocolMessageType
-from grpc._server import _Context
+from grpc import ServicerContext
 
 from .meta import ServiceMeta, __meta__
 from .orm import Message
 
 Rpc = namedtuple('Rpc', ['name', 'request', 'response'])
 
-Context = _Context
+Context = ServicerContext
 
 _T = TypeVar("_T")
 
@@ -24,20 +24,22 @@ class DuplicatedRPCMethod(Exception):
     pass
 
 
-class RpcWrappedCallable(Generic[_T]):
+class RpcWrappedCallable:
     name: str = ...
     request_type: Type[Message] = ...
     response_type: Type[Message] = ...
     pre_processes: List[Callable[[Message, Context], Message]] = ...
     post_processes: List[Callable[[Message, Context], Message]] = ...
 
-    def preprocess(origin_request: GeneratedProtocolMessageType) -> Message:
+    def preprocess(self,
+                   origin_request: GeneratedProtocolMessageType) -> Message:
         ...
 
-    def postprocess(origin_response: Message) -> GeneratedProtocolMessageType:
+    def postprocess(self,
+                    origin_response: Message) -> GeneratedProtocolMessageType:
         ...
 
-    def __call__(origin_request: GeneratedProtocolMessageType,
+    def __call__(self, origin_request: GeneratedProtocolMessageType,
                  context: Context) -> GeneratedProtocolMessageType:
         ...
 
