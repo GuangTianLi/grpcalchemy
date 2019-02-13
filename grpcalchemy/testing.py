@@ -55,8 +55,8 @@ class TestContext(Context):
 
 
 class Client(unittest.TestCase):
-    def test_method(self,
-                    method: RpcWrappedCallable,
-                    request: Message,
-                    context=TestContext()) -> GeneratedProtocolMessageType:
+    def rpc_call(self,
+                 method: RpcWrappedCallable,
+                 request: Message,
+                 context=TestContext()) -> GeneratedProtocolMessageType:
         return method(origin_request=request._message, context=context)

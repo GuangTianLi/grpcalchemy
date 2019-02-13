@@ -17,7 +17,6 @@ class TestTesting(TestGrpcalchemy, Client):
                          context: Context) -> TestMessage:
             return TestMessage(test_name=request.test_name)
 
-        self.assertEqual(
-            "test",
-            self.test_method(
-                test_message, request=TestMessage(test_name="test")).test_name)
+        response = self.rpc_call(
+            test_message, request=TestMessage(test_name="test"))
+        self.assertEqual("test", response.test_name)
