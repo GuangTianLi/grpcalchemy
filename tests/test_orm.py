@@ -47,6 +47,7 @@ class TestORM(TestGrpcalchemy):
 
         test = Test(name="Test")
         self.assertEqual("Test", test.name)
+        test = Test()
         test.name = "Changed_name"
         self.assertEqual("Changed_name", test.name)
         self.assertEqual("Changed_name", test._message.name)

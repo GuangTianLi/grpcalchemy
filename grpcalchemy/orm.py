@@ -13,24 +13,6 @@ from .meta import MessageMeta, __meta__
 _missing = object()
 
 
-class lazyproperty:
-    def __init__(self, func):
-        self.func = func
-
-    def __get__(self, instance, cls):
-        if instance is None:
-            return self
-        else:
-            value = self.func(instance)
-            if value is not None:
-                setattr(instance, self.func.__name__, value)
-            return value
-
-
-class InvalidMessage(Exception):
-    pass
-
-
 class BaseField:
     _type_name = ""
 
@@ -48,7 +30,7 @@ class BaseField:
                 obj.__dict__[self._name] = value
             return value
 
-    def __set__(self, instance, value) -> None:
+    def __set__(self, instance, value: Any) -> None:
         with self.lock:
             setattr(instance._message, self._name, value)
             instance.__dict__[self._name] = value
@@ -202,23 +184,21 @@ class Message(BaseField, metaclass=DeclarativeMeta):
     __meta__: Dict[str, BaseField] = {}
 
     def __init__(self, **kwargs):
-        if kwargs:
-            gpr_message_module = importlib.import_module(
-                f".{self.__filename__}_pb2", default_config["TEMPLATE_PATH"])
-            gRPCMessageClass = getattr(gpr_message_module,
-                                       f"{self._type_name}")
-            for key, item in kwargs.items():
-                if isinstance(item, list):
-                    for index, value in enumerate(item):
-                        if isinstance(value, Message):
-                            item[index] = value._message
-                elif isinstance(item, Message):
-                    kwargs[key] = item._message
-                elif isinstance(item, dict):
-                    for key, tmp in item.items():
-                        if isinstance(tmp, Message):
-                            item[key] = tmp._message
-            self._message = gRPCMessageClass(**kwargs)
+        gpr_message_module = importlib.import_module(
+            f".{self.__filename__}_pb2", default_config["TEMPLATE_PATH"])
+        gRPCMessageClass = getattr(gpr_message_module, f"{self._type_name}")
+        for key, item in kwargs.items():
+            if isinstance(item, list):
+                for index, value in enumerate(item):
+                    if isinstance(value, Message):
+                        item[index] = value._message
+            elif isinstance(item, Message):
+                kwargs[key] = item._message
+            elif isinstance(item, dict):
+                for key, tmp in item.items():
+                    if isinstance(tmp, Message):
+                        item[key] = tmp._message
+        self._message = gRPCMessageClass(**kwargs)
         super().__init__()
 
     def init_grpc_message(self, grpc_message: GeneratedProtocolMessageType):
