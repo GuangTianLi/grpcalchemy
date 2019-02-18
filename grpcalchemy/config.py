@@ -46,7 +46,15 @@ class Config(dict):
 
     * Priority: *env > local config file > remote center > project config*
 
-    :param obj: Raw Object
+    Example of module-based configuration::
+
+        config = Config('yourapplication.default_config')
+        from yourapplication import default_config
+        config = Config(default_config)
+
+    :param obj: a string or an actual object
+        -   a string: in this case the object with that name will be imported
+        -   an actual object reference: that object is used directly
     :type obj: Union[str, Type]
     :param sync_access_config_list:
     :type sync_access_config_list: List[Callable[[], Dict]]
@@ -152,7 +160,7 @@ class Config(dict):
 
         Example of module-based configuration::
 
-            config = Config()
+            config = Config(obj=object)
             config.from_object('yourapplication.default_config')
             from yourapplication import default_config
             config.from_object(default_config)
@@ -160,11 +168,7 @@ class Config(dict):
         You should not use this function to load the actual configuration but
         rather configuration defaults.  The actual config should be loaded
         with :meth:`from_object` and ideally from a location not within the
-        package because the package might be installed system wide. If the
-        ``__json_file__`` is an attribute of the ``object`` class, the actual
-        config will also be loaded with :meth:`from_json`.
-
-        using :meth:`from_object`.
+        package because the package might be installed system wide.
 
         :param obj: an import name or object
         :type obj: Union[str, Type]

@@ -16,7 +16,7 @@ class Client:
             target, () if options is None else options, credentials)
 
     def __enter__(self):
-        generate_proto_file()
+        generate_proto_file(self.config["TEMPLATE_PATH"])
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):

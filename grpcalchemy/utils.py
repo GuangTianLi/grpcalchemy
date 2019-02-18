@@ -5,12 +5,10 @@ import grpc_tools.protoc
 import pkg_resources
 from jinja2 import Environment, FileSystemLoader
 
-from .config import default_config
 from .meta import __meta__
 
 
-def generate_proto_file():
-    template_path = default_config["TEMPLATE_PATH"]
+def generate_proto_file(template_path: str = "protos"):
     abs_template_path = join(getcwd(), template_path)
 
     env = Environment(

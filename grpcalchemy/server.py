@@ -115,7 +115,7 @@ class Server(Blueprint):
         self.blueprints[bp.name] = bp
 
     def run(self, port: int = 50051, test=False) -> None:
-        generate_proto_file()
+        generate_proto_file(template_path=self.config["TEMPLATE_PATH"])
         for name, bp in self.blueprints.items():
             grpc_pb2_module = importlib.import_module(
                 f".{bp.file_name}_pb2_grpc", self.config["TEMPLATE_PATH"])
