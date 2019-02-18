@@ -68,6 +68,7 @@ class TestServer(TestGrpcalchemy):
 
     def test_server_config(self):
         test_app = Server(
-            'test_server', config=Config(defaults={"TEST": "TEST"}))
+            'test_server',
+            config=Config(obj=object, defaults={"TEST": "TEST"}))
 
         self.assertEqual("TEST", test_app.config["TEST"])
