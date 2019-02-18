@@ -182,3 +182,112 @@ supporting common patterns within an application or across applications.
         app.register_blueprint(first_blueprint)
         app.run()
 
+
+How to Use the Config
+==============================================
+
+Using :any:`Config` to construct your config.
+
+* Priority: *env > local config file > remote center > project config*
+
+Define the Base Config Class
+-----------------------------------------
+
+Using `Class` to define your config value explicitly and pass it to :any:`Config` to init:
+
+* `BaseConfig` should define all config used in the project *explicitly* and initialize it.
+* the config key should be **uppercase**.
+
+.. code-block:: python
+
+    from grpcalchemy.config import Config
+
+    class BaseConfig:
+        DEBUG = False
+        TESTING = False
+        DATABASE_URI = 'sqlite:///:memory:'
+
+    class ProductionConfig(BaseConfig):
+        DATABASE_URI = 'mysql://user@localhost/foo'
+
+    class DevelopmentConfig(BaseConfig):
+        DEBUG = True
+
+    class TestingConfig(BaseConfig):
+        TESTING = True
+
+    config = Config(obj='configmodule.ProductionConfig')
+    # or
+    config = Config(obj=ProductionConfig)
+
+Using environment variables explicitly
+----------------------------------------
+Defining the `ENV_PREFIX` to load the environment variables:
+
+* The :any:`Config` will try to load all `ENV_PREFIX` + `attributes name`.
+
+.. code-block:: python
+
+    from grpcalchemy.config import Config
+    import os
+
+    os.environ['TEST_NAME'] = 'env'
+
+    class BaseConfig:
+        ENV_PREFIX = 'TEST_'
+        NAME = 'base'
+
+    config = Config(obj=BaseConfig)
+
+    >>> config['NAME']
+    env
+
+Using the config file explicitly
+---------------------------------
+Defining the `CONFIG_FILE` to load the environment variables:
+
+.. code-block:: python
+
+    from grpcalchemy.config import Config
+
+    class BaseConfig:
+        CONFIG_FILE = 'test.json' #: etc: {'NAME': 'json'}
+        NAME = 'base'
+
+    config = Config(obj=BaseConfig)
+
+    >>> config['NAME']
+    json
+
+Using the Custom way to Access Config
+-------------------------------------------
+Using  `sync_access_config_list` or `async_access_config_list` access your config:
+
+.. code-block:: python
+
+    from grpcalchemy.config import Config
+
+    async def get_config_async() -> dict:
+        return {'TYPE': 'async'}
+
+
+    def get_config() -> dict:
+        return {'NAME': 'sync'}
+
+
+    class BaseConfig:
+        TYPE = 'base'
+        NAME = 'base'
+
+
+    config = Config(
+        obj=BaseConfig,
+        sync_access_config_list=[get_config],
+        async_access_config_list=[get_config_async])
+
+    >>> config['TYPE']
+    async
+    >>> config['NAME']
+    sync
+
+
