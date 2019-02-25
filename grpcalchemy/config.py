@@ -3,7 +3,20 @@ import errno
 import json
 import os
 import sys
-from typing import Any, Callable, Coroutine, Dict, List, Type, Union
+from collections import defaultdict
+from threading import RLock
+from typing import (
+    Any,
+    Callable,
+    Coroutine,
+    DefaultDict,
+    Dict,
+    List,
+    Type,
+    Union,
+)
+
+_miss = lambda x: x
 
 
 def import_string(import_name: str) -> Type:
@@ -41,7 +54,40 @@ def import_string(import_name: str) -> Type:
     return getattr(module, obj_name)
 
 
-class Config(dict):
+class ConfigMeta:
+    def __init__(self, default=None):
+        self.value_type: Callable[[Any], Any] = _miss
+        self.project_value = default
+        self.remote_center_value = None
+        self.config_file_value = None
+        self.env_value = None
+
+    def get_config(self) -> Any:
+        if self.env_value is not None:
+            return self.env_value
+        elif self.config_file_value is not None:
+            return self.config_file_value
+        elif self.remote_center_value is not None:
+            return self.remote_center_value
+        else:
+            return self.project_value
+
+    def get(self) -> Any:
+        return self.value_type(self.get_config())
+
+    def set(self, priority: int, value: Any) -> bool:
+        if priority == 0:
+            self.project_value = value
+        elif priority == 1:
+            self.remote_center_value = value
+        elif priority == 2:
+            self.config_file_value = value
+        else:
+            self.env_value = value
+        return True
+
+
+class Config:
     """Init the :any:`Config` with the Priority。
 
     * Priority: *env > local config file > remote center > project config*
@@ -71,11 +117,14 @@ class Config(dict):
                      Callable[[], Coroutine[Any, Any, Dict]]] = None,
                  root_path: str = "",
                  defaults: Dict = None):
-        super().__init__(defaults or {})
+        self.lock = RLock()
+        self.config_meta: DefaultDict[str, ConfigMeta] = defaultdict(
+            ConfigMeta)
         self.root_path = root_path
         self.sync_access_config_list = sync_access_config_list or []
         self.async_access_config_list = async_access_config_list or []
 
+        self.from_mapping(defaults or {}, priority=0)
         #: Priority: env > local config file > remote center > project config
 
         #: project config
@@ -84,24 +133,25 @@ class Config(dict):
         #: remote center
         #: Sync
         if self.sync_access_config_list:
-            self.from_remote_center()
+            self.from_sync_access_config_list()
 
         # Async
         loop = asyncio.get_event_loop()
         if self.async_access_config_list:
-            loop.run_until_complete(self.from_remote_center_async())
+            loop.run_until_complete(self.from_async_access_config_list())
 
         #: local config file
         config_file = self.get("CONFIG_FILE", "")
         if config_file:
-            self.from_json(config_file)
+            self.from_json(config_file, silent=True)
 
         #: env
         env_prefix = self.get("ENV_PREFIX", "")
         if env_prefix:
             self.from_env(prefix=env_prefix)
 
-    def from_json(self, filename: str, silent: bool = False) -> bool:
+    def from_json(self, filename: str, silent: bool = False,
+                  priority: int = 2) -> bool:
         """Updates the values in the config from a JSON file. This function
         behaves as if the JSON object was a dictionary and passed to the
         :meth:`from_mapping` function.
@@ -123,9 +173,9 @@ class Config(dict):
                 return False
             e.strerror = 'Unable to load configuration file (%s)' % e.strerror
             raise
-        return self.from_mapping(obj)
+        return self.from_mapping(obj, priority=priority)
 
-    def from_mapping(self, *mapping, **kwargs) -> bool:
+    def from_mapping(self, *mapping, priority, **kwargs) -> bool:
         """Updates the config like :meth:`update` ignoring items with non-upper
         keys.
 
@@ -143,10 +193,10 @@ class Config(dict):
         for mapping in mappings:
             for (key, value) in mapping:
                 if key.isupper():
-                    self[key] = value
+                    self.set_value(key, value, priority=priority)
         return True
 
-    def from_object(self, obj: Union[str, Type]) -> bool:
+    def from_object(self, obj: Union[str, Type], priority: int = 0) -> bool:
         """Updates the values from the given object.  An object can be of one
         of the following two types:
 
@@ -170,18 +220,24 @@ class Config(dict):
         with :meth:`from_object` and ideally from a location not within the
         package because the package might be installed system wide.
 
-        :param obj: an import name or object
+        :param obj: a string or an actual object
         :type obj: Union[str, Type]
 
         """
         if isinstance(obj, str):
-            obj = import_string(obj)
+            obj = import_string(obj)()
+
         for key in dir(obj):
             if key.isupper():
-                self[key] = getattr(obj, key)
+                obj_value = getattr(obj, key)
+                self.set_value(
+                    key,
+                    obj_value,
+                    priority=priority,
+                    value_type=type(obj_value))
         return True
 
-    def from_env(self, prefix: str) -> bool:
+    def from_env(self, prefix: str, priority: int = 3) -> bool:
         """Updates the values in the config from the environment variable.
 
         :param str prefix: The prefix to construct the full environment variable
@@ -189,26 +245,56 @@ class Config(dict):
 
         """
         for key, value in self.items():
-            self[key] = os.getenv(f"{prefix}{key}", value)
+            env_value = os.getenv(f"{prefix}{key}")
+            if env_value is not None:
+                self.set_value(key, env_value, priority=priority)
         return True
 
-    def from_remote_center(self) -> bool:
-        """Updates the values in the config from the remote center.
+    def from_sync_access_config_list(self) -> bool:
+        """Updates the values in the config from the sync_access_config_list.
 
 
         """
         for remote_center in self.sync_access_config_list:
-            self.from_mapping(remote_center())
+            self.from_mapping(remote_center(), priority=2)
         return True
 
-    async def from_remote_center_async(self) -> bool:
-        """Async updates the values in the config from the remote center.
-
+    async def from_async_access_config_list(self) -> bool:
+        """Async updates the values in the config from the async_access_config_list.
 
         """
         for remote_center in self.async_access_config_list:
-            self.from_mapping(await remote_center())
+            self.from_mapping(await remote_center(), priority=2)
         return True
+
+    def set_value(self,
+                  key: str,
+                  value: Any,
+                  priority: int,
+                  value_type: Callable[[Any], Any] = _miss):
+        """ Set self[key] to value. """
+        with self.lock:
+            if value_type is not _miss:
+                self.config_meta[key].value_type = value_type
+            self.config_meta[key].set(priority=priority, value=value)
+
+    def __getitem__(self, key: str) -> Any:
+        """ x.__getitem__(y) <==> x[y] """
+        with self.lock:
+            return self.config_meta[key].get()
+
+    def items(self):
+        return self.config_meta.items()
+
+    def keys(self):
+        return self.config_meta.keys()
+
+    def update(self, config: 'Config'):
+        self.config_meta.update(config.config_meta)
+
+    def get(self, key: str, default=None):
+        with self.lock:
+            return self.config_meta.get(key, ConfigMeta(default=default)).get()
 
 
 default_config = Config(

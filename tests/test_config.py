@@ -86,12 +86,13 @@ class TestConfig(unittest.TestCase):
         def get_config() -> dict:
             return {
                 "SECOND": "1",
+                "FOURTH": "1",
             }
 
         async def get_config_async() -> dict:
             return {
-                "THIRD": "1",
-                "FOURTH": "1",
+                "THIRD": 1,
+                "FOURTH": 1,
             }
 
         with open(current_json_file, "w") as fp:
@@ -106,20 +107,21 @@ class TestConfig(unittest.TestCase):
             # file
             CONFIG_FILE = current_json_file
 
-            FIRST = "0"
+            FIRST = 0
             SECOND = "0"
             THIRD = "0"
-            FOURTH = "0"
+            FOURTH = 0
 
         config = Config(
             obj=TestPriority,
             sync_access_config_list=[get_config],
             async_access_config_list=[get_config_async])
-        self.assertEqual("0", config["FIRST"])
+        self.assertEqual(0, config["FIRST"])
         self.assertEqual("1", config["SECOND"])
         self.assertEqual("2", config["THIRD"])
-        self.assertEqual("3", config["FOURTH"])
-
+        self.assertEqual(3, config["FOURTH"])
+        config.from_sync_access_config_list()
+        self.assertEqual(3, config["FOURTH"])
         os.remove(current_json_file)
         os.unsetenv("test_FOURTH")
 

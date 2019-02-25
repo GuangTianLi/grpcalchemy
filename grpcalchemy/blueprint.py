@@ -54,7 +54,7 @@ def _validate_rpc_method(rpc_method: Callable[[Message, Context], Message]
         if issubclass(request_type, Message) and issubclass(
                 response_type, Message):
             return request_type, response_type
-    raise InvalidRPCMethod("注册服务不合法")
+    raise InvalidRPCMethod("Invalid rpc Method!")
 
 
 def _validate_rpc_processes(
