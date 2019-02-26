@@ -4,14 +4,12 @@ from inspect import signature
 from typing import Callable, List, Tuple, Type, TypeVar, Union
 
 from google.protobuf.message import Message as GeneratedProtocolMessageType
-from grpc import ServicerContext
+from grpc import ServicerContext as Context
 
 from .meta import ServiceMeta, __meta__
 from .orm import Message
 
 Rpc = namedtuple('Rpc', ['name', 'request', 'response'])
-
-Context = ServicerContext
 
 _T = TypeVar("_T")
 
@@ -25,11 +23,12 @@ class DuplicatedRPCMethod(Exception):
 
 
 class RpcWrappedCallable:
-    name: str = ...
-    request_type: Type[Message] = ...
-    response_type: Type[Message] = ...
-    pre_processes: List[Callable[[Message, Context], Message]] = ...
-    post_processes: List[Callable[[Message, Context], Message]] = ...
+    server_name: str
+    name: str
+    request_type: Type[Message]
+    response_type: Type[Message]
+    pre_processes: List[Callable[[Message, Context], Message]]
+    post_processes: List[Callable[[Message, Context], Message]]
 
     def preprocess(self,
                    origin_request: GeneratedProtocolMessageType) -> Message:
@@ -66,7 +65,8 @@ def _validate_rpc_processes(
     return rpc_processes
 
 
-def rpc_call_wrap(func: Callable[[Message, Context], Message],
+def rpc_call_wrap(server_name: str,
+                  func: Callable[[Message, Context], Message],
                   request_type: Type[Message], response_type: Type[Message],
                   pre_processes: List[Callable[[Message, Context], Message]],
                   post_processes: List[Callable[[Message, Context], Message]]
@@ -91,6 +91,7 @@ def rpc_call_wrap(func: Callable[[Message, Context], Message],
         request = preprocess(origin_request, context)
         return postprocess(func(request, context), context)
 
+    call.server_name = server_name
     call.name = func.__name__
     call.request_type = request_type
     call.response_type = response_type
@@ -181,6 +182,7 @@ class Blueprint:
         current_post_processes = self.post_processes + _validate_rpc_processes(
             post_processes)
         rpc_call: RpcWrappedCallable = rpc_call_wrap(
+            server_name=self.name,
             func=rpc,
             request_type=request_type,
             response_type=response_type,

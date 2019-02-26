@@ -234,7 +234,7 @@ class Config:
                     key,
                     obj_value,
                     priority=priority,
-                    value_type=type(obj_value))
+                    value_type=type(obj_value))  # pyre-ignore
         return True
 
     def from_env(self, prefix: str, priority: int = 3) -> bool:

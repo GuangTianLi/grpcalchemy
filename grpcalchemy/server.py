@@ -18,7 +18,7 @@ from grpc._server import (
 )
 
 from .blueprint import Blueprint, Context
-from .config import default_config
+from .config import Config, default_config
 from .orm import Message
 from .utils import generate_proto_file
 
@@ -54,7 +54,7 @@ class Server(Blueprint):
             file_name: str = '',
             pre_processes: List[Callable[[Message, Context], Message]] = None,
             post_processes: List[Callable[[Message, Context], Message]] = None,
-            config: Dict[str, Any] = None):
+            config: Config = None):
         super().__init__(
             name=name,
             file_name=file_name,
@@ -85,7 +85,7 @@ class Server(Blueprint):
         #: all the attached blueprints in a dictionary by name.
         #:
         #: .. versionadded:: 0.1.6
-        self.blueprints: Dict[str, Blueprint] = {}
+        self.blueprints: Dict[str, Blueprint] = {self.name: self}
 
         #: all the listened event in a dictionary by name.
         #: And the event will be called according to the name:
