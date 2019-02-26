@@ -7,7 +7,7 @@
 
 __author__ = """GuangTian Li"""
 __email__ = 'guangtian_li@qq.com'
-__version__ = '0.2.2'
+__version__ = '0.2.3'
 
 from .server import Server
 from .blueprint import Blueprint, Context
