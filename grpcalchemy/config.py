@@ -3,7 +3,7 @@ import errno
 import json
 import os
 import sys
-from collections import defaultdict
+from collections import Mapping, defaultdict
 from threading import RLock
 from typing import (
     Any,
@@ -87,7 +87,7 @@ class ConfigMeta:
         return True
 
 
-class Config:
+class Config(Mapping):
     """Init the :any:`Config` with the Priority。
 
     * Priority: *env > local config file > remote center > project config*
@@ -288,6 +288,15 @@ class Config:
 
     def keys(self):
         return self.config_meta.keys()
+
+    def __contains__(self, key: object):
+        return key in self.config_meta
+
+    def __iter__(self):
+        return iter(self.config_meta)
+
+    def __len__(self) -> int:
+        return len(self.config_meta)
 
     def update(self, config: 'Config'):
         self.config_meta.update(config.config_meta)

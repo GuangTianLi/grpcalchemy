@@ -77,7 +77,8 @@ Features
 TODO
 -------
 
-* All Types Support
+* Stream Method Support
+* Global Variable Support
 
 Credits
 ---------
