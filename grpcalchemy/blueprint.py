@@ -30,12 +30,12 @@ class RpcWrappedCallable:
     pre_processes: List[Callable[[Message, Context], Message]]
     post_processes: List[Callable[[Message, Context], Message]]
 
-    def preprocess(self,
-                   origin_request: GeneratedProtocolMessageType) -> Message:
+    def preprocess(self, origin_request: GeneratedProtocolMessageType,
+                   context: Context) -> Message:
         ...
 
-    def postprocess(self,
-                    origin_response: Message) -> GeneratedProtocolMessageType:
+    def postprocess(self, origin_response: Message,
+                    context: Context) -> GeneratedProtocolMessageType:
         ...
 
     def __call__(self, origin_request: GeneratedProtocolMessageType,
@@ -102,6 +102,11 @@ def rpc_call_wrap(server_name: str,
     return call  # pyre-ignore
 
 
+class ServiceMetaTypeshed:
+    name: str
+    rpcs: List[RpcWrappedCallable]
+
+
 class Blueprint:
     """gRPCAlchemy uses a concept of blueprints for making gRPC services and
     supporting common patterns within an application or across applications.
@@ -133,7 +138,8 @@ class Blueprint:
             self.file_name = file_name
         self.file_name.replace('.', '_')
         self.name = name
-        self.service_meta = ServiceMeta(name=self.name, rpcs=[])
+        self.service_meta: ServiceMetaTypeshed = ServiceMeta(
+            name=self.name, rpcs=[])
 
         #: all the processes function in a list.
         #: And the function must be Callable[[`Message`, Context], `Message`]:
@@ -146,7 +152,8 @@ class Blueprint:
         #: .. versionadded:: 0.1.6
         self.post_processes = _validate_rpc_processes(post_processes)
 
-        __meta__[self.file_name].services.append(self.service_meta)
+        __meta__[self.file_name].services.append(
+            self.service_meta)  # pyre-ignore
 
     def register(
             self,

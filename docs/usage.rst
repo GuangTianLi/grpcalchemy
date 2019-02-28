@@ -259,9 +259,11 @@ Defining the `CONFIG_FILE` to load the environment variables:
     >>> config['NAME']
     json
 
-Using the Custom way to Access Config
+Using the Custom way to Access Config Explicitly
 -------------------------------------------
 Using  `sync_access_config_list` or `async_access_config_list` access your config:
+
+* When the `ENABLE_CONFIG_LIST` is `True`, the config will init with your custom way:
 
 .. code-block:: python
 
@@ -276,6 +278,7 @@ Using  `sync_access_config_list` or `async_access_config_list` access your confi
 
 
     class BaseConfig:
+        ENABLE_CONFIG_LIST = True
         TYPE = 'base'
         NAME = 'base'
 

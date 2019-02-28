@@ -15,9 +15,9 @@ _missing = object()
 
 class BaseField:
     _type_name = ""
+    _name = ''
 
-    def __init__(self, name=None):
-        self._name = name
+    def __init__(self):
         self.lock = RLock()
 
     def __get__(self, obj: Any, type: Type) -> Any:

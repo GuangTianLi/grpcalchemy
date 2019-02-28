@@ -63,6 +63,7 @@ class TestConfig(unittest.TestCase):
             return {"TEST": "changed"}
 
         class TestObject:
+            ENABLE_CONFIG_LIST = True
             TEST = "default"
 
         config = Config(obj=TestObject, sync_access_config_list=[get_config])
@@ -73,6 +74,7 @@ class TestConfig(unittest.TestCase):
             return {"TEST": "changed"}
 
         class TestObject:
+            ENABLE_CONFIG_LIST = True
             TEST = "default"
 
         config = Config(
@@ -102,6 +104,7 @@ class TestConfig(unittest.TestCase):
             }, fp)
 
         class TestPriority:
+            ENABLE_CONFIG_LIST = True
             # env
             ENV_PREFIX = "test_"
             # file

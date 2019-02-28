@@ -11,7 +11,10 @@ from typing import (
     Coroutine,
     DefaultDict,
     Dict,
+    KeysView,
     List,
+    Set,
+    Tuple,
     Type,
     Union,
 )
@@ -131,14 +134,15 @@ class Config(Mapping):
         self.from_object(obj)
 
         #: remote center
-        #: Sync
-        if self.sync_access_config_list:
-            self.from_sync_access_config_list()
+        if self.get("ENABLE_CONFIG_LIST", False):
+            #: Sync
+            if self.sync_access_config_list:
+                self.from_sync_access_config_list()
 
-        # Async
-        loop = asyncio.get_event_loop()
-        if self.async_access_config_list:
-            loop.run_until_complete(self.from_async_access_config_list())
+            # Async
+            loop = asyncio.get_event_loop()
+            if self.async_access_config_list:
+                loop.run_until_complete(self.from_async_access_config_list())
 
         #: local config file
         config_file = self.get("CONFIG_FILE", "")
@@ -193,7 +197,7 @@ class Config(Mapping):
         for mapping in mappings:
             for (key, value) in mapping:
                 if key.isupper():
-                    self.set_value(key, value, priority=priority)
+                    self._set_value(key, value, priority=priority)
         return True
 
     def from_object(self, obj: Union[str, Type], priority: int = 0) -> bool:
@@ -230,7 +234,7 @@ class Config(Mapping):
         for key in dir(obj):
             if key.isupper():
                 obj_value = getattr(obj, key)
-                self.set_value(
+                self._set_value(
                     key,
                     obj_value,
                     priority=priority,
@@ -247,7 +251,7 @@ class Config(Mapping):
         for key, value in self.items():
             env_value = os.getenv(f"{prefix}{key}")
             if env_value is not None:
-                self.set_value(key, env_value, priority=priority)
+                self._set_value(key, env_value, priority=priority)
         return True
 
     def from_sync_access_config_list(self) -> bool:
@@ -267,11 +271,11 @@ class Config(Mapping):
             self.from_mapping(await remote_center(), priority=2)
         return True
 
-    def set_value(self,
-                  key: str,
-                  value: Any,
-                  priority: int,
-                  value_type: Callable[[Any], Any] = _miss):
+    def _set_value(self,
+                   key: str,
+                   value: Any,
+                   priority: int,
+                   value_type: Callable[[Any], Any] = _miss):
         """ Set self[key] to value. """
         with self.lock:
             if value_type is not _miss:
@@ -283,13 +287,16 @@ class Config(Mapping):
         with self.lock:
             return self.config_meta[key].get()
 
-    def items(self):
-        return self.config_meta.items()
+    def items(self) -> Set[Tuple[Any, Any]]:
+        config_meta_items = set()
+        for key, config_meta in self.config_meta.items():
+            config_meta_items.add((key, config_meta.get()))
+        return config_meta_items
 
-    def keys(self):
+    def keys(self) -> KeysView[Any]:
         return self.config_meta.keys()
 
-    def __contains__(self, key: object):
+    def __contains__(self, key: object) -> bool:
         return key in self.config_meta
 
     def __iter__(self):
