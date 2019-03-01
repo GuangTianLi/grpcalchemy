@@ -72,13 +72,13 @@ Features
     * Repeated Field
     * Maps
 * Middleware And Listeners
-
+* Global Variable Support
+* Current App Context Support
 
 TODO
 -------
 
 * Stream Method Support
-* Global Variable Support
 
 Credits
 ---------

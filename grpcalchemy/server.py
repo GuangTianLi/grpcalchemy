@@ -104,6 +104,13 @@ class Server(Blueprint):
 
         self.register_blueprint(self)
 
+        #: Create an :class:`~grpcalchemy.ctx.AppContext`. Use as a ``with``
+        #: block to push the context, which will make :data:`current_app`
+        #: point at this application.
+        #:
+        #: .. versionchanged:: 0.2.4
+        self.app_context: AppContext = AppContext(self)
+
     def register_blueprint(self, bp: Blueprint) -> None:
         """
         all the gRPC service register in a dictionary by name.
@@ -123,7 +130,7 @@ class Server(Blueprint):
             getattr(grpc_pb2_module, f"add_{bp.name}Servicer_to_server")(bp,
                                                                          self)
             for rpc in bp.service_meta.rpcs:
-                rpc.ctx = AppContext(self)
+                rpc.ctx = self.app_context
 
         for func in self.listeners["before_server_start"]:
             func(self)

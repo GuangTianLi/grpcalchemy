@@ -2,17 +2,10 @@ import sys
 
 from .globals import _app_ctx_stack
 
-# a singleton sentinel value for parameter defaults
-_sentinel = object()
-
 
 class AppContext:
     """The application context binds an application object implicitly
-    to the current thread or greenlet, similar to how the
-    :class:`RequestContext` binds request information.  The application
-    context is also implicitly created if a request context is created
-    but the application is not on top of the individual application
-    context.
+    to the current thread or greenlet.
 
     .. versionchanged:: 0.2.4
     """

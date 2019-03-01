@@ -10,7 +10,7 @@ class Client:
     config = default_config
 
     def __init__(self, target, credentials=None, options=None):
-        from grpc import _channel  # pylint: disable=cyclic-import
+        from grpc import _channel
 
         self.channel = _channel.Channel(
             target, () if options is None else options, credentials)

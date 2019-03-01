@@ -319,5 +319,5 @@ default_config = Config(
         TEMPLATE_PATH="protos",
         MAX_WORKERS=10,
         OPTIONS=(),
-        MAXIMUM_CONCURRENT_RPCS=10,
+        MAXIMUM_CONCURRENT_RPCS=None,
     ))

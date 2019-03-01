@@ -5,8 +5,8 @@ History
 0.2.4(2019-02-26)
 ------------------
 
-* Improve Config module
-* Improve rpc_call_wrap
+* Implement Globals Variable
+* Implement APP Context
 
 0.2.2-3 (2019-02-26)
 ------------------
