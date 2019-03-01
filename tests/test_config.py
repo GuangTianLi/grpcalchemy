@@ -13,7 +13,7 @@ class TestStrObject:
 default_config = Config(obj=TestStrObject)
 
 
-class TestConfig(unittest.TestCase):
+class ConfigTestCase(unittest.TestCase):
     json_file = "test.json"
 
     @classmethod

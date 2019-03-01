@@ -1,7 +1,7 @@
-import unittest
-
 from .blueprint import Context, RpcWrappedCallable
+from .ctx import AppContext
 from .orm import GeneratedProtocolMessageType, Message
+from .server import Server
 
 
 class TestContext(Context):
@@ -54,9 +54,15 @@ class TestContext(Context):
         pass
 
 
-class Client(unittest.TestCase):
+class Client:
+    def __init__(self, app: Server):
+        self.app = app
+
     def rpc_call(self,
                  method: RpcWrappedCallable,
                  request: Message,
                  context=TestContext()) -> GeneratedProtocolMessageType:
+        for name, bp in self.app.blueprints.items():
+            for rpc in bp.service_meta.rpcs:
+                rpc.ctx = AppContext(self)
         return method(origin_request=request._message, context=context)

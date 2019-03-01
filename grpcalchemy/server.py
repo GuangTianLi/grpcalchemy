@@ -19,6 +19,7 @@ from grpc._server import (
 
 from .blueprint import Blueprint, Context
 from .config import Config, default_config
+from .ctx import AppContext
 from .orm import Message
 from .utils import generate_proto_file
 
@@ -121,6 +122,8 @@ class Server(Blueprint):
                 f".{bp.file_name}_pb2_grpc", self.config["TEMPLATE_PATH"])
             getattr(grpc_pb2_module, f"add_{bp.name}Servicer_to_server")(bp,
                                                                          self)
+            for rpc in bp.service_meta.rpcs:
+                rpc.ctx = AppContext(self)
 
         for func in self.listeners["before_server_start"]:
             func(self)

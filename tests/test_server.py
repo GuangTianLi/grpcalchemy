@@ -1,13 +1,12 @@
-from grpcalchemy.blueprint import Blueprint, Context
+from grpcalchemy import Blueprint, Context, Server, current_app
 from grpcalchemy.client import Client
 from grpcalchemy.config import Config
 from grpcalchemy.orm import Message, StringField
-from grpcalchemy.server import Server
 
 from .test_grpcalchemy import TestGrpcalchemy
 
 
-class TestServer(TestGrpcalchemy):
+class ServerTestCase(TestGrpcalchemy):
     def setUp(self):
         super().setUp()
         self.app = Server('test_server')
@@ -18,16 +17,23 @@ class TestServer(TestGrpcalchemy):
         self.test_blueprint = Blueprint("test_blueprint")
 
         @self.test_blueprint.register
-        def test_message(request: TestMessage,
+        def test_blueprint_rpc(request: TestMessage,
+                               context: Context) -> TestMessage:
+            return TestMessage(test_name=request.test_name)
+
+        @self.app.register
+        def test_app_rpc(request: TestMessage,
                          context: Context) -> TestMessage:
             return TestMessage(test_name=request.test_name)
 
         @self.app.register
-        def test_message(request: TestMessage,
-                         context: Context) -> TestMessage:
-            return TestMessage(test_name=request.test_name)
+        def test_current_app_rpc(request: TestMessage,
+                                 context: Context) -> TestMessage:
+            return TestMessage(test_name=current_app.name)
 
-        self.test_message = test_message
+        self.test_blueprint_rpc = test_blueprint_rpc
+        self.test_app_rpc = test_app_rpc
+        self.test_current_app_rpc = test_current_app_rpc
         self.Message = TestMessage
         self.app.register_blueprint(self.test_blueprint)
         self.app.run(test=True)
@@ -41,13 +47,17 @@ class TestServer(TestGrpcalchemy):
             client.register(self.test_blueprint)
             client.register(self.app)
             response = client.test_blueprint(
-                rpc=self.test_message,
+                rpc=self.test_blueprint_rpc,
                 message=self.Message(test_name=test_name))
             self.assertEqual(test_name, response.test_name)
             response = client.test_server(
-                rpc=self.test_message,
+                rpc=self.test_app_rpc,
                 message=self.Message(test_name=test_name))
             self.assertEqual(test_name, response.test_name)
+            response = client.test_server(
+                rpc=self.test_current_app_rpc,
+                message=self.Message(test_name=test_name))
+            self.assertEqual('test_server', response.test_name)
 
     def test_server_listener(self):
         test_app = Server('test_server')

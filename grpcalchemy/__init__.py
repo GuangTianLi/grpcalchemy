@@ -11,3 +11,4 @@ __version__ = '0.2.3'
 
 from .server import Server
 from .blueprint import Blueprint, Context
+from .globals import current_app

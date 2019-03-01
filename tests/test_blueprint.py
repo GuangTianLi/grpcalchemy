@@ -1,5 +1,8 @@
-from grpcalchemy.blueprint import Blueprint
-from grpcalchemy.blueprint import InvalidRPCMethod, DuplicatedRPCMethod
+from grpcalchemy.blueprint import (
+    Blueprint,
+    DuplicatedRPCMethod,
+    InvalidRPCMethod,
+)
 from grpcalchemy.orm import Message, StringField
 
 from .test_grpcalchemy import TestGrpcalchemy
@@ -9,7 +12,7 @@ class TestMessage(Message):
     test_name = StringField()
 
 
-class TestBlueprint(TestGrpcalchemy):
+class BlueprintTestCase(TestGrpcalchemy):
     def test_init_without_set_file_name(self):
         test = Blueprint("test")
         self.assertEqual("test", test.file_name)

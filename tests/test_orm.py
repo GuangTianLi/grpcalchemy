@@ -16,7 +16,7 @@ from grpcalchemy.utils import generate_proto_file
 from .test_grpcalchemy import TestGrpcalchemy
 
 
-class TestORM(TestGrpcalchemy):
+class ORMTestCase(TestGrpcalchemy):
     def setUp(self):
         super().setUp()
 

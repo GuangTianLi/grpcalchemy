@@ -4,7 +4,7 @@ import copy
 # for the context.  If greenlets are not available we fall back to the
 # current thread ident depending on where it is.
 try:
-    from greenlet import getcurrent as get_ident
+    from greenlet import getcurrent as get_ident  # pyre-ignore
 except ImportError:
     from _thread import get_ident
 
@@ -302,3 +302,25 @@ class LocalProxy(object):
     __rdivmod__ = lambda x, o: x._get_current_object().__rdivmod__(o)
     __copy__ = lambda x: copy.copy(x._get_current_object())
     __deepcopy__ = lambda x, memo: copy.deepcopy(x._get_current_object(), memo=memo)
+
+
+_app_ctx_err_msg = '''\
+Working outside of application context.
+
+This typically means that you attempted to use functionality that needed
+to interface with the current application object in some way. To solve
+this, set up an application context with app.app_context().  See the
+documentation for more information.\
+'''
+
+
+def _find_app():
+    top = _app_ctx_stack.top
+    if top is None:
+        raise RuntimeError(_app_ctx_err_msg)
+    return top.app
+
+
+# context locals
+_app_ctx_stack = LocalStack()
+current_app = LocalProxy(_find_app)

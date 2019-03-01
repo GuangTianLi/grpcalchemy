@@ -6,6 +6,7 @@ from typing import Callable, List, Tuple, Type, TypeVar, Union
 from google.protobuf.message import Message as GeneratedProtocolMessageType
 from grpc import ServicerContext as Context
 
+from .ctx import AppContext
 from .meta import ServiceMeta, __meta__
 from .orm import Message
 
@@ -29,6 +30,7 @@ class RpcWrappedCallable:
     response_type: Type[Message]
     pre_processes: List[Callable[[Message, Context], Message]]
     post_processes: List[Callable[[Message, Context], Message]]
+    ctx: AppContext
 
     def preprocess(self, origin_request: GeneratedProtocolMessageType,
                    context: Context) -> Message:
@@ -88,9 +90,14 @@ def rpc_call_wrap(server_name: str,
 
     def call(origin_request: GeneratedProtocolMessageType,
              context: Context) -> GeneratedProtocolMessageType:
-        request = preprocess(origin_request, context)
-        return postprocess(func(request, context), context)
+        try:
+            call.ctx.push()
+            request = preprocess(origin_request, context)
+            return postprocess(func(request, context), context)
+        finally:
+            call.ctx.pop()
 
+    call.ctx: AppContext = None
     call.server_name = server_name
     call.name = func.__name__
     call.request_type = request_type
@@ -152,8 +159,7 @@ class Blueprint:
         #: .. versionadded:: 0.1.6
         self.post_processes = _validate_rpc_processes(post_processes)
 
-        __meta__[self.file_name].services.append(
-            self.service_meta)  # pyre-ignore
+        __meta__[self.file_name].services.append(self.service_meta)
 
     def register(
             self,

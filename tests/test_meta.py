@@ -5,7 +5,7 @@ from grpcalchemy.orm import Message, ReferenceField, StringField
 from .test_grpcalchemy import TestGrpcalchemy
 
 
-class TestMeta(TestGrpcalchemy):
+class MetaTestCase(TestGrpcalchemy):
     def test_single_message(self):
         class TestMessage(Message):
             name = StringField()
