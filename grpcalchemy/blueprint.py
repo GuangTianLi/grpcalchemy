@@ -90,12 +90,9 @@ def rpc_call_wrap(server_name: str,
 
     def call(origin_request: GeneratedProtocolMessageType,
              context: Context) -> GeneratedProtocolMessageType:
-        try:
-            call.ctx.push()
+        with call.ctx:
             request = preprocess(origin_request, context)
             return postprocess(func(request, context), context)
-        finally:
-            call.ctx.pop()
 
     call.ctx: AppContext = None
     call.server_name = server_name
