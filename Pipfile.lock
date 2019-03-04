@@ -302,10 +302,10 @@
         },
         "identify": {
             "hashes": [
-                "sha256:162e553f1c75df561301c1fd5ee2d88f579bd5dff739c53369807d84b730b489",
-                "sha256:300652c011142b917f598466d1470dcf522d1e20be1412f03b60b7a06e673d51"
+                "sha256:407cbb36e8b72b45cfa96a97ae13ccabca4c36557e03616958bd895dfcd3f77d",
+                "sha256:721abbbb1269fa1172799119981c22c5ace022544ce82eedc29b1b0d753baaa5"
             ],
-            "version": "==1.3.0"
+            "version": "==1.4.0"
         },
         "idna": {
             "hashes": [
