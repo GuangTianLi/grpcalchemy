@@ -519,9 +519,9 @@
         },
         "pyyaml": {
             "hashes": [
-                "sha256:b21fadf0e343c3738cc956be9d24ee7a83d3260ff1a6805f860b4f5d4645b7b9"
+                "sha256:0b83c5697aed17a27efbb631a6a3846501375c6e55112a665b210f223fa69629"
             ],
-            "version": "==5.1b1"
+            "version": "==5.1b3"
         },
         "readme-renderer": {
             "hashes": [
