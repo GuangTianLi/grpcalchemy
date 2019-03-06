@@ -4,6 +4,7 @@ import json
 import os
 import sys
 from collections import defaultdict
+from itertools import chain
 from threading import RLock
 from typing import (
     Any,
@@ -13,6 +14,7 @@ from typing import (
     Dict,
     KeysView,
     List,
+    Mapping,
     Set,
     Tuple,
     Type,
@@ -307,10 +309,11 @@ class Config(Dict):
         return len(self.config_meta)
 
     def __setitem__(self, k, v) -> None:
-        raise AttributeError
+        self._set_value(k, v, priority=3)
 
-    def update(self, config: 'Config', **F):
-        self.config_meta.update(config.config_meta)
+    def update(self, __m: Mapping, **F):
+        for key, value in chain(__m.items(), F):
+            self._set_value(key, value, priority=3)
 
     def get(self, key: str, default=None):
         with self.lock:
