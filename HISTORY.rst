@@ -2,6 +2,12 @@
 History
 =======
 
+0.2.5(2019-03-06)
+------------------
+
+* Implement Rpc Context
+* Improve Config Module
+
 0.2.4(2019-03-01)
 ------------------
 

@@ -6,13 +6,16 @@ from typing import Callable, List, Tuple, Type, TypeVar, Union
 from google.protobuf.message import Message as GeneratedProtocolMessageType
 from grpc import ServicerContext as Context
 
-from .ctx import AppContext
+from .ctx import AppContext, RequestContext
+from .globals import LocalProxy, _find_rpc
 from .meta import ServiceMeta, __meta__
 from .orm import Message
 
 Rpc = namedtuple('Rpc', ['name', 'request', 'response'])
 
 _T = TypeVar("_T")
+
+current_rpc: 'RpcWrappedCallable' = LocalProxy(_find_rpc)
 
 
 class InvalidRPCMethod(Exception):
@@ -24,25 +27,44 @@ class DuplicatedRPCMethod(Exception):
 
 
 class RpcWrappedCallable:
-    server_name: str
     name: str
-    request_type: Type[Message]
-    response_type: Type[Message]
-    pre_processes: List[Callable[[Message, Context], Message]]
-    post_processes: List[Callable[[Message, Context], Message]]
     ctx: AppContext
+
+    def __init__(self, server_name: str,
+                 func: Callable[[Message, Context], Message],
+                 request_type: Type[Message], response_type: Type[Message],
+                 pre_processes: List[Callable[[Message, Context], Message]],
+                 post_processes: List[Callable[[Message, Context], Message]]):
+        self._func = func
+        self.server_name = server_name
+        self.name: str = func.__name__
+        self.request_type = request_type
+        self.response_type = response_type
+        self.pre_processes = pre_processes
+        self.post_processes = post_processes
+        # ：TODO self.__call__.__func__.__signature__ = signature(func)
+        update_wrapper(self.__call__.__func__, func)
 
     def preprocess(self, origin_request: GeneratedProtocolMessageType,
                    context: Context) -> Message:
-        ...
+        current_request = self.request_type()
+        current_request.init_grpc_message(grpc_message=origin_request)
+        for pre_process in self.pre_processes:
+            current_request = pre_process(current_request, context)
+        return current_request
 
     def postprocess(self, origin_response: Message,
                     context: Context) -> GeneratedProtocolMessageType:
-        ...
+        current_response = origin_response
+        for post_process in self.post_processes:
+            current_response = post_process(current_response, context)
+        return current_response._message
 
     def __call__(self, origin_request: GeneratedProtocolMessageType,
                  context: Context) -> GeneratedProtocolMessageType:
-        ...
+        with RequestContext(app_context=self.ctx, rpc=self):
+            request = self.preprocess(origin_request, context)
+            return self.postprocess(self._func(request, context), context)
 
 
 def _validate_rpc_method(rpc_method: Callable[[Message, Context], Message]
@@ -65,45 +87,6 @@ def _validate_rpc_processes(
     for rpc_process in rpc_processes:
         _validate_rpc_method(rpc_process)
     return rpc_processes
-
-
-def rpc_call_wrap(server_name: str,
-                  func: Callable[[Message, Context], Message],
-                  request_type: Type[Message], response_type: Type[Message],
-                  pre_processes: List[Callable[[Message, Context], Message]],
-                  post_processes: List[Callable[[Message, Context], Message]]
-                  ) -> RpcWrappedCallable:
-    def preprocess(origin_request: GeneratedProtocolMessageType,
-                   context: Context) -> Message:
-        current_request = request_type()
-        current_request.init_grpc_message(grpc_message=origin_request)
-        for pre_process in pre_processes:
-            current_request = pre_process(current_request, context)
-        return current_request
-
-    def postprocess(origin_response: Message,
-                    context: Context) -> GeneratedProtocolMessageType:
-        current_response = origin_response
-        for post_process in post_processes:
-            current_response = post_process(current_response, context)
-        return current_response._message
-
-    def call(origin_request: GeneratedProtocolMessageType,
-             context: Context) -> GeneratedProtocolMessageType:
-        with call.ctx:
-            request = preprocess(origin_request, context)
-            return postprocess(func(request, context), context)
-
-    call.ctx: AppContext = None
-    call.server_name = server_name
-    call.name = func.__name__
-    call.request_type = request_type
-    call.response_type = response_type
-    call.pre_processes = pre_processes
-    call.post_processes = post_processes
-    update_wrapper(call, func)
-
-    return call  # pyre-ignore
 
 
 class ServiceMetaTypeshed:
@@ -191,14 +174,14 @@ class Blueprint:
             pre_processes)
         current_post_processes = self.post_processes + _validate_rpc_processes(
             post_processes)
-        rpc_call: RpcWrappedCallable = rpc_call_wrap(
+        wrapped_rpc: RpcWrappedCallable = RpcWrappedCallable(
             server_name=self.name,
             func=rpc,
             request_type=request_type,
             response_type=response_type,
             pre_processes=current_pre_process,
             post_processes=current_post_processes)
-        self.service_meta.rpcs.append(rpc_call)
+        self.service_meta.rpcs.append(wrapped_rpc)
         if request_type.__filename__ != self.file_name:
             __meta__[self.file_name].import_files.add(
                 request_type.__filename__)
@@ -210,5 +193,5 @@ class Blueprint:
         if hasattr(self, rpc.__name__):
             raise DuplicatedRPCMethod("Service Duplicate!")
         else:
-            setattr(self, rpc_call.name, rpc_call)
-            return rpc_call
+            setattr(self, wrapped_rpc.name, wrapped_rpc)
+            return wrapped_rpc

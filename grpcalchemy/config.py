@@ -133,6 +133,16 @@ class Config(Mapping):
         #: project config
         self.from_object(obj)
 
+        #: env
+        env_prefix = self.get("ENV_PREFIX", "")
+        if env_prefix:
+            self.from_env(prefix=env_prefix)
+
+        #: local config file
+        config_file = self.get("CONFIG_FILE", "")
+        if config_file:
+            self.from_json(config_file, silent=True)
+
         #: remote center
         if self.get("ENABLE_CONFIG_LIST", False):
             #: Sync
@@ -143,16 +153,6 @@ class Config(Mapping):
             loop = asyncio.get_event_loop()
             if self.async_access_config_list:
                 loop.run_until_complete(self.from_async_access_config_list())
-
-        #: local config file
-        config_file = self.get("CONFIG_FILE", "")
-        if config_file:
-            self.from_json(config_file, silent=True)
-
-        #: env
-        env_prefix = self.get("ENV_PREFIX", "")
-        if env_prefix:
-            self.from_env(prefix=env_prefix)
 
     def from_json(self, filename: str, silent: bool = False,
                   priority: int = 2) -> bool:
@@ -254,21 +254,21 @@ class Config(Mapping):
                 self._set_value(key, env_value, priority=priority)
         return True
 
-    def from_sync_access_config_list(self) -> bool:
+    def from_sync_access_config_list(self, priority: int = 1) -> bool:
         """Updates the values in the config from the sync_access_config_list.
 
 
         """
         for remote_center in self.sync_access_config_list:
-            self.from_mapping(remote_center(), priority=2)
+            self.from_mapping(remote_center(), priority=priority)
         return True
 
-    async def from_async_access_config_list(self) -> bool:
+    async def from_async_access_config_list(self, priority: int = 1) -> bool:
         """Async updates the values in the config from the async_access_config_list.
 
         """
         for remote_center in self.async_access_config_list:
-            self.from_mapping(await remote_center(), priority=2)
+            self.from_mapping(await remote_center(), priority=priority)
         return True
 
     def _set_value(self,

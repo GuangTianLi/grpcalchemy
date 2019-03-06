@@ -313,6 +313,11 @@ this, set up an application context with app.app_context.  See the
 documentation for more information.\
 '''
 
+_request_ctx_err_msg = '''\
+Working outside of request context.
+
+'''
+
 
 def _find_app():
     top = _app_ctx_stack.top
@@ -321,6 +326,14 @@ def _find_app():
     return top.app
 
 
+def _find_rpc():
+    top = _request_ctx_stack.top
+    if top is None:
+        raise RuntimeError(_request_ctx_err_msg)
+    return top.rpc
+
+
 # context locals
 _app_ctx_stack = LocalStack()
+_request_ctx_stack = LocalStack()
 current_app = LocalProxy(_find_app)

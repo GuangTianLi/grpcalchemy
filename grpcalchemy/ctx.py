@@ -1,6 +1,6 @@
 import sys
 
-from .globals import _app_ctx_stack
+from .globals import _app_ctx_stack, _request_ctx_stack
 
 
 class AppContext:
@@ -32,7 +32,26 @@ class AppContext:
     def __exit__(self, exc_type, exc_value, tb):
         self.pop()
 
-        if exc_type is not None:
-            if exc_value.__traceback__ is not tb:
-                raise exc_value.with_traceback(tb)
-            raise exc_value
+
+class RequestContext:
+    def __init__(self, app_context: AppContext, rpc):
+        self.app_context = app_context
+        self.rpc = rpc
+
+    def push(self):
+        _request_ctx_stack.push(self)
+        self.app_context.push()
+
+    def pop(self):
+        """Pops the app context."""
+        rv = _request_ctx_stack.pop()
+        assert rv is self, 'Popped wrong app context.  (%r instead of %r)' \
+                           % (rv, self)
+        self.app_context.push()
+
+    def __enter__(self):
+        self.push()
+        return self
+
+    def __exit__(self, exc_type, exc_value, tb):
+        self.pop()

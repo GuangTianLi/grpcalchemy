@@ -1,4 +1,4 @@
-from grpcalchemy import Blueprint, Context, Server, current_app
+from grpcalchemy import Blueprint, Context, Server, current_app, current_rpc
 from grpcalchemy.client import Client
 from grpcalchemy.config import Config
 from grpcalchemy.orm import Message, StringField
@@ -31,9 +31,15 @@ class ServerTestCase(TestGrpcalchemy):
                                  context: Context) -> TestMessage:
             return TestMessage(test_name=current_app.name)
 
+        @self.app.register
+        def test_current_rpc_rpc(request: TestMessage,
+                                 context: Context) -> TestMessage:
+            return TestMessage(test_name=current_rpc.name)
+
         self.test_blueprint_rpc = test_blueprint_rpc
         self.test_app_rpc = test_app_rpc
         self.test_current_app_rpc = test_current_app_rpc
+        self.test_current_rpc_rpc = test_current_rpc_rpc
         self.Message = TestMessage
         self.app.register_blueprint(self.test_blueprint)
         self.app.run(test=True)
@@ -58,6 +64,10 @@ class ServerTestCase(TestGrpcalchemy):
                 rpc=self.test_current_app_rpc,
                 message=self.Message(test_name=test_name))
             self.assertEqual('test_server', response.test_name)
+            response = client.test_server(
+                rpc=self.test_current_rpc_rpc,
+                message=self.Message(test_name=test_name))
+            self.assertEqual('test_current_rpc_rpc', response.test_name)
 
     def test_server_listener(self):
         test_app = Server('test_server')
