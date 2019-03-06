@@ -3,7 +3,7 @@ import errno
 import json
 import os
 import sys
-from collections import Mapping, defaultdict
+from collections import defaultdict
 from threading import RLock
 from typing import (
     Any,
@@ -90,7 +90,7 @@ class ConfigMeta:
         return True
 
 
-class Config(Mapping):
+class Config(Dict):
     """Init the :any:`Config` with the Priority。
 
     * Priority: *env > local config file > remote center > project config*
@@ -153,6 +153,7 @@ class Config(Mapping):
             loop = asyncio.get_event_loop()
             if self.async_access_config_list:
                 loop.run_until_complete(self.from_async_access_config_list())
+        super().__init__(**self)
 
     def from_json(self, filename: str, silent: bool = False,
                   priority: int = 2) -> bool:
@@ -305,7 +306,10 @@ class Config(Mapping):
     def __len__(self) -> int:
         return len(self.config_meta)
 
-    def update(self, config: 'Config'):
+    def __setitem__(self, k, v) -> None:
+        raise AttributeError
+
+    def update(self, config: 'Config', **F):
         self.config_meta.update(config.config_meta)
 
     def get(self, key: str, default=None):
