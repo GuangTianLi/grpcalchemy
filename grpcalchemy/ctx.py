@@ -47,7 +47,7 @@ class RequestContext:
         rv = _request_ctx_stack.pop()
         assert rv is self, 'Popped wrong app context.  (%r instead of %r)' \
                            % (rv, self)
-        self.app_context.push()
+        self.app_context.pop()
 
     def __enter__(self):
         self.push()
