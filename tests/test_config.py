@@ -32,6 +32,10 @@ class ConfigTestCase(unittest.TestCase):
         config = Config(obj=TestObject)
 
         self.assertEqual("test", config["TEST"])
+        with self.assertRaises(KeyError):
+            _ = config['NOT_EXIST']
+
+        self.assertEqual("NOT_EXIST", config.get('NOT_EXIST', 'NOT_EXIST'))
 
     def test_default_config_init_from_str(self):
         config = Config(obj='tests.test_config.TestStrObject')

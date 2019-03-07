@@ -288,6 +288,8 @@ class Config(Dict):
     def __getitem__(self, key: str) -> Any:
         """ x.__getitem__(y) <==> x[y] """
         with self.lock:
+            if key not in self.config_meta:
+                raise KeyError(key)
             return self.config_meta[key].get()
 
     def items(self) -> Set[Tuple[Any, Any]]:
