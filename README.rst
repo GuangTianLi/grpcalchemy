@@ -16,6 +16,8 @@ gRPCAlchemy
 .. image:: https://img.shields.io/pypi/pyversions/grpcalchemy.svg
         :target: https://pypi.org/project/grpcalchemy/
 
+.. image:: https://codecov.io/gh/GuangTianLi/restalchemy/branch/master/graph/badge.svg
+  :target: https://codecov.io/gh/GuangTianLi/restalchemy
 
 
 
