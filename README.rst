@@ -74,6 +74,7 @@ Features
 * Middleware And Listeners
 * Global Variable Support
 * Current App Context Support
+* Current Rpc Context Support
 
 TODO
 -------
