@@ -5,53 +5,22 @@ from .server import Server
 
 
 class TestContext(Context):
-    def is_active(self):
-        pass
-
-    def time_remaining(self):
-        pass
-
-    def cancel(self):
-        pass
-
-    def add_callback(self, callback):
-        pass
-
-    def disable_next_message_compression(self):
-        pass
-
-    def invocation_metadata(self):
-        pass
-
-    def peer(self):
-        pass
-
-    def peer_identities(self):
-        pass
-
-    def peer_identity_key(self):
-        pass
-
-    def auth_context(self):
-        pass
-
-    def send_initial_metadata(self, initial_metadata):
-        pass
-
-    def set_trailing_metadata(self, trailing_metadata):
-        pass
-
-    def abort(self, code, details):
-        pass
-
-    def abort_with_status(self, status):
-        pass
-
-    def set_code(self, code):
-        pass
-
-    def set_details(self, details):
-        pass
+    is_active = lambda x:...
+    time_remaining = lambda x:...
+    cancel = lambda x:...
+    disable_next_message_compression = lambda x:...
+    invocation_metadata = lambda x:...
+    peer = lambda x:...
+    peer_identities = lambda x:...
+    peer_identity_key = lambda x:...
+    auth_context = lambda x:...
+    add_callback = lambda x, k:...
+    send_initial_metadata = lambda x, k:...
+    set_trailing_metadata = lambda x, k:...
+    abort_with_status = lambda x, k:...
+    set_code = lambda x, k:...
+    set_details = lambda x, k:...
+    abort = lambda x, k, v:...
 
 
 class Client:

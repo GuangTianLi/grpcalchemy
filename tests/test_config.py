@@ -36,6 +36,11 @@ class ConfigTestCase(unittest.TestCase):
             _ = config['NOT_EXIST']
 
         self.assertEqual("NOT_EXIST", config.get('NOT_EXIST', 'NOT_EXIST'))
+        self.assertTrue('TEST' in config)
+        self.assertEqual(1, len(config))
+        self.assertListEqual(['TEST'], [_ for _ in config])
+        config['TEST'] = 'changed'
+        self.assertEqual('changed', config['TEST'])
 
     def test_default_config_init_from_str(self):
         config = Config(obj='tests.test_config.TestStrObject')
