@@ -10,7 +10,6 @@ matrix:
       dist: xenial
       sudo: required
 after_success:
-  - coverage run setup.py test
   - codecov
 deploy:
   provider: pypi
