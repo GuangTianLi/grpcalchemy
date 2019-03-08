@@ -5,7 +5,6 @@ from concurrent.futures.thread import ThreadPoolExecutor
 from functools import partial
 
 from grpcalchemy import globals
-from grpcalchemy.globals import Local, LocalProxy, LocalStack, release_local
 
 
 class GlobalsTestCase(unittest.TestCase):
@@ -34,7 +33,7 @@ class GlobalsTestCase(unittest.TestCase):
         with self.assertRaises(AttributeError):
             delfoo()
 
-        release_local(ns)
+        globals.release_local(ns)
 
     def test_local_release(self):
         ns = globals.Local()
@@ -42,7 +41,7 @@ class GlobalsTestCase(unittest.TestCase):
         globals.release_local(ns)
         assert not hasattr(ns, 'foo')
 
-        ls = LocalStack()
+        ls = globals.LocalStack()
         ls.push(42)
         globals.release_local(ls)
         assert ls.top is None

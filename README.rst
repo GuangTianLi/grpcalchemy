@@ -16,8 +16,8 @@ gRPCAlchemy
 .. image:: https://img.shields.io/pypi/pyversions/grpcalchemy.svg
         :target: https://pypi.org/project/grpcalchemy/
 
-.. image:: https://codecov.io/gh/GuangTianLi/restalchemy/branch/master/graph/badge.svg
-  :target: https://codecov.io/gh/GuangTianLi/restalchemy
+.. image:: https://codecov.io/gh/GuangTianLi/grpcalchemy/branch/master/graph/badge.svg
+  :target: https://codecov.io/gh/GuangTianLi/grpcalchemy
 
 
 
@@ -82,11 +82,3 @@ TODO
 -------
 
 * Stream Method Support
-
-Credits
----------
-
-This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypackage`_ project template.
-
-.. _Cookiecutter: https://github.com/audreyr/cookiecutter
-.. _`audreyr/cookiecutter-pypackage`: https://github.com/audreyr/cookiecutter-pypackage
