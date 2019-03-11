@@ -125,7 +125,7 @@ We can then define a list of comment documents in our post message:
 
 .. code-block:: python
 
-    class Post(Document):
+    class Post(Message):
         title = StringField()
         author = ReferenceField(User)
         tags = ListField(StringField)
@@ -154,7 +154,7 @@ The above code is equal to an RPC service with a method::
     }
 
 
-Using Blueprint to Construct Your Large Application
+Using Blueprint to Build Your Large Application
 =========================================================
 
 gRPCAlchemy uses a concept of blueprints for making gRPC services and
@@ -193,10 +193,10 @@ Using :any:`Config` to construct your config.
 Define the Base Config Class
 -----------------------------------------
 
-Using `Class` to define your config value explicitly and pass it to :any:`Config` to init:
+Using `Class` to define your config value explicitly and pass it to initialize :any:`Config`:
 
-* `BaseConfig` should define all config used in the project *explicitly* and initialize it.
-* the config key should be **uppercase**.
+.. note:: `BaseConfig` should define all config used in the project **explicitly** and initialize it.
+.. note:: the config key should be **uppercase**.
 
 .. code-block:: python
 
@@ -224,7 +224,7 @@ Using environment variables explicitly
 ----------------------------------------
 Defining the `ENV_PREFIX` to load the environment variables:
 
-* The :any:`Config` will try to load all `ENV_PREFIX` + `attributes name`.
+.. note:: The :any:`Config` will try to load all `ENV_PREFIX` + `attributes name`.
 
 .. code-block:: python
 
@@ -260,10 +260,10 @@ Defining the `CONFIG_FILE` to load the environment variables:
     json
 
 Using the Custom way to Access Config Explicitly
--------------------------------------------
+----------------------------------------------------
 Using  `sync_access_config_list` or `async_access_config_list` access your config:
 
-* When the `ENABLE_CONFIG_LIST` is `True`, the config will init with your custom way:
+.. note:: When the `ENABLE_CONFIG_LIST` is `True`, the config will init with your custom way:
 
 .. code-block:: python
 
