@@ -92,7 +92,7 @@ class ConfigMeta:
         return True
 
 
-class Config(Dict):
+class Config(Dict[str, Any]):
     """Init the :any:`Config` with the Priority。
 
     * Priority: *env > local config file > remote center > project config*

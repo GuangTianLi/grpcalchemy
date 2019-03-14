@@ -1,7 +1,6 @@
-from collections import namedtuple
 from functools import partial, update_wrapper
 from inspect import signature
-from typing import Callable, List, Tuple, Type, TypeVar, Union
+from typing import Callable, List, Tuple, Type, Union
 
 from google.protobuf.message import Message as GeneratedProtocolMessageType
 from grpc import ServicerContext as Context
@@ -10,10 +9,6 @@ from .ctx import AppContext, RequestContext
 from .globals import LocalProxy, _find_rpc
 from .meta import ServiceMeta, __meta__
 from .orm import Message
-
-Rpc = namedtuple('Rpc', ['name', 'request', 'response'])
-
-_T = TypeVar("_T")
 
 current_rpc: 'RpcWrappedCallable' = LocalProxy(_find_rpc)
 
@@ -43,8 +38,8 @@ class RpcWrappedCallable:
         self.response_type = response_type
         self.pre_processes = pre_processes
         self.post_processes = post_processes
-        # ：TODO self.__call__.__func__.__signature__ = signature(func)
-        update_wrapper(self.__call__.__func__, func)
+        self.__signature__ = signature(func)
+        update_wrapper(self, func)
 
     def preprocess(self, origin_request: GeneratedProtocolMessageType,
                    context: Context) -> Message:
