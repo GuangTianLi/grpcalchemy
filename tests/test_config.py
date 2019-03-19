@@ -2,6 +2,8 @@ import json
 import os
 import unittest
 
+import yaml
+
 from grpcalchemy.config import Config
 
 
@@ -15,15 +17,19 @@ default_config = Config(obj=TestStrObject)
 
 class ConfigTestCase(unittest.TestCase):
     json_file = "test.json"
+    yaml_file = "test.yaml"
 
     @classmethod
     def setUpClass(cls):
         with open(cls.json_file, "w") as fp:
             json.dump({"JSON_TEST": "JSON_TEST"}, fp)
+        with open(cls.yaml_file, "w") as fp:
+            yaml.dump({"YAML_TEST": "YAML_TEST"}, fp)
 
     @classmethod
     def tearDownClass(cls):
         os.remove(cls.json_file)
+        os.remove(cls.yaml_file)
 
     def test_default_config_init_from_object(self):
         class TestObject:
@@ -57,6 +63,16 @@ class ConfigTestCase(unittest.TestCase):
 
         self.assertEqual("JSON_TEST", config["JSON_TEST"])
 
+    def test_default_config_update_from_yaml(self):
+        class TestObject:
+            CONFIG_FILE = self.yaml_file
+
+            YAML_TEST = "default"
+
+        config = Config(obj=TestObject)
+
+        self.assertEqual("YAML_TEST", config["YAML_TEST"])
+
     def test_config_with_env(self):
         os.environ["test_TEST"] = "changed"
 
@@ -68,7 +84,8 @@ class ConfigTestCase(unittest.TestCase):
         os.unsetenv("test_TEST")
 
     def test_update_config_from_remote_center(self):
-        def get_config() -> dict:
+        def get_config(current_config: dict) -> dict:
+            self.assertTrue(current_config['ENABLE_CONFIG_LIST'])
             return {"TEST": "changed"}
 
         class TestObject:
@@ -79,7 +96,8 @@ class ConfigTestCase(unittest.TestCase):
         self.assertEqual("changed", config["TEST"])
 
     def test_async_update_config_from_remote_center(self):
-        async def get_config_async() -> dict:
+        async def get_config_async(current_config: dict) -> dict:
+            self.assertTrue(current_config['ENABLE_CONFIG_LIST'])
             return {"TEST": "changed"}
 
         class TestObject:
@@ -94,13 +112,13 @@ class ConfigTestCase(unittest.TestCase):
         os.environ["test_FOURTH"] = "3"
         current_json_file = "test_priority.json"
 
-        def get_config() -> dict:
+        def get_config(current_config: dict) -> dict:
             return {
                 "SECOND": "1",
                 "FOURTH": "1",
             }
 
-        async def get_config_async() -> dict:
+        async def get_config_async(current_config: dict) -> dict:
             return {
                 "THIRD": 1,
                 "FOURTH": 1,

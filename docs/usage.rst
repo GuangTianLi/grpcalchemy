@@ -246,6 +246,8 @@ Using the config file explicitly
 ---------------------------------
 Defining the `CONFIG_FILE` to load the environment variables:
 
+.. note:: YAML or JSON file
+
 .. code-block:: python
 
     from grpcalchemy.config import Config
@@ -269,11 +271,11 @@ Using  `sync_access_config_list` or `async_access_config_list` access your confi
 
     from grpcalchemy.config import Config
 
-    async def get_config_async() -> dict:
+    async def get_config_async(current_config: dict) -> dict:
         return {'TYPE': 'async'}
 
 
-    def get_config() -> dict:
+    def get_config(current_config: dict) -> dict:
         return {'NAME': 'sync'}
 
 

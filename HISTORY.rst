@@ -2,6 +2,12 @@
 History
 =======
 
+0.2.7(2019-03-19)
+------------------
+
+* Support YAML file in Config Module
+* Improve Config Module
+
 0.2.5-6(2019-03-06)
 ------------------
 
