@@ -7,7 +7,7 @@
 
 __author__ = """GuangTian Li"""
 __email__ = 'guangtian_li@qq.com'
-__version__ = '0.2.6'
+__version__ = '0.2.7'
 
 from .blueprint import Blueprint, Context, current_rpc
 from .globals import current_app
