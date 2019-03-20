@@ -1,6 +1,7 @@
 import asyncio
 import errno
 import json
+import logging
 import os
 import sys
 from collections import defaultdict
@@ -20,6 +21,8 @@ from typing import (
     Type,
     Union,
 )
+
+import yaml
 
 _miss = lambda x: x
 
@@ -117,9 +120,9 @@ class Config(Dict[str, Any]):
 
     def __init__(self,
                  obj: Union[str, Type],
-                 sync_access_config_list: List[Callable[[], Dict]] = None,
+                 sync_access_config_list: List[Callable[[Dict], Dict]] = None,
                  async_access_config_list: List[
-                     Callable[[], Coroutine[Any, Any, Dict]]] = None,
+                     Callable[[Dict], Coroutine[Any, Any, Dict]]] = None,
                  root_path: str = "",
                  defaults: Dict = None):
         self.lock = RLock()
@@ -143,7 +146,7 @@ class Config(Dict[str, Any]):
         #: local config file
         config_file = self.get("CONFIG_FILE", "")
         if config_file:
-            self.from_json(config_file, silent=True)
+            self.from_file(config_file, silent=True)
 
         #: remote center
         if self.get("ENABLE_CONFIG_LIST", False):
@@ -157,29 +160,34 @@ class Config(Dict[str, Any]):
                 loop.run_until_complete(self.from_async_access_config_list())
         super().__init__(**self)
 
-    def from_json(self, filename: str, silent: bool = False,
+    def from_file(self, filename: str, silent: bool = False,
                   priority: int = 2) -> bool:
-        """Updates the values in the config from a JSON file. This function
-        behaves as if the JSON object was a dictionary and passed to the
-        :meth:`from_mapping` function.
+        """Updates the values in the config from a JSON file or a YAML file.
+        This function behaves as if the JSON or YAML object was a dictionary
+        and passed to the :meth:`from_mapping` function.
 
-        :param str filename: the filename of the JSON file. This can either be
-                            an absolute filename or a filename relative to the
-                            root path.
+        :param str filename: the filename of the JSON or YAML file. This can
+                            either be an absolute filename or a filename relative
+                            to the root path.
         :param bool silent: set to ``True`` if you want silent failure for missing
                        files.
 
         """
         filename = os.path.join(self.root_path, filename)
+        try_json_file = 'json' in filename
 
         try:
-            with open(filename) as json_file:
-                obj = json.loads(json_file.read())
+            with open(filename) as f:
+                if try_json_file:
+                    obj = json.load(f)
+                else:
+                    obj = yaml.safe_load(f)
         except IOError as e:
             if silent and e.errno in (errno.ENOENT, errno.EISDIR):
                 return False
             e.strerror = 'Unable to load configuration file (%s)' % e.strerror
             raise
+        logging.info(f'Loaded configuration file: {filename}')
         return self.from_mapping(obj, priority=priority)
 
     def from_mapping(self, *mapping, priority, **kwargs) -> bool:
@@ -263,7 +271,7 @@ class Config(Dict[str, Any]):
 
         """
         for remote_center in self.sync_access_config_list:
-            self.from_mapping(remote_center(), priority=priority)
+            self.from_mapping(remote_center(self), priority=priority)
         return True
 
     async def from_async_access_config_list(self, priority: int = 1) -> bool:
@@ -271,7 +279,7 @@ class Config(Dict[str, Any]):
 
         """
         for remote_center in self.async_access_config_list:
-            self.from_mapping(await remote_center(), priority=priority)
+            self.from_mapping(await remote_center(self), priority=priority)
         return True
 
     def _set_value(self,

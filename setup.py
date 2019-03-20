@@ -8,7 +8,7 @@ with open('README.rst') as readme_file:
 with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
-requirements = ["grpcio", "protobuf", "grpcio-tools", "jinja2"]
+requirements = ["grpcio", "protobuf", "grpcio-tools", "jinja2", "pyyaml"]
 
 setup_requirements = []
 
@@ -39,6 +39,6 @@ setup(
     tests_require=test_requirements,
     url='https://github.com/GuangTianLi/grpcalchemy',
     python_requires='>=3.6.0',
-    version='0.2.6',
+    version='0.2.7',
     zip_safe=False,
 )
