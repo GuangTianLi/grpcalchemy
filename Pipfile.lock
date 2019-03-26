@@ -351,17 +351,16 @@
         },
         "ipdb": {
             "hashes": [
-                "sha256:7081c65ed7bfe7737f83fa4213ca8afd9617b42ff6b3f1daf9a3419839a2a00a"
+                "sha256:dce2112557edfe759742ca2d0fee35c59c97b0cc7a05398b791079d78f1519ce"
             ],
-            "index": "pypi",
-            "version": "==0.11"
+            "version": "==0.12"
         },
         "ipython": {
             "hashes": [
-                "sha256:06de667a9e406924f97781bda22d5d76bfb39762b678762d86a466e63f65dc39",
-                "sha256:5d3e020a6b5f29df037555e5c45ab1088d6a7cf3bd84f47e0ba501eeb0c3ec82"
+                "sha256:b038baa489c38f6d853a3cfc4c635b0cda66f2864d136fe8f40c1a6e334e2a6b",
+                "sha256:f5102c1cd67e399ec8ea66bcebe6e3968ea25a8977e53f012963e5affeb1fe38"
             ],
-            "version": "==7.3.0"
+            "version": "==7.4.0"
         },
         "ipython-genutils": {
             "hashes": [
@@ -372,11 +371,10 @@
         },
         "isort": {
             "hashes": [
-                "sha256:18c796c2cd35eb1a1d3f012a214a542790a1aed95e29768bdcb9f2197eccbd0b",
-                "sha256:96151fca2c6e736503981896495d344781b60d18bfda78dc11b290c6125ebdb6"
+                "sha256:08f8e3f0f0b7249e9fad7e5c41e2113aba44969798a26452ee790c06f155d4ec",
+                "sha256:4e9e9c4bd1acd66cf6c36973f29b031ec752cbfd991c69695e4e259f9a756927"
             ],
-            "index": "pypi",
-            "version": "==4.3.15"
+            "version": "==4.3.16"
         },
         "jedi": {
             "hashes": [
@@ -527,11 +525,10 @@
         },
         "pyre-check": {
             "hashes": [
-                "sha256:4c7102417c5ca47bfae693630d6a20740260752a809b0fa75b52af0de4944c66",
-                "sha256:5be0c254ead5cf06cce6910b7806a0c0d0b742254b40862f5f1d5646a05d1f94"
+                "sha256:4593eceebeb2f8bf316f545dd3a020e95d8ff1e478048dd63c1d71e86a6dd8ad",
+                "sha256:56ab921e374bf2622eee63323dcd779594f0e283e17b97daaa25f0e6c2469f2e"
             ],
-            "index": "pypi",
-            "version": "==0.0.20"
+            "version": "==0.0.21"
         },
         "pytz": {
             "hashes": [
