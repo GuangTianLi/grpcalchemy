@@ -16,6 +16,7 @@ from typing import (
     KeysView,
     List,
     Mapping,
+    Optional,
     Set,
     Tuple,
     Type,
@@ -95,7 +96,7 @@ class ConfigMeta:
         return True
 
 
-class Config(Dict[str, Any]):
+class Config(dict):
     """Init the :any:`Config` with the Priority。
 
     * Priority: *env > local config file > remote center > project config*
@@ -124,7 +125,7 @@ class Config(Dict[str, Any]):
                  async_access_config_list: List[
                      Callable[[Dict], Coroutine[Any, Any, Dict]]] = None,
                  root_path: str = "",
-                 defaults: Dict = None):
+                 defaults: Optional[dict] = None):
         self.lock = RLock()
         self.config_meta: DefaultDict[str, ConfigMeta] = defaultdict(
             ConfigMeta)
@@ -331,7 +332,7 @@ class Config(Dict[str, Any]):
 
 
 default_config = dict(
-    TEMPLATE_PATH="prgotos",
+    TEMPLATE_PATH="protos",
     MAX_WORKERS=10,
     OPTIONS=(),
     MAXIMUM_CONCURRENT_RPCS=None,

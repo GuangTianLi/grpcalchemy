@@ -64,7 +64,7 @@ class Server(Blueprint):
             file_name: str = '',
             pre_processes: List[Callable[[Message, Context], Message]] = None,
             post_processes: List[Callable[[Message, Context], Message]] = None,
-            config: Config = None):
+            config: Optional[dict] = None):
         super().__init__(
             name=name,
             file_name=file_name,
