@@ -1,6 +1,6 @@
 from functools import partial, update_wrapper
 from inspect import signature
-from typing import Callable, List, Tuple, Type, Union
+from typing import Callable, List, Optional, Tuple, Type, Union
 
 from google.protobuf.message import Message as GeneratedProtocolMessageType
 from grpc import ServicerContext as Context
@@ -78,7 +78,7 @@ def _validate_rpc_method(rpc_method: Callable[[Message, Context], Message]
 
 
 def _validate_rpc_processes(
-        rpc_processes: Union[List[Callable[[Message, Context], Message]], None]
+        rpc_processes: Optional[List[Callable[[Message, Context], Message]]]
 ) -> List[Callable[[Message, Context], Message]]:
     rpc_processes = rpc_processes or []
     for rpc_process in rpc_processes:
@@ -138,15 +138,14 @@ class Blueprint:
 
         __meta__[self.file_name].services.append(self.service_meta)
 
-    def register(
-            self,
-            rpc: Union[Callable[[Message, Context], Message], None] = None,
-            *,
-            pre_processes: Union[List[Callable[[Message, Context], Message]],
-                                 None] = None,
-            post_processes: Union[List[Callable[[Message, Context], Message]],
-                                  None] = None
-    ) -> Union[RpcWrappedCallable, partial]:
+    def register(self,
+                 rpc: Optional[Callable[[Message, Context], Message]] = None,
+                 *,
+                 pre_processes: Optional[List[
+                     Callable[[Message, Context], Message]]] = None,
+                 post_processes: Optional[List[
+                     Callable[[Message, Context], Message]]] = None
+                 ) -> Union[RpcWrappedCallable, partial]:
         """Any gRPC method can be defined like this::
 
             @app.register

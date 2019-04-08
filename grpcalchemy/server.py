@@ -5,7 +5,16 @@ from collections import defaultdict
 from concurrent import futures
 from functools import partial
 from threading import Event
-from typing import Any, Callable, DefaultDict, Dict, List, Tuple, Union
+from typing import (
+    Any,
+    Callable,
+    DefaultDict,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    Union,
+)
 
 from grpc import GenericRpcHandler
 from grpc._cython import cygrpc
@@ -154,7 +163,7 @@ class Server(Blueprint):
 
     def listener(self,
                  event: str,
-                 listener: Union[Callable[[Any], None], None] = None
+                 listener: Optional[Callable[[Any], None]] = None
                  ) -> Union[partial, Callable[[Any], None]]:
         """
         Create a listener from a decorated function.

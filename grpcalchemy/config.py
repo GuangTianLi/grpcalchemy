@@ -146,7 +146,7 @@ class Config(Dict[str, Any]):
         #: local config file
         config_file = self.get("CONFIG_FILE", "")
         if config_file:
-            self.from_file(config_file, silent=True)
+            self.from_file(config_file)
 
         #: remote center
         if self.get("ENABLE_CONFIG_LIST", False):
@@ -181,7 +181,7 @@ class Config(Dict[str, Any]):
                 if try_json_file:
                     obj = json.load(f)
                 else:
-                    obj = yaml.safe_load(f)
+                    obj = yaml.safe_load(f) or {}
         except IOError as e:
             if silent and e.errno in (errno.ENOENT, errno.EISDIR):
                 return False
@@ -330,11 +330,9 @@ class Config(Dict[str, Any]):
             return self.config_meta.get(key, ConfigMeta(default=default)).get()
 
 
-default_config = Config(
-    obj=object,
-    defaults=dict(
-        TEMPLATE_PATH="protos",
-        MAX_WORKERS=10,
-        OPTIONS=(),
-        MAXIMUM_CONCURRENT_RPCS=None,
-    ))
+default_config = dict(
+    TEMPLATE_PATH="prgotos",
+    MAX_WORKERS=10,
+    OPTIONS=(),
+    MAXIMUM_CONCURRENT_RPCS=None,
+)
