@@ -25,6 +25,7 @@ class RpcWrappedCallable:
     name: str
     ctx: AppContext
     origin_request: GeneratedProtocolMessageType
+    context: Context
 
     def __init__(self, server_name: str,
                  func: Callable[[Message, Context], Message],
@@ -59,6 +60,7 @@ class RpcWrappedCallable:
     def __call__(self, origin_request: GeneratedProtocolMessageType,
                  context: Context) -> GeneratedProtocolMessageType:
         self.origin_request = origin_request
+        self.context = context
         with RequestContext(app_context=self.ctx, rpc=self):
             request = self.preprocess(origin_request, context)
             return self.postprocess(self._func(request, context), context)

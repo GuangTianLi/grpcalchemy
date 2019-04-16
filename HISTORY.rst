@@ -2,11 +2,12 @@
 History
 =======
 
-0.2.7(2019-03-19)
+0.2.7-8(2019-04-16)
 ------------------
 
 * Support YAML file in Config Module
 * Improve Config Module
+* Add context in current rpc
 
 0.2.5-6(2019-03-06)
 ------------------
