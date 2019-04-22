@@ -642,10 +642,10 @@
         },
         "urllib3": {
             "hashes": [
-                "sha256:61bf29cada3fc2fbefad4fdf059ea4bd1b4a86d2b6d15e1c7c0b582b9752fe39",
-                "sha256:de9529817c93f27c8ccbfead6985011db27bd0ddfcdb2d86f3f663385c6a9c22"
+                "sha256:a08afe8b057ba35963364711a1f36d346375da0c118f611f35c0252375338c7c",
+                "sha256:f03eeb431c77b88cf8747d47e94233a91d0e0fdae1cf09e0b21405a885700266"
             ],
-            "version": "==1.24.1"
+            "version": "==1.25"
         },
         "virtualenv": {
             "hashes": [
