@@ -519,10 +519,10 @@
         },
         "pyre-check": {
             "hashes": [
-                "sha256:0475cc0de6497ab4a466ee3aa21203fa3d5d177aead4de5d069ed03b682562d9",
-                "sha256:af9dd88b5ed8836b28831897803a6495d1ec04837451b2be104f8a8b011a1264"
+                "sha256:53092acb9667f3c349efef92c089c15b5c82ca5bddde20bc49eb01d16925aab6",
+                "sha256:909429e5957a3d1934bf5e230461f56e3be02a3ec2d4a5a403d7fc8c8d201fa1"
             ],
-            "version": "==0.0.24"
+            "version": "==0.0.26"
         },
         "pytz": {
             "hashes": [
