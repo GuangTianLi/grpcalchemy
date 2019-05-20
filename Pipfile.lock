@@ -341,10 +341,10 @@
         },
         "importlib-metadata": {
             "hashes": [
-                "sha256:6a0080fdc87c8225e004b00b55bd1eab153a32ef5a11e17c14de81edbb8ed1a7",
-                "sha256:c0bdce522d5b215c710f237cfc1f58ace432affd3052176bbb719f53e2465256"
+                "sha256:0e375a4c177090292988d1c2f997c7c2467d908c1adbed3e08fb511486c85457",
+                "sha256:440815529340fb7fdd6a83ebf4258cc2860fb3770d37b52875e37c6f509a4cd6"
             ],
-            "version": "==0.11"
+            "version": "==0.13"
         },
         "ipdb": {
             "hashes": [
