@@ -684,10 +684,10 @@
         },
         "zipp": {
             "hashes": [
-                "sha256:46dfd547d9ccbf8bdc26ecea52818046bb28509f12bb6a0de1cd66ab06e9a9be",
-                "sha256:d7ac25f895fb65bff937b381353c14eb1fa23d35f40abd72a5342cd57eb57fd1"
+                "sha256:8c1019c6aad13642199fbe458275ad6a84907634cc9f0989877ccc4a2840139d",
+                "sha256:ca943a7e809cc12257001ccfb99e3563da9af99d52f261725e96dfe0f9275bc3"
             ],
-            "version": "==0.5.0"
+            "version": "==0.5.1"
         }
     }
 }
