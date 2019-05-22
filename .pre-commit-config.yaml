@@ -5,7 +5,7 @@ repos:
 
   - id: isort
     name: isort
-    entry: isort
+    entry: pipenv run isort
     language: python
     types: [python]
     exclude: ai_service_protos/
@@ -13,7 +13,7 @@ repos:
 
   - id: format
     name: format
-    entry: yapf
+    entry: pipenv run format
     language: system
     exclude: ai_service_protos/
     types: [python]

@@ -30,3 +30,5 @@ python_version = "3.7"
 [scripts]
 patch = "bumpversion patch"
 init-pre-commit = "pre-commit install"
+isort =  "bash -c 'isort $@ && git add -u' --"
+format =  "bash -c 'yapf --in-place $@ && git add -u' --"
