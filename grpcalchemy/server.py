@@ -16,6 +16,7 @@ from typing import (
     Union,
 )
 
+import grpc
 from grpc import GenericRpcHandler
 from grpc._cython import cygrpc
 from grpc._server import (
@@ -27,7 +28,7 @@ from grpc._server import (
 )
 
 from .blueprint import Blueprint, Context
-from .config import Config, default_config
+from .config import default_config
 from .ctx import AppContext
 from .orm import Message
 from .utils import generate_proto_file
@@ -35,7 +36,7 @@ from .utils import generate_proto_file
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
 
 
-class Server(Blueprint):
+class Server(Blueprint, grpc.Server):
     """The Server object implements a base application and acts as the central
     object. It is passed the name of gRPC Service of the application. Once it is
     created it will act as a central registry for the gRPC Service.
@@ -144,8 +145,7 @@ class Server(Blueprint):
         for func in self.listeners["before_server_start"]:
             func(self)
 
-        with self._state.lock:
-            self._state.server.add_http2_port(f'[::]:{port}'.encode("utf-8"))
+        self.add_insecure_port(f'[::]:{port}'.encode("utf-8"))
         self.start()
 
         self.logger.info(f"gRPC server is running on 0.0.0.0:{port}")
@@ -235,6 +235,16 @@ class Server(Blueprint):
         """
         _validate_generic_rpc_handlers(generic_rpc_handlers)
         _add_generic_handlers(self._state, generic_rpc_handlers)
+
+    def add_insecure_port(self, address: bytes):
+        with self._state.lock:
+            return self._state.server.add_http2_port(address)
+
+    def add_secure_port(self, address: bytes,
+                        server_credentials: grpc.ServerCredentials):
+        with self._state.lock:
+            return self._state.server.add_http2_port(
+                address, server_credentials._credentials)
 
     def __del__(self):
         """

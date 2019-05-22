@@ -2,9 +2,10 @@
 History
 =======
 
-0.2.7-8(2019-04-16)
+0.2.7-9(2019-04-16)
 ------------------
 
+* Improve Implement of Server with grpc.server
 * Support YAML file in Config Module
 * Improve Config Module
 * Add context in current rpc

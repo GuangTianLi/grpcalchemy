@@ -82,3 +82,4 @@ TODO
 -------
 
 * Stream Method Support
+* Error Handler Support
