@@ -9,11 +9,16 @@ from .utils import generate_proto_file
 class Client:
     config = default_config
 
-    def __init__(self, target, credentials=None, options=None):
+    def __init__(self,
+                 target,
+                 credentials=None,
+                 options=None,
+                 compression=None):
         from grpc import _channel
 
-        self.channel = _channel.Channel(
-            target, () if options is None else options, credentials)
+        self.channel = _channel.Channel(target,
+                                        () if options is None else options,
+                                        credentials, compression)
 
     def __enter__(self):
         generate_proto_file(self.config["TEMPLATE_PATH"])
