@@ -8,7 +8,9 @@ with open('README.rst') as readme_file:
 with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
-requirements = ["grpcio", "protobuf", "grpcio-tools", "jinja2", "pyyaml"]
+requirements = [
+    "grpcio>=1.12.1", "protobuf", "grpcio-tools", "jinja2", "pyyaml"
+]
 
 setup_requirements = []
 
