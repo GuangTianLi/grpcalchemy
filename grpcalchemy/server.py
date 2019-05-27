@@ -132,7 +132,11 @@ class Server(Blueprint, grpc.Server):
         """
         self.blueprints[bp.name] = bp
 
-    def run(self, port: int = 50051, test=False) -> None:
+    def run(self,
+            port: int = 50051,
+            test=False,
+            server_credentials: Optional[grpc.ServerCredentials] = None
+            ) -> None:
         generate_proto_file(template_path=self.config["TEMPLATE_PATH"])
         for name, bp in self.blueprints.items():
             grpc_pb2_module = importlib.import_module(
@@ -145,7 +149,12 @@ class Server(Blueprint, grpc.Server):
         for func in self.listeners["before_server_start"]:
             func(self)
 
-        self.add_insecure_port(f'[::]:{port}'.encode("utf-8"))
+        if server_credentials:
+            self.add_secure_port(
+                f'[::]:{port}'.encode("utf-8"),
+                server_credentials=server_credentials)
+        else:
+            self.add_insecure_port(f'[::]:{port}'.encode("utf-8"))
         self.start()
 
         self.logger.info(f"gRPC server is running on 0.0.0.0:{port}")
