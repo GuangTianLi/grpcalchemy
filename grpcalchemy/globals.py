@@ -153,7 +153,7 @@ class LocalStack:
             return None
 
 
-class LocalProxy(object):
+class LocalProxy:
     """Acts as a proxy for a grpcalchemy local.  Forwards all operations to
     a proxied object.  The only operations not supported for forwarding
     are right handed operands and any kind of assignment.
@@ -301,7 +301,8 @@ class LocalProxy(object):
     __rmod__ = lambda x, o: o % x._get_current_object()
     __rdivmod__ = lambda x, o: x._get_current_object().__rdivmod__(o)
     __copy__ = lambda x: copy.copy(x._get_current_object())
-    __deepcopy__ = lambda x, memo: copy.deepcopy(x._get_current_object(), memo=memo)
+    __deepcopy__ = lambda x, memo: copy.deepcopy(x._get_current_object(),
+                                                 memo=memo)
 
 
 _app_ctx_err_msg = '''\

@@ -76,7 +76,14 @@ def _validate_rpc_method(rpc_method: Callable[[Message, Context], Message]
         if issubclass(request_type, Message) and issubclass(
                 response_type, Message):
             return request_type, response_type
-    raise InvalidRPCMethod("Invalid rpc Method!")
+    raise InvalidRPCMethod('''\
+The RPC method is invalid. 
+
+The correct signature is blow::
+
+    def rpc_call(request: Message, context) -> Message:
+        ...
+''')
 
 
 def _validate_rpc_processes(
@@ -124,8 +131,8 @@ class Blueprint:
             self.file_name = file_name
         self.file_name.replace('.', '_')
         self.name = name
-        self.service_meta: ServiceMetaTypeshed = ServiceMeta(
-            name=self.name, rpcs=[])
+        self.service_meta: ServiceMetaTypeshed = ServiceMeta(name=self.name,
+                                                             rpcs=[])
 
         #: all the processes function in a list.
         #: And the function must be Callable[[`Message`, Context], `Message`]:
@@ -139,6 +146,30 @@ class Blueprint:
         self.post_processes = _validate_rpc_processes(post_processes)
 
         __meta__[self.file_name].services.append(self.service_meta)
+
+    def before_request(self, f: Callable[[Message, Context], Message]):
+        """Registers a function to run before each request.
+
+        Example::
+
+            @app.before_request
+            def before_request(request: Message, context) -> Message:
+                return request
+        """
+        _validate_rpc_method(f)
+        self.pre_processes.append(f)
+
+    def after_request(self, f: Callable[[Message, Context], Message]):
+        """Register a function to be run after each request.
+
+        Example::
+
+            @app.after_request
+            def after_request(request: Message, context) -> Message:
+                return request
+        """
+        _validate_rpc_method(f)
+        self.post_processes.append(f)
 
     def register(self,
                  rpc: Optional[Callable[[Message, Context], Message]] = None,
@@ -163,10 +194,9 @@ class Blueprint:
         :return:
         """
         if rpc is None:
-            return partial(
-                self.register,
-                pre_processes=pre_processes,
-                post_processes=post_processes)
+            return partial(self.register,
+                           pre_processes=pre_processes,
+                           post_processes=post_processes)
         request_type, response_type = _validate_rpc_method(rpc)
         current_pre_process = self.pre_processes + _validate_rpc_processes(
             pre_processes)
