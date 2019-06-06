@@ -30,8 +30,6 @@ The Python micro framework for building gPRC application.
 Installation
 ----------------
 
- | Disclaimer: Still at an early stage of development. Rapidly evolving APIs.
-
 .. code-block:: shell
 
     $ pipenv install grpcalchemy

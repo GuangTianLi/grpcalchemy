@@ -18,7 +18,7 @@ setup(
     author="GuangTian Li",
     author_email='guangtian_li@qq.com',
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
         'Natural Language :: English',
