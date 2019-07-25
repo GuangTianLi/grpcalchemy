@@ -33,11 +33,11 @@ def release_local(local):
 
 
 class Local:
-    __slots__ = ('__storage__', '__ident_func__')
+    __slots__ = ("__storage__", "__ident_func__")
 
     def __init__(self):
-        object.__setattr__(self, '__storage__', {})
-        object.__setattr__(self, '__ident_func__', get_ident)
+        object.__setattr__(self, "__storage__", {})
+        object.__setattr__(self, "__ident_func__", get_ident)
 
     def __iter__(self):
         return iter(self.__storage__.items())
@@ -107,7 +107,7 @@ class LocalStack:
         return self._local.__ident_func__
 
     def _set__ident_func__(self, value):
-        object.__setattr__(self._local, '__ident_func__', value)
+        object.__setattr__(self._local, "__ident_func__", value)
 
     __ident_func__ = property(_get__ident_func__, _set__ident_func__)
     del _get__ident_func__, _set__ident_func__
@@ -116,14 +116,14 @@ class LocalStack:
         def _lookup():
             rv = self.top
             if rv is None:
-                raise RuntimeError('object unbound')
+                raise RuntimeError("object unbound")
             return rv
 
         return LocalProxy(_lookup)
 
     def push(self, obj):
         """Pushes a new item to the stack"""
-        rv = getattr(self._local, 'stack', None)
+        rv = getattr(self._local, "stack", None)
         if rv is None:
             self._local.stack = rv = []
         rv.append(obj)
@@ -133,7 +133,7 @@ class LocalStack:
         """Removes the topmost item from the stack, will return the
         old value or `None` if the stack was already empty.
         """
-        stack = getattr(self._local, 'stack', None)
+        stack = getattr(self._local, "stack", None)
         if stack is None:
             return None
         elif len(stack) == 1:
@@ -188,40 +188,41 @@ class LocalProxy:
     .. versionchanged:: 0.2.4
        The class can be instantiated with a callable as well now.
     """
-    __slots__ = ('__local', '__dict__', '__name__', '__wrapped__')
+
+    __slots__ = ("__local", "__dict__", "__name__", "__wrapped__")
 
     def __init__(self, local, name=None):
-        object.__setattr__(self, '_LocalProxy__local', local)
-        object.__setattr__(self, '__name__', name)
-        if callable(local) and not hasattr(local, '__release_local__'):
+        object.__setattr__(self, "_LocalProxy__local", local)
+        object.__setattr__(self, "__name__", name)
+        if callable(local) and not hasattr(local, "__release_local__"):
             # "local" is a callable that is not an instance of Local or
             # LocalManager: mark it as a wrapped function.
-            object.__setattr__(self, '__wrapped__', local)
+            object.__setattr__(self, "__wrapped__", local)
 
     def _get_current_object(self):
         """Return the current object.  This is useful if you want the real
         object behind the proxy at a time for performance reasons or because
         you want to pass the object into a different context.
         """
-        if not hasattr(self.__local, '__release_local__'):
+        if not hasattr(self.__local, "__release_local__"):
             return self.__local()
         try:
             return getattr(self.__local, self.__name__)
         except AttributeError:
-            raise RuntimeError('no object bound to %s' % self.__name__)
+            raise RuntimeError("no object bound to %s" % self.__name__)
 
     @property
     def __dict__(self):
         try:
             return self._get_current_object().__dict__
         except RuntimeError:
-            raise AttributeError('__dict__')
+            raise AttributeError("__dict__")
 
     def __repr__(self):
         try:
             obj = self._get_current_object()
         except RuntimeError:
-            return '<%s unbound>' % self.__class__.__name__
+            return "<%s unbound>" % self.__class__.__name__
         return repr(obj)
 
     def __bool__(self):
@@ -240,7 +241,7 @@ class LocalProxy:
             return []
 
     def __getattr__(self, name):
-        if name == '__members__':
+        if name == "__members__":
             return dir(self._get_current_object())
         return getattr(self._get_current_object(), name)
 
@@ -271,7 +272,7 @@ class LocalProxy:
     __floordiv__ = lambda x, o: x._get_current_object() // o
     __mod__ = lambda x, o: x._get_current_object() % o
     __divmod__ = lambda x, o: x._get_current_object().__divmod__(o)
-    __pow__ = lambda x, o: x._get_current_object()**o
+    __pow__ = lambda x, o: x._get_current_object() ** o
     __lshift__ = lambda x, o: x._get_current_object() << o
     __rshift__ = lambda x, o: x._get_current_object() >> o
     __and__ = lambda x, o: x._get_current_object() & o
@@ -301,23 +302,22 @@ class LocalProxy:
     __rmod__ = lambda x, o: o % x._get_current_object()
     __rdivmod__ = lambda x, o: x._get_current_object().__rdivmod__(o)
     __copy__ = lambda x: copy.copy(x._get_current_object())
-    __deepcopy__ = lambda x, memo: copy.deepcopy(x._get_current_object(),
-                                                 memo=memo)
+    __deepcopy__ = lambda x, memo: copy.deepcopy(x._get_current_object(), memo=memo)
 
 
-_app_ctx_err_msg = '''\
+_app_ctx_err_msg = """\
 Working outside of application context.
 
 This typically means that you attempted to use functionality that needed
 to interface with the current application object in some way. To solve
 this, set up an application context with app.app_context.  See the
 documentation for more information.\
-'''
+"""
 
-_request_ctx_err_msg = '''\
+_request_ctx_err_msg = """\
 Working outside of request context.
 
-'''
+"""
 
 
 def _find_app():

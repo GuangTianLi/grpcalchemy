@@ -15,7 +15,7 @@ _missing = object()
 
 class BaseField:
     _type_name = ""
-    _name = ''
+    _name = ""
 
     def __init__(self):
         self.lock = RLock()
@@ -167,12 +167,14 @@ class DeclarativeMeta(type):
                         if issubclass(value._key_type, Message):
                             if value._key_type.__filename__ != file_name:
                                 __meta__[file_name].import_files.add(
-                                    value._key_type.__filename__)
+                                    value._key_type.__filename__
+                                )
                         if isinstance(value, MapField):
                             if issubclass(value._value_type, Message):
                                 if value._value_type.__filename__ != file_name:
                                     __meta__[file_name].import_files.add(
-                                        value._value_type.__filename__)
+                                        value._value_type.__filename__
+                                    )
                     clsdict["__meta__"][key] = value
             __meta__[file_name].messages.append(message_meta)
         return super().__new__(cls, clsname, bases, clsdict)
@@ -185,7 +187,8 @@ class Message(BaseField, metaclass=DeclarativeMeta):
 
     def __init__(self, **kwargs):
         gpr_message_module = importlib.import_module(
-            f".{self.__filename__}_pb2", default_config["TEMPLATE_PATH"])
+            f".{self.__filename__}_pb2", default_config["TEMPLATE_PATH"]
+        )
         gRPCMessageClass = getattr(gpr_message_module, f"{self._type_name}")
         for key, item in kwargs.items():
             if isinstance(item, list):
@@ -204,10 +207,12 @@ class Message(BaseField, metaclass=DeclarativeMeta):
     def init_grpc_message(self, grpc_message: GeneratedProtocolMessageType):
         self._message = grpc_message
 
-    def message_to_dict(self,
-                        including_default_value_fields: bool = False,
-                        preserving_proto_field_name: bool = False,
-                        use_integers_for_enums: bool = False) -> dict:
+    def message_to_dict(
+        self,
+        including_default_value_fields: bool = False,
+        preserving_proto_field_name: bool = False,
+        use_integers_for_enums: bool = False,
+    ) -> dict:
         """Converts protobuf message to a dictionary.
 
         When the dictionary is encoded to JSON, it conforms to proto3 JSON spec.
@@ -231,14 +236,17 @@ class Message(BaseField, metaclass=DeclarativeMeta):
             self._message,
             including_default_value_fields=including_default_value_fields,
             preserving_proto_field_name=preserving_proto_field_name,
-            use_integers_for_enums=use_integers_for_enums)
+            use_integers_for_enums=use_integers_for_enums,
+        )
 
-    def message_to_json(self,
-                        including_default_value_fields: bool = False,
-                        preserving_proto_field_name: bool = False,
-                        indent: int = 2,
-                        sort_keys: bool = False,
-                        use_integers_for_enums: bool = False) -> str:
+    def message_to_json(
+        self,
+        including_default_value_fields: bool = False,
+        preserving_proto_field_name: bool = False,
+        indent: int = 2,
+        sort_keys: bool = False,
+        use_integers_for_enums: bool = False,
+    ) -> str:
         """Converts protobuf message to JSON format.
 
           Args:
@@ -265,4 +273,5 @@ class Message(BaseField, metaclass=DeclarativeMeta):
             preserving_proto_field_name=preserving_proto_field_name,
             indent=indent,
             sort_keys=sort_keys,
-            use_integers_for_enums=use_integers_for_enums)
+            use_integers_for_enums=use_integers_for_enums,
+        )

@@ -39,7 +39,7 @@ class GlobalsTestCase(unittest.TestCase):
         ns = globals.Local()
         ns.foo = 42
         globals.release_local(ns)
-        assert not hasattr(ns, 'foo')
+        assert not hasattr(ns, "foo")
 
         ls = globals.LocalStack()
         ls.push(42)
@@ -82,7 +82,7 @@ class GlobalsTestCase(unittest.TestCase):
         assert ls * 2 == "foofoo"
 
         foo = "foo %s"
-        assert ls % ("bar", ) == "foo bar"
+        assert ls % ("bar",) == "foo bar"
 
     def test_local_stack(self):
         ident = globals.get_ident()
@@ -109,7 +109,7 @@ class GlobalsTestCase(unittest.TestCase):
         assert proxy == (1, 2)
         ls.pop()
         ls.pop()
-        assert repr(proxy) == '<LocalProxy unbound>'
+        assert repr(proxy) == "<LocalProxy unbound>"
 
         assert ident not in ls._local.__storage__
 
@@ -148,7 +148,7 @@ class GlobalsTestCase(unittest.TestCase):
 
     def test_local_proxy_wrapped_attribute(self):
         class SomeClassWithWrapped:
-            __wrapped__ = 'wrapped'
+            __wrapped__ = "wrapped"
 
         def lookup_func():
             return 42
@@ -165,10 +165,10 @@ class GlobalsTestCase(unittest.TestCase):
         ns.foo = SomeClassWithWrapped()
         ns.bar = 42
 
-        assert ns('foo').__wrapped__ == 'wrapped'
+        assert ns("foo").__wrapped__ == "wrapped"
         with self.assertRaises(AttributeError):
-            ns('bar').__wrapped__()
+            ns("bar").__wrapped__()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

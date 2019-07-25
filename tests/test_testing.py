@@ -13,13 +13,13 @@ class TestTesting(TestGrpcalchemy):
         test_server = Server("test_blueprint")
 
         @test_server.register
-        def test_message(request: TestMessage,
-                         context: Context) -> TestMessage:
+        def test_message(request: TestMessage, context: Context) -> TestMessage:
             return TestMessage(test_name=request.test_name)
 
         test_client = Client(test_server)
         response = test_client.rpc_call(
-            test_message, request=TestMessage(test_name="test"))
+            test_message, request=TestMessage(test_name="test")
+        )
         self.assertEqual("test", response.test_name)
 
     def test_exception(self):
@@ -32,11 +32,9 @@ class TestTesting(TestGrpcalchemy):
         test_server = Server("test_blueprint")
 
         @test_server.register
-        def test_exception(request: TestMessage,
-                           context: Context) -> TestMessage:
+        def test_exception(request: TestMessage, context: Context) -> TestMessage:
             raise TestException
 
         test_client = Client(test_server)
         with self.assertRaises(TestException):
-            test_client.rpc_call(
-                test_exception, request=TestMessage(test_name="test"))
+            test_client.rpc_call(test_exception, request=TestMessage(test_name="test"))

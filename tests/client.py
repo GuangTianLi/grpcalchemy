@@ -1,4 +1,4 @@
-if __name__ == '__main__':
+if __name__ == "__main__":
     import timeit
     from concurrent import futures
     from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
@@ -17,7 +17,8 @@ if __name__ == '__main__':
     def grpc_call(_):
         with grpc.insecure_channel("localhost:50051") as channel:
             stub = test_concurrent_blueprint_pb2_grpc.test_concurrent_blueprintStub(
-                channel)
+                channel
+            )
             request = testservermessage_pb2.TestServerMessage(num=33)
             num = stub.test_message(request).num
             return num
@@ -27,8 +28,9 @@ if __name__ == '__main__':
             for result in executor.map(grpc_call, range(3)):
                 print(result)
 
-    def test_concurrent(Executor: Union[Type[ProcessPoolExecutor],
-                                        Type[ThreadPoolExecutor]]):
+    def test_concurrent(
+        Executor: Union[Type[ProcessPoolExecutor], Type[ThreadPoolExecutor]]
+    ):
         with Executor(max_workers=5) as executor:
             for result in executor.map(fib, range(33)):
                 pass
@@ -36,11 +38,11 @@ if __name__ == '__main__':
         # print(timeit.timeit('main()', globals=globals(), number=1))
         print(
             timeit.timeit(
-                'test_concurrent(ProcessPoolExecutor)',
-                globals=globals(),
-                number=1))
+                "test_concurrent(ProcessPoolExecutor)", globals=globals(), number=1
+            )
+        )
         print(
             timeit.timeit(
-                'test_concurrent(ThreadPoolExecutor)',
-                globals=globals(),
-                number=1))
+                "test_concurrent(ThreadPoolExecutor)", globals=globals(), number=1
+            )
+        )

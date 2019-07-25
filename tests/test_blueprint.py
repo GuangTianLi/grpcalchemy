@@ -1,8 +1,4 @@
-from grpcalchemy.blueprint import (
-    Blueprint,
-    DuplicatedRPCMethod,
-    InvalidRPCMethod,
-)
+from grpcalchemy.blueprint import Blueprint, DuplicatedRPCMethod, InvalidRPCMethod
 from grpcalchemy.orm import Message, StringField
 
 from .test_grpcalchemy import TestGrpcalchemy
@@ -95,14 +91,12 @@ class BlueprintTestCase(TestGrpcalchemy):
             return TestMessage(test_name=request.test_name)
 
         test = Blueprint(
-            "test",
-            pre_processes=[test_process],
-            post_processes=[test_process])
+            "test", pre_processes=[test_process], post_processes=[test_process]
+        )
 
         @test.register(pre_processes=[test_process])
         def test_message(request: TestMessage, context) -> TestMessage:
             return TestMessage(test_name=request.test_name)
 
-        self.assertListEqual(test_message.pre_processes,
-                             [test_process, test_process])
+        self.assertListEqual(test_message.pre_processes, [test_process, test_process])
         self.assertListEqual(test_message.post_processes, [test_process])

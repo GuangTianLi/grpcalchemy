@@ -74,7 +74,8 @@ class ORMTestCase(TestGrpcalchemy):
         test = TestRef(
             ref_field=Test(name="Test"),
             list_test_field=[Test(name="Test")],
-            list_int32_field=[1])
+            list_int32_field=[1],
+        )
         self.assertEqual("Test", test.ref_field.name)
         test.ref_field.name = "Changed_name"
         self.assertEqual("Changed_name", test.ref_field.name)
@@ -82,10 +83,10 @@ class ORMTestCase(TestGrpcalchemy):
         self.assertEqual("Test", test.list_test_field[0].name)
 
         self.assertEqual("Test ref_field", str(TestRef.ref_field))
-        self.assertEqual("repeated Test list_test_field",
-                         str(TestRef.list_test_field))
-        self.assertEqual("repeated int32 list_int32_field",
-                         str(TestRef.list_int32_field))
+        self.assertEqual("repeated Test list_test_field", str(TestRef.list_test_field))
+        self.assertEqual(
+            "repeated int32 list_int32_field", str(TestRef.list_int32_field)
+        )
 
     def test_MapField(self):
         class Test(Message):
@@ -99,8 +100,7 @@ class ORMTestCase(TestGrpcalchemy):
         test = TestMapRef(map_field={"test": Test(name="test")})
         self.assertEqual("test", test.map_field["test"].name)
         self.assertEqual("test", test._message.map_field["test"].name)
-        self.assertEqual("map<string, Test> map_field",
-                         str(TestMapRef.map_field))
+        self.assertEqual("map<string, Test> map_field", str(TestMapRef.map_field))
 
     def test_inheritance(self):
         class Post(Message):
@@ -130,24 +130,19 @@ class ORMTestCase(TestGrpcalchemy):
             ref_field=Test(name="Test"),
             list_test_field=[Test(name="Test")],
             list_int32_field=[1],
-            map_field={"test": Test(name="Test")})
+            map_field={"test": Test(name="Test")},
+        )
 
         dict_test = {
-            "ref_field": {
-                "name": "Test"
-            },
-            "list_test_field": [{
-                "name": "Test"
-            }],
+            "ref_field": {"name": "Test"},
+            "list_test_field": [{"name": "Test"}],
             "list_int32_field": [1],
-            "map_field": {
-                "test": {
-                    "name": "Test"
-                }
-            },
+            "map_field": {"test": {"name": "Test"}},
         }
         self.assertDictEqual(
-            dict_test, test.message_to_dict(preserving_proto_field_name=True))
+            dict_test, test.message_to_dict(preserving_proto_field_name=True)
+        )
         self.assertDictEqual(
             dict_test,
-            json.loads(test.message_to_json(preserving_proto_field_name=True)))
+            json.loads(test.message_to_json(preserving_proto_field_name=True)),
+        )

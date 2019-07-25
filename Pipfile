@@ -13,9 +13,9 @@ twine = "*"
 sphinx-rtd-theme = "*"
 pre-commit = "*"
 isort = "*"
-yapf = "*"
 pyre-check = "*"
 ipdb = "*"
+black = "*"
 
 [packages]
 grpcio = "*"
@@ -31,4 +31,7 @@ python_version = "3.7"
 patch = "bumpversion patch"
 init-pre-commit = "pre-commit install"
 isort =  "bash -c 'isort $@ && git add -u' --"
-format =  "bash -c 'yapf --in-place $@ && git add -u' --"
+format =  "bash -c 'black $@ && git add -u' --"
+
+[pipenv]
+allow_prereleases = true

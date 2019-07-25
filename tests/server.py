@@ -1,4 +1,4 @@
-if __name__ == '__main__':
+if __name__ == "__main__":
     from concurrent.futures import ProcessPoolExecutor
     from os import chdir, getcwd
 
@@ -7,7 +7,7 @@ if __name__ == '__main__':
     from grpcalchemy.server import Server
 
     cwd = getcwd()
-    root_path = cwd[:cwd.rfind("grpcalchemy") + len("grpcalchemy")]
+    root_path = cwd[: cwd.rfind("grpcalchemy") + len("grpcalchemy")]
     chdir(root_path)
 
     class TestServerMessage(Message):
@@ -22,12 +22,11 @@ if __name__ == '__main__':
             return fib(n - 1) + fib(n - 2)
 
     @test_server_blueprint.register
-    def test_message(request: TestServerMessage,
-                     context: Context) -> TestServerMessage:
+    def test_message(request: TestServerMessage, context: Context) -> TestServerMessage:
         return TestServerMessage(num=fib(request.num))
 
     def main(_):
-        app = Server('test_concurrent_server')
+        app = Server("test_concurrent_server")
         app.register_blueprint(test_server_blueprint)
         app.run()
 

@@ -5,16 +5,7 @@ from collections import defaultdict
 from concurrent import futures
 from functools import partial
 from threading import Event
-from typing import (
-    Any,
-    Callable,
-    DefaultDict,
-    Dict,
-    List,
-    Optional,
-    Tuple,
-    Union,
-)
+from typing import Any, Callable, DefaultDict, Dict, List, Optional, Tuple, Union
 
 import grpc
 from grpc import GenericRpcHandler
@@ -60,17 +51,19 @@ class Server(Blueprint, grpc.Server):
     """
 
     def __init__(
-            self,
-            name: str,
-            file_name: str = '',
-            pre_processes: List[Callable[[Message, Context], Message]] = None,
-            post_processes: List[Callable[[Message, Context], Message]] = None,
-            config: Optional[dict] = None):
+        self,
+        name: str,
+        file_name: str = "",
+        pre_processes: List[Callable[[Message, Context], Message]] = None,
+        post_processes: List[Callable[[Message, Context], Message]] = None,
+        config: Optional[dict] = None,
+    ):
         super().__init__(
             name=name,
             file_name=file_name,
             pre_processes=pre_processes,
-            post_processes=post_processes)
+            post_processes=post_processes,
+        )
 
         if config is not None:
             default_config.update(config)
@@ -80,8 +73,7 @@ class Server(Blueprint, grpc.Server):
         #: to load a config from files.
         self.config = default_config
 
-        thread_pool = futures.ThreadPoolExecutor(
-            max_workers=self.config["MAX_WORKERS"])
+        thread_pool = futures.ThreadPoolExecutor(max_workers=self.config["MAX_WORKERS"])
         completion_queue = cygrpc.CompletionQueue()
         server = cygrpc.Server(self.config["OPTIONS"])
         server.register_completion_queue(completion_queue)
@@ -89,9 +81,14 @@ class Server(Blueprint, grpc.Server):
         #: gRPC Server State
         #:
         #: .. versionadded:: 0.2.1
-        self._state = _ServerState(completion_queue, server, (), None,
-                                   thread_pool,
-                                   self.config["MAXIMUM_CONCURRENT_RPCS"])
+        self._state = _ServerState(
+            completion_queue,
+            server,
+            (),
+            None,
+            thread_pool,
+            self.config["MAXIMUM_CONCURRENT_RPCS"],
+        )
 
         #: all the attached blueprints in a dictionary by name.
         #:
@@ -104,8 +101,9 @@ class Server(Blueprint, grpc.Server):
         #: ``after_server_stop``
         #:
         #: .. versionadded:: 0.1.6
-        self.listeners: DefaultDict[str, List[
-            Callable[[Server], None]]] = defaultdict(list)
+        self.listeners: DefaultDict[str, List[Callable[[Server], None]]] = defaultdict(
+            list
+        )
 
         #: init logger
         self.logger = logging.getLogger()
@@ -132,17 +130,18 @@ class Server(Blueprint, grpc.Server):
         """
         self.blueprints[bp.name] = bp
 
-    def run(self,
-            port: int = 50051,
-            test=False,
-            server_credentials: Optional[grpc.ServerCredentials] = None
-            ) -> None:
+    def run(
+        self,
+        port: int = 50051,
+        test=False,
+        server_credentials: Optional[grpc.ServerCredentials] = None,
+    ) -> None:
         generate_proto_file(template_path=self.config["TEMPLATE_PATH"])
         for name, bp in self.blueprints.items():
             grpc_pb2_module = importlib.import_module(
-                f".{bp.file_name}_pb2_grpc", self.config["TEMPLATE_PATH"])
-            getattr(grpc_pb2_module, f"add_{bp.name}Servicer_to_server")(bp,
-                                                                         self)
+                f".{bp.file_name}_pb2_grpc", self.config["TEMPLATE_PATH"]
+            )
+            getattr(grpc_pb2_module, f"add_{bp.name}Servicer_to_server")(bp, self)
             for rpc in bp.service_meta.rpcs:
                 rpc.ctx = self.app_context
 
@@ -151,10 +150,10 @@ class Server(Blueprint, grpc.Server):
 
         if server_credentials:
             self.add_secure_port(
-                f'[::]:{port}'.encode("utf-8"),
-                server_credentials=server_credentials)
+                f"[::]:{port}".encode("utf-8"), server_credentials=server_credentials
+            )
         else:
-            self.add_insecure_port(f'[::]:{port}'.encode("utf-8"))
+            self.add_insecure_port(f"[::]:{port}".encode("utf-8"))
         self.start()
 
         self.logger.info(f"gRPC server is running on 0.0.0.0:{port}")
@@ -170,10 +169,9 @@ class Server(Blueprint, grpc.Server):
                 for func in self.listeners["after_server_stop"]:
                     func(self)
 
-    def listener(self,
-                 event: str,
-                 listener: Optional[Callable[[Any], None]] = None
-                 ) -> Union[partial, Callable[[Any], None]]:
+    def listener(
+        self, event: str, listener: Optional[Callable[[Any], None]] = None
+    ) -> Union[partial, Callable[[Any], None]]:
         """
         Create a listener from a decorated function.
 
@@ -226,7 +224,8 @@ class Server(Blueprint, grpc.Server):
         return _stop(self._state, grace)
 
     def add_generic_rpc_handlers(
-            self, generic_rpc_handlers: Tuple[GenericRpcHandler]) -> None:
+        self, generic_rpc_handlers: Tuple[GenericRpcHandler]
+    ) -> None:
         """Registers GenericRpcHandlers with this Server.
 
         This method is only safe to call before the server is started.
@@ -249,17 +248,19 @@ class Server(Blueprint, grpc.Server):
         with self._state.lock:
             return self._state.server.add_http2_port(address)
 
-    def add_secure_port(self, address: bytes,
-                        server_credentials: grpc.ServerCredentials):
+    def add_secure_port(
+        self, address: bytes, server_credentials: grpc.ServerCredentials
+    ):
         with self._state.lock:
             return self._state.server.add_http2_port(
-                address, server_credentials._credentials)
+                address, server_credentials._credentials
+            )
 
     def __del__(self):
         """
         .. versionadded:: 0.2.1
         """
-        if hasattr(self, '_state'):
+        if hasattr(self, "_state"):
             # We can not grab a lock in __del__(), so set a flag to signal the
             # serving daemon thread (if it exists) to initiate shutdown.
             self._state.server_deallocated = True

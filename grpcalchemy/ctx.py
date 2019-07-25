@@ -15,15 +15,14 @@ class AppContext:
 
     def push(self):
         """Binds the app context to the current context."""
-        if hasattr(sys, 'exc_clear'):
+        if hasattr(sys, "exc_clear"):
             sys.exc_clear()
         _app_ctx_stack.push(self)
 
     def pop(self):
         """Pops the app context."""
         rv = _app_ctx_stack.pop()
-        assert rv is self, 'Popped wrong app context.  (%r instead of %r)' \
-            % (rv, self)
+        assert rv is self, "Popped wrong app context.  (%r instead of %r)" % (rv, self)
 
     def __enter__(self):
         self.push()
@@ -45,8 +44,7 @@ class RequestContext:
     def pop(self):
         """Pops the app context."""
         rv = _request_ctx_stack.pop()
-        assert rv is self, 'Popped wrong app context.  (%r instead of %r)' \
-                           % (rv, self)
+        assert rv is self, "Popped wrong app context.  (%r instead of %r)" % (rv, self)
         self.app_context.pop()
 
     def __enter__(self):

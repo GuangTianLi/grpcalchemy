@@ -10,7 +10,7 @@ from .globals import LocalProxy, _find_rpc
 from .meta import ServiceMeta, __meta__
 from .orm import Message
 
-current_rpc: 'RpcWrappedCallable' = LocalProxy(_find_rpc)
+current_rpc: "RpcWrappedCallable" = LocalProxy(_find_rpc)
 
 
 class InvalidRPCMethod(Exception):
@@ -27,11 +27,15 @@ class RpcWrappedCallable:
     origin_request: GeneratedProtocolMessageType
     context: Context
 
-    def __init__(self, server_name: str,
-                 func: Callable[[Message, Context], Message],
-                 request_type: Type[Message], response_type: Type[Message],
-                 pre_processes: List[Callable[[Message, Context], Message]],
-                 post_processes: List[Callable[[Message, Context], Message]]):
+    def __init__(
+        self,
+        server_name: str,
+        func: Callable[[Message, Context], Message],
+        request_type: Type[Message],
+        response_type: Type[Message],
+        pre_processes: List[Callable[[Message, Context], Message]],
+        post_processes: List[Callable[[Message, Context], Message]],
+    ):
         self._func = func
         self.server_name = server_name
         self.name: str = func.__name__
@@ -42,23 +46,26 @@ class RpcWrappedCallable:
         self.__signature__ = signature(func)
         update_wrapper(self, func)
 
-    def preprocess(self, origin_request: GeneratedProtocolMessageType,
-                   context: Context) -> Message:
+    def preprocess(
+        self, origin_request: GeneratedProtocolMessageType, context: Context
+    ) -> Message:
         current_request = self.request_type()
         current_request.init_grpc_message(grpc_message=origin_request)
         for pre_process in self.pre_processes:
             current_request = pre_process(current_request, context)
         return current_request
 
-    def postprocess(self, origin_response: Message,
-                    context: Context) -> GeneratedProtocolMessageType:
+    def postprocess(
+        self, origin_response: Message, context: Context
+    ) -> GeneratedProtocolMessageType:
         current_response = origin_response
         for post_process in self.post_processes:
             current_response = post_process(current_response, context)
         return current_response._message
 
-    def __call__(self, origin_request: GeneratedProtocolMessageType,
-                 context: Context) -> GeneratedProtocolMessageType:
+    def __call__(
+        self, origin_request: GeneratedProtocolMessageType, context: Context
+    ) -> GeneratedProtocolMessageType:
         self.origin_request = origin_request
         self.context = context
         with RequestContext(app_context=self.ctx, rpc=self):
@@ -66,28 +73,30 @@ class RpcWrappedCallable:
             return self.postprocess(self._func(request, context), context)
 
 
-def _validate_rpc_method(rpc_method: Callable[[Message, Context], Message]
-                         ) -> Tuple[Type[Message], Type[Message]]:
+def _validate_rpc_method(
+    rpc_method: Callable[[Message, Context], Message]
+) -> Tuple[Type[Message], Type[Message]]:
     sig = signature(rpc_method)
 
     if len(sig.parameters) == 2:
         request_type = getattr(sig.parameters.get("request"), "annotation")
         response_type = sig.return_annotation
-        if issubclass(request_type, Message) and issubclass(
-                response_type, Message):
+        if issubclass(request_type, Message) and issubclass(response_type, Message):
             return request_type, response_type
-    raise InvalidRPCMethod('''\
+    raise InvalidRPCMethod(
+        """\
 The RPC method is invalid. 
 
 The correct signature is blow::
 
     def rpc_call(request: Message, context) -> Message:
         ...
-''')
+"""
+    )
 
 
 def _validate_rpc_processes(
-        rpc_processes: Optional[List[Callable[[Message, Context], Message]]]
+    rpc_processes: Optional[List[Callable[[Message, Context], Message]]]
 ) -> List[Callable[[Message, Context], Message]]:
     rpc_processes = rpc_processes or []
     for rpc_process in rpc_processes:
@@ -119,20 +128,19 @@ class Blueprint:
     """
 
     def __init__(
-            self,
-            name: str,
-            file_name: str = '',
-            pre_processes: List[Callable[[Message, Context], Message]] = None,
-            post_processes: List[
-                Callable[[Message, Context], Message]] = None):
-        if file_name == '':
+        self,
+        name: str,
+        file_name: str = "",
+        pre_processes: List[Callable[[Message, Context], Message]] = None,
+        post_processes: List[Callable[[Message, Context], Message]] = None,
+    ):
+        if file_name == "":
             self.file_name = name.lower()
         else:
             self.file_name = file_name
-        self.file_name.replace('.', '_')
+        self.file_name.replace(".", "_")
         self.name = name
-        self.service_meta: ServiceMetaTypeshed = ServiceMeta(name=self.name,
-                                                             rpcs=[])
+        self.service_meta: ServiceMetaTypeshed = ServiceMeta(name=self.name, rpcs=[])
 
         #: all the processes function in a list.
         #: And the function must be Callable[[`Message`, Context], `Message`]:
@@ -171,14 +179,13 @@ class Blueprint:
         _validate_rpc_method(f)
         self.post_processes.append(f)
 
-    def register(self,
-                 rpc: Optional[Callable[[Message, Context], Message]] = None,
-                 *,
-                 pre_processes: Optional[List[
-                     Callable[[Message, Context], Message]]] = None,
-                 post_processes: Optional[List[
-                     Callable[[Message, Context], Message]]] = None
-                 ) -> Union[RpcWrappedCallable, partial]:
+    def register(
+        self,
+        rpc: Optional[Callable[[Message, Context], Message]] = None,
+        *,
+        pre_processes: Optional[List[Callable[[Message, Context], Message]]] = None,
+        post_processes: Optional[List[Callable[[Message, Context], Message]]] = None
+    ) -> Union[RpcWrappedCallable, partial]:
         """Any gRPC method can be defined like this::
 
             @app.register
@@ -194,29 +201,32 @@ class Blueprint:
         :return:
         """
         if rpc is None:
-            return partial(self.register,
-                           pre_processes=pre_processes,
-                           post_processes=post_processes)
+            return partial(
+                self.register,
+                pre_processes=pre_processes,
+                post_processes=post_processes,
+            )
         request_type, response_type = _validate_rpc_method(rpc)
         current_pre_process = self.pre_processes + _validate_rpc_processes(
-            pre_processes)
+            pre_processes
+        )
         current_post_processes = self.post_processes + _validate_rpc_processes(
-            post_processes)
+            post_processes
+        )
         wrapped_rpc: RpcWrappedCallable = RpcWrappedCallable(
             server_name=self.name,
             func=rpc,
             request_type=request_type,
             response_type=response_type,
             pre_processes=current_pre_process,
-            post_processes=current_post_processes)
+            post_processes=current_post_processes,
+        )
         self.service_meta.rpcs.append(wrapped_rpc)
         if request_type.__filename__ != self.file_name:
-            __meta__[self.file_name].import_files.add(
-                request_type.__filename__)
+            __meta__[self.file_name].import_files.add(request_type.__filename__)
 
         if response_type.__filename__ != self.file_name:
-            __meta__[self.file_name].import_files.add(
-                response_type.__filename__)
+            __meta__[self.file_name].import_files.add(response_type.__filename__)
 
         if hasattr(self, rpc.__name__):
             raise DuplicatedRPCMethod("Service Duplicate!")

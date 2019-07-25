@@ -42,17 +42,17 @@ def import_string(import_name: str) -> Type:
     # force the import name to automatically convert to strings
     # __import__ is not able to handle unicode strings in the fromlist
     # if the module is a package
-    import_name = import_name.replace(':', '.')
+    import_name = import_name.replace(":", ".")
 
     try:
         __import__(import_name)
     except ImportError:
-        if '.' not in import_name:
+        if "." not in import_name:
             raise
     else:
         return sys.modules[import_name]  # pyre-ignore
 
-    module_name, obj_name = import_name.rsplit('.', 1)
+    module_name, obj_name = import_name.rsplit(".", 1)
     try:
         module = __import__(module_name, fromlist=[obj_name])
     except ImportError:
@@ -119,16 +119,18 @@ class Config(dict):
     :param Dict defaults: defaults value to init the dict
     """
 
-    def __init__(self,
-                 obj: Union[str, Type],
-                 sync_access_config_list: List[Callable[[Dict], Dict]] = None,
-                 async_access_config_list: List[
-                     Callable[[Dict], Coroutine[Any, Any, Dict]]] = None,
-                 root_path: str = "",
-                 defaults: Optional[dict] = None):
+    def __init__(
+        self,
+        obj: Union[str, Type],
+        sync_access_config_list: List[Callable[[Dict], Dict]] = None,
+        async_access_config_list: List[
+            Callable[[Dict], Coroutine[Any, Any, Dict]]
+        ] = None,
+        root_path: str = "",
+        defaults: Optional[dict] = None,
+    ):
         self.lock = RLock()
-        self.config_meta: DefaultDict[str, ConfigMeta] = defaultdict(
-            ConfigMeta)
+        self.config_meta: DefaultDict[str, ConfigMeta] = defaultdict(ConfigMeta)
         self.root_path = root_path
         self.sync_access_config_list = sync_access_config_list or []
         self.async_access_config_list = async_access_config_list or []
@@ -161,8 +163,7 @@ class Config(dict):
                 loop.run_until_complete(self.from_async_access_config_list())
         super().__init__(**self)
 
-    def from_file(self, filename: str, silent: bool = False,
-                  priority: int = 2) -> bool:
+    def from_file(self, filename: str, silent: bool = False, priority: int = 2) -> bool:
         """Updates the values in the config from a JSON file or a YAML file.
         This function behaves as if the JSON or YAML object was a dictionary
         and passed to the :meth:`from_mapping` function.
@@ -175,7 +176,7 @@ class Config(dict):
 
         """
         filename = os.path.join(self.root_path, filename)
-        try_json_file = 'json' in filename
+        try_json_file = "json" in filename
 
         try:
             with open(filename) as f:
@@ -186,9 +187,9 @@ class Config(dict):
         except IOError as e:
             if silent and e.errno in (errno.ENOENT, errno.EISDIR):
                 return False
-            e.strerror = 'Unable to load configuration file (%s)' % e.strerror
+            e.strerror = "Unable to load configuration file (%s)" % e.strerror
             raise
-        logging.info(f'Loaded configuration file: {filename}')
+        logging.info(f"Loaded configuration file: {filename}")
         return self.from_mapping(obj, priority=priority)
 
     def from_mapping(self, *mapping, priority, **kwargs) -> bool:
@@ -198,13 +199,14 @@ class Config(dict):
         """
         mappings = []
         if len(mapping) == 1:
-            if hasattr(mapping[0], 'items'):
+            if hasattr(mapping[0], "items"):
                 mappings.append(mapping[0].items())
             else:
                 mappings.append(mapping[0])
         elif len(mapping) > 1:
-            raise TypeError('expected at most 1 positional argument, got %d' %
-                            len(mapping))
+            raise TypeError(
+                "expected at most 1 positional argument, got %d" % len(mapping)
+            )
         mappings.append(kwargs.items())
         for mapping in mappings:
             for (key, value) in mapping:
@@ -247,10 +249,8 @@ class Config(dict):
             if key.isupper():
                 obj_value = getattr(obj, key)
                 self._set_value(
-                    key,
-                    obj_value,
-                    priority=priority,
-                    value_type=type(obj_value))  # pyre-ignore
+                    key, obj_value, priority=priority, value_type=type(obj_value)
+                )  # pyre-ignore
         return True
 
     def from_env(self, prefix: str, priority: int = 3) -> bool:
@@ -283,11 +283,13 @@ class Config(dict):
             self.from_mapping(await remote_center(self), priority=priority)
         return True
 
-    def _set_value(self,
-                   key: str,
-                   value: Any,
-                   priority: int,
-                   value_type: Callable[[Any], Any] = _miss):
+    def _set_value(
+        self,
+        key: str,
+        value: Any,
+        priority: int,
+        value_type: Callable[[Any], Any] = _miss,
+    ):
         """ Set self[key] to value. """
         with self.lock:
             if value_type is not _miss:
@@ -332,8 +334,5 @@ class Config(dict):
 
 
 default_config = dict(
-    TEMPLATE_PATH="protos",
-    MAX_WORKERS=10,
-    OPTIONS=(),
-    MAXIMUM_CONCURRENT_RPCS=None,
+    TEMPLATE_PATH="protos", MAX_WORKERS=10, OPTIONS=(), MAXIMUM_CONCURRENT_RPCS=None
 )

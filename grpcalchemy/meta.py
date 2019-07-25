@@ -1,8 +1,8 @@
 from collections import defaultdict, namedtuple
 from typing import DefaultDict, List, Set
 
-MessageMeta = namedtuple('MessageMeta', ['name', 'fields'])
-ServiceMeta = namedtuple('Service', ['name', 'rpcs'])
+MessageMeta = namedtuple("MessageMeta", ["name", "fields"])
+ServiceMeta = namedtuple("Service", ["name", "rpcs"])
 
 
 class ProtoBuffMeta:

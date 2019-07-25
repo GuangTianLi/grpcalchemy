@@ -9,16 +9,12 @@ from .utils import generate_proto_file
 class Client:
     config = default_config
 
-    def __init__(self,
-                 target,
-                 credentials=None,
-                 options=None,
-                 compression=None):
+    def __init__(self, target, credentials=None, options=None, compression=None):
         from grpc import _channel
 
-        self.channel = _channel.Channel(target,
-                                        () if options is None else options,
-                                        credentials, compression)
+        self.channel = _channel.Channel(
+            target, () if options is None else options, credentials, compression
+        )
 
     def __enter__(self):
         generate_proto_file(self.config["TEMPLATE_PATH"])
@@ -29,8 +25,9 @@ class Client:
         return False
 
     def register(self, bp: Blueprint):
-        grpc_pb2_module = importlib.import_module(f".{bp.file_name}_pb2_grpc",
-                                                  self.config["TEMPLATE_PATH"])
+        grpc_pb2_module = importlib.import_module(
+            f".{bp.file_name}_pb2_grpc", self.config["TEMPLATE_PATH"]
+        )
         stub = getattr(grpc_pb2_module, f"{bp.name}Stub")(self.channel)
         setattr(self, bp.name, gRPCRequest(stub))
 

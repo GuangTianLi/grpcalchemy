@@ -39,17 +39,17 @@ class ConfigTestCase(unittest.TestCase):
 
         self.assertEqual("test", config["TEST"])
         with self.assertRaises(KeyError):
-            _ = config['NOT_EXIST']
+            _ = config["NOT_EXIST"]
 
-        self.assertEqual("NOT_EXIST", config.get('NOT_EXIST', 'NOT_EXIST'))
-        self.assertTrue('TEST' in config)
+        self.assertEqual("NOT_EXIST", config.get("NOT_EXIST", "NOT_EXIST"))
+        self.assertTrue("TEST" in config)
         self.assertEqual(1, len(config))
-        self.assertListEqual(['TEST'], [_ for _ in config])
-        config['TEST'] = 'changed'
-        self.assertEqual('changed', config['TEST'])
+        self.assertListEqual(["TEST"], [_ for _ in config])
+        config["TEST"] = "changed"
+        self.assertEqual("changed", config["TEST"])
 
     def test_default_config_init_from_str(self):
-        config = Config(obj='tests.test_config.TestStrObject')
+        config = Config(obj="tests.test_config.TestStrObject")
 
         self.assertEqual("default", config["TEMPLATE_PATH"])
 
@@ -85,7 +85,7 @@ class ConfigTestCase(unittest.TestCase):
 
     def test_update_config_from_remote_center(self):
         def get_config(current_config: dict) -> dict:
-            self.assertTrue(current_config['ENABLE_CONFIG_LIST'])
+            self.assertTrue(current_config["ENABLE_CONFIG_LIST"])
             return {"TEST": "changed"}
 
         class TestObject:
@@ -97,15 +97,14 @@ class ConfigTestCase(unittest.TestCase):
 
     def test_async_update_config_from_remote_center(self):
         async def get_config_async(current_config: dict) -> dict:
-            self.assertTrue(current_config['ENABLE_CONFIG_LIST'])
+            self.assertTrue(current_config["ENABLE_CONFIG_LIST"])
             return {"TEST": "changed"}
 
         class TestObject:
             ENABLE_CONFIG_LIST = True
             TEST = "default"
 
-        config = Config(
-            obj=TestObject, async_access_config_list=[get_config_async])
+        config = Config(obj=TestObject, async_access_config_list=[get_config_async])
         self.assertEqual("changed", config["TEST"])
 
     def test_config_priority(self):
@@ -113,22 +112,13 @@ class ConfigTestCase(unittest.TestCase):
         current_json_file = "test_priority.json"
 
         def get_config(current_config: dict) -> dict:
-            return {
-                "SECOND": "1",
-                "FOURTH": "1",
-            }
+            return {"SECOND": "1", "FOURTH": "1"}
 
         async def get_config_async(current_config: dict) -> dict:
-            return {
-                "THIRD": 1,
-                "FOURTH": 1,
-            }
+            return {"THIRD": 1, "FOURTH": 1}
 
         with open(current_json_file, "w") as fp:
-            json.dump({
-                "THIRD": "2",
-                "FOURTH": "2",
-            }, fp)
+            json.dump({"THIRD": "2", "FOURTH": "2"}, fp)
 
         class TestPriority:
             ENABLE_CONFIG_LIST = True
@@ -145,7 +135,8 @@ class ConfigTestCase(unittest.TestCase):
         config = Config(
             obj=TestPriority,
             sync_access_config_list=[get_config],
-            async_access_config_list=[get_config_async])
+            async_access_config_list=[get_config_async],
+        )
         self.assertEqual(0, config["FIRST"])
         self.assertEqual("1", config["SECOND"])
         self.assertEqual("2", config["THIRD"])
@@ -156,5 +147,5 @@ class ConfigTestCase(unittest.TestCase):
         os.unsetenv("test_FOURTH")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
