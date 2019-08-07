@@ -52,10 +52,9 @@ clean-test: ## remove test and coverage artifacts
 	rm -fr .pytest_cache
 	rm -fr protos/
 
-lint: ## check type with pyre
-	pyre --search-path=$$(pipenv --venv)/lib/python3.7/site-packages \
-	--source-directory grpcalchemy \
-	--typeshed $$(pipenv --venv)/lib/pyre_check/typeshed check
+lint: ## check type with mypy
+	black --check tests grpcalchemy
+	mypy grpcalchemy
 
 test: ## run tests quickly with the default Python
 	python setup.py test

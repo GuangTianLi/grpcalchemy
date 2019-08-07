@@ -1,7 +1,7 @@
 import importlib
 from itertools import chain
 from threading import RLock
-from typing import Any, Dict, Iterator, List, Tuple, Type
+from typing import Dict, Iterator, List, Tuple, Type, Generic, TypeVar
 
 from google.protobuf.json_format import MessageToDict, MessageToJson
 from google.protobuf.message import Message as GeneratedProtocolMessageType
@@ -13,140 +13,9 @@ from .meta import MessageMeta, __meta__
 _missing = object()
 
 
-class BaseField:
-    _type_name = ""
-    _name = ""
-
-    def __init__(self):
-        self.lock = RLock()
-
-    def __get__(self, obj: Any, type: Type) -> Any:
-        if obj is None:
-            return self
-        with self.lock:
-            value = obj.__dict__.get(self._name, _missing)
-            if value is _missing:
-                value = getattr(obj._message, self._name)
-                obj.__dict__[self._name] = value
-            return value
-
-    def __set__(self, instance, value: Any) -> None:
-        with self.lock:
-            setattr(instance._message, self._name, value)
-            instance.__dict__[self._name] = value
-
-    def __str__(self):
-        return f"{self._type_name} {self._name}"
-
-
-class StringField(BaseField):
-    _type_name = "string"
-
-    def __get__(self, obj: Any, type: Type) -> str:
-        return super().__get__(obj, type)
-
-    def __set__(self, instance, value: str) -> None:
-        super().__set__(instance, value)
-
-
-class Int32Field(BaseField):
-    _type_name = "int32"
-
-    def __get__(self, obj: Any, type: Type) -> int:
-        return super().__get__(obj, type)
-
-    def __set__(self, instance, value: int) -> None:
-        super().__set__(instance, value)
-
-
-class FloatField(BaseField):
-    _type_name = "float"
-
-    def __get__(self, obj: Any, type: Type) -> float:
-        return super().__get__(obj, type)
-
-    def __set__(self, instance, value: float) -> None:
-        super().__set__(instance, value)
-
-
-class DoubleField(BaseField):
-    _type_name = "double"
-
-    def __get__(self, obj: Any, type: Type) -> float:
-        return super().__get__(obj, type)
-
-    def __set__(self, instance, value: float) -> None:
-        super().__set__(instance, value)
-
-
-class Int64Field(BaseField):
-    _type_name = "int64"
-
-    def __get__(self, obj: Any, type: Type) -> int:
-        return super().__get__(obj, type)
-
-    def __set__(self, instance, value: int) -> None:
-        super().__set__(instance, value)
-
-
-class BooleanField(BaseField):
-    _type_name = "bool"
-
-    def __get__(self, obj: Any, type: Type) -> bool:
-        return super().__get__(obj, type)
-
-    def __set__(self, instance, value: bool) -> None:
-        super().__set__(instance, value)
-
-
-class BytesField(BaseField):
-    _type_name = "bytes"
-
-    def __get__(self, obj: Any, type: Type) -> bytes:
-        return super().__get__(obj, type)
-
-    def __set__(self, instance, value: bytes) -> None:
-        super().__set__(instance, value)
-
-
-class ReferenceField(BaseField):
-    def __init__(self, key_type: Type[BaseField]):
-        self._key_type = key_type
-        self._type_name = key_type._type_name
-
-        super().__init__()
-
-
-class ListField(ReferenceField):
-    def __get__(self, obj: Any, type: Type) -> List[Any]:
-        return super().__get__(obj, type)
-
-    def __str__(self):
-        return f"repeated {super().__str__()}"
-
-    def __set__(self, instance, value: List) -> None:
-        super().__set__(instance, value)
-
-
-class MapField(ReferenceField):
-    def __init__(self, key_type: Type[BaseField], value_type: Type[BaseField]):
-        super().__init__(key_type)
-        self._value_type = value_type
-        self._value_type_name = value_type._type_name
-
-    def __get__(self, obj: Any, type: Type) -> Dict:
-        return super().__get__(obj, type)
-
-    def __set__(self, instance, value: Dict) -> None:
-        super().__set__(instance, value)
-
-    def __str__(self):
-        return f"map<{self._type_name}, {self._value_type_name}> {self._name}"
-
-
 class DeclarativeMeta(type):
     def __new__(cls, clsname: str, bases: Tuple, clsdict: dict):
-        if bases[0] is not BaseField:
+        if bases:
             file_name = clsdict.get("__filename__", clsname).lower()
             clsdict["__filename__"] = file_name
             clsdict["__meta__"]: Dict[str, BaseField] = {}
@@ -180,10 +49,12 @@ class DeclarativeMeta(type):
         return super().__new__(cls, clsname, bases, clsdict)
 
 
-class Message(BaseField, metaclass=DeclarativeMeta):
+class Message(metaclass=DeclarativeMeta):
+    _type_name = ""
+    _name = ""
     __filename__ = ""
     _message: GeneratedProtocolMessageType = None
-    __meta__: Dict[str, BaseField] = {}
+    __meta__: Dict[str, "BaseField"] = {}
 
     def __init__(self, **kwargs):
         gpr_message_module = importlib.import_module(
@@ -275,3 +146,155 @@ class Message(BaseField, metaclass=DeclarativeMeta):
             sort_keys=sort_keys,
             use_integers_for_enums=use_integers_for_enums,
         )
+
+
+FieldType = TypeVar("FieldType")
+
+
+class BaseField(Generic[FieldType]):
+    _type_name = ""
+    _name = ""
+
+    def __init__(self):
+        self.lock = RLock()
+
+    def __get__(self, obj: "Message", type: Type) -> FieldType:
+        if obj is None:
+            return self
+        with self.lock:
+            value = obj.__dict__.get(self._name, _missing)
+            if value is _missing:
+                value = getattr(obj._message, self._name)
+                obj.__dict__[self._name] = value
+            return value
+
+    def __set__(self, instance: "Message", value: FieldType) -> None:
+        with self.lock:
+            setattr(instance._message, self._name, value)
+            instance.__dict__[self._name] = value
+
+    def __str__(self):
+        return f"{self._type_name} {self._name}"
+
+
+class StringField(BaseField[str]):
+    _type_name = "string"
+
+    def __get__(self, obj: "Message", type: Type) -> str:
+        return super().__get__(obj, type)
+
+    def __set__(self, instance, value: str) -> None:
+        super().__set__(instance, value)
+
+
+class Int32Field(BaseField[int]):
+    _type_name = "int32"
+
+    def __get__(self, obj: "Message", type: Type) -> int:
+        return super().__get__(obj, type)
+
+    def __set__(self, instance, value: int) -> None:
+        super().__set__(instance, value)
+
+
+class FloatField(BaseField[float]):
+    _type_name = "float"
+
+    def __get__(self, obj: "Message", type: Type) -> float:
+        return super().__get__(obj, type)
+
+    def __set__(self, instance, value: float) -> None:
+        super().__set__(instance, value)
+
+
+class DoubleField(BaseField[float]):
+    _type_name = "double"
+
+    def __get__(self, obj: "Message", type: Type) -> float:
+        return super().__get__(obj, type)
+
+    def __set__(self, instance, value: float) -> None:
+        super().__set__(instance, value)
+
+
+class Int64Field(BaseField[int]):
+    _type_name = "int64"
+
+    def __get__(self, obj: "Message", type: Type) -> int:
+        return super().__get__(obj, type)
+
+    def __set__(self, instance, value: int) -> None:
+        super().__set__(instance, value)
+
+
+class BooleanField(BaseField[bool]):
+    _type_name = "bool"
+
+    def __get__(self, obj: "Message", type: Type) -> bool:
+        return super().__get__(obj, type)
+
+    def __set__(self, instance, value: bool) -> None:
+        super().__set__(instance, value)
+
+
+class BytesField(BaseField[bytes]):
+    _type_name = "bytes"
+
+    def __get__(self, obj: "Message", type: Type) -> bytes:
+        return super().__get__(obj, type)
+
+    def __set__(self, instance, value: bytes) -> None:
+        super().__set__(instance, value)
+
+
+ReferenceFieldType = TypeVar("ReferenceFieldType")
+ReferenceValueFieldType = TypeVar("ReferenceValueFieldType")
+
+
+class ReferenceField(BaseField[ReferenceFieldType]):
+    def __init__(self, key_type: ReferenceFieldType):
+        self._key_type = key_type
+        self._type_name = key_type._type_name
+
+        super().__init__()
+
+    def __get__(self, obj: Message, type: Type) -> ReferenceFieldType:
+        return super().__get__(obj, type)
+
+    def __set__(self, instance: Message, value: ReferenceFieldType) -> None:
+        super().__set__(instance, value)
+
+
+class ListField(ReferenceField[List[ReferenceFieldType]]):
+    def __get__(self, obj: Message, type: Type) -> List[ReferenceFieldType]:
+        return super().__get__(obj, type)
+
+    def __set__(self, instance: Message, value: List[ReferenceFieldType]) -> None:
+        super().__set__(instance, value)
+
+    def __str__(self):
+        return f"repeated {super().__str__()}"
+
+
+class MapField(ReferenceField[Dict[ReferenceFieldType, ReferenceValueFieldType]]):
+    def __init__(
+        self, key_type: ReferenceFieldType, value_type: ReferenceValueFieldType
+    ):
+        super().__init__(key_type)
+        self._value_type = value_type
+        self._value_type_name = value_type._type_name
+
+    def __str__(self):
+        return f"map<{self._type_name}, {self._value_type_name}> {self._name}"
+
+    def __get__(
+        self, obj: Message, type: Type
+    ) -> Dict[ReferenceFieldType, ReferenceValueFieldType]:
+        return super().__get__(obj, type)
+
+    def __set__(
+        self,
+        instance: Message,
+        value: Dict[ReferenceFieldType, ReferenceValueFieldType],
+    ) -> None:
+        super().__set__(instance, value)

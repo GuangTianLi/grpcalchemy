@@ -12,10 +12,9 @@ sphinx = "*"
 twine = "*"
 sphinx-rtd-theme = "*"
 pre-commit = "*"
-isort = "*"
-pyre-check = "*"
 ipdb = "*"
 black = "*"
+mypy = "*"
 
 [packages]
 grpcio = "*"
@@ -28,9 +27,7 @@ pyyaml = "*"
 python_version = "3.7"
 
 [scripts]
-patch = "bumpversion patch"
 init-pre-commit = "pre-commit install"
-isort =  "bash -c 'isort $@ && git add -u' --"
 format =  "bash -c 'black $@ && git add -u' --"
 
 [pipenv]
