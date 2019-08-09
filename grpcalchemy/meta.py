@@ -1,8 +1,27 @@
-from collections import defaultdict, namedtuple
-from typing import DefaultDict, List, Set
+from collections import defaultdict
+from typing import DefaultDict, List, Set, TYPE_CHECKING
 
-MessageMeta = namedtuple("MessageMeta", ["name", "fields"])
-ServiceMeta = namedtuple("Service", ["name", "rpcs"])
+if TYPE_CHECKING:
+    from .blueprint import RpcWrappedCallable
+    from .orm import BaseField
+
+
+class ServiceMeta:
+    name: str
+    rpcs: List["RpcWrappedCallable"]
+
+    def __init__(self, name: str, rpcs: List["RpcWrappedCallable"]):
+        self.name = name
+        self.rpcs = rpcs
+
+
+class MessageMeta:
+    name: str
+    fields: List["BaseField"]
+
+    def __init__(self, name: str, fields: List["BaseField"]):
+        self.name = name
+        self.fields = fields
 
 
 class ProtoBuffMeta:

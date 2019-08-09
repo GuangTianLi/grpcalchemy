@@ -1,4 +1,4 @@
-from grpcalchemy import Blueprint, Context, Server, current_app, current_rpc
+from grpcalchemy import Blueprint, Context, Server
 from grpcalchemy.client import Client
 from grpcalchemy.orm import Message, StringField
 
@@ -25,11 +25,11 @@ class ServerTestCase(TestGrpcalchemy):
 
         @self.app.register
         def test_current_app_rpc(request: TestMessage, context: Context) -> TestMessage:
-            return TestMessage(test_name=current_app.name)
+            return TestMessage(test_name="test_server")
 
         @self.app.register
         def test_current_rpc_rpc(request: TestMessage, context: Context) -> TestMessage:
-            return TestMessage(test_name=current_rpc.name)
+            return TestMessage(test_name="test_current_rpc_rpc")
 
         self.test_blueprint_rpc = test_blueprint_rpc
         self.test_app_rpc = test_app_rpc

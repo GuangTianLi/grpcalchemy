@@ -20,7 +20,7 @@ from grpc._server import (
 
 from .blueprint import Blueprint, Context
 from .config import default_config
-from .ctx import AppContext
+from .ctx import BaseRequestContextManager
 from .orm import Message
 from .utils import generate_proto_file
 
@@ -49,6 +49,12 @@ class Server(Blueprint, grpc.Server):
 
     .. versionadded:: 0.2.0
     """
+
+    #: Default Create an :class:`~grpcalchemy.ctx.BaseRequestContextManager`.
+    #: Use as a ``with`` block to push the context with current request.
+    #:
+    #: .. versionchanged:: 0.3.0
+    RequestContextManagerCls = BaseRequestContextManager
 
     def __init__(
         self,
@@ -112,12 +118,7 @@ class Server(Blueprint, grpc.Server):
 
         self.register_blueprint(self)
 
-        #: Create an :class:`~grpcalchemy.ctx.AppContext`. Use as a ``with``
-        #: block to push the context, which will make :data:`current_app`
-        #: point at this application.
-        #:
-        #: .. versionchanged:: 0.2.4
-        self.app_context: AppContext = AppContext(self)
+        self.context_manager = self.RequestContextManagerCls(self)
 
     def register_blueprint(self, bp: Blueprint) -> None:
         """
@@ -143,7 +144,7 @@ class Server(Blueprint, grpc.Server):
             )
             getattr(grpc_pb2_module, f"add_{bp.name}Servicer_to_server")(bp, self)
             for rpc in bp.service_meta.rpcs:
-                rpc.ctx = self.app_context
+                rpc.current_app = self
 
         for func in self.listeners["before_server_start"]:
             func(self)

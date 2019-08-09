@@ -1,16 +1,15 @@
 from functools import partial, update_wrapper
 from inspect import signature
-from typing import Callable, List, Optional, Tuple, Type, Union
+from typing import Callable, List, Optional, Tuple, Type, Union, TYPE_CHECKING
 
 from google.protobuf.message import Message as GeneratedProtocolMessageType
 from grpc import ServicerContext as Context
 
-from .ctx import AppContext, RequestContext
-from .globals import LocalProxy, _find_rpc
 from .meta import ServiceMeta, __meta__
 from .orm import Message
 
-current_rpc: "RpcWrappedCallable" = LocalProxy(_find_rpc)
+if TYPE_CHECKING:
+    from .server import Server
 
 
 class InvalidRPCMethod(Exception):
@@ -23,8 +22,7 @@ class DuplicatedRPCMethod(Exception):
 
 class RpcWrappedCallable:
     name: str
-    ctx: AppContext
-    origin_request: GeneratedProtocolMessageType
+    current_app: "Server"
     context: Context
 
     def __init__(
@@ -68,7 +66,7 @@ class RpcWrappedCallable:
     ) -> GeneratedProtocolMessageType:
         self.origin_request = origin_request
         self.context = context
-        with RequestContext(app_context=self.ctx, rpc=self):
+        with self.current_app.context_manager.set_current_rpc(self):
             request = self.preprocess(origin_request, context)
             return self.postprocess(self._func(request, context), context)
 
@@ -104,11 +102,6 @@ def _validate_rpc_processes(
     return rpc_processes
 
 
-class ServiceMetaTypeshed:
-    name: str
-    rpcs: List[RpcWrappedCallable]
-
-
 class Blueprint:
     """gRPCAlchemy uses a concept of blueprints for making gRPC services and
     supporting common patterns within an application or across applications.
@@ -140,7 +133,7 @@ class Blueprint:
             self.file_name = file_name
         self.file_name.replace(".", "_")
         self.name = name
-        self.service_meta: ServiceMetaTypeshed = ServiceMeta(name=self.name, rpcs=[])
+        self.service_meta = ServiceMeta(name=self.name, rpcs=[])
 
         #: all the processes function in a list.
         #: And the function must be Callable[[`Message`, Context], `Message`]:

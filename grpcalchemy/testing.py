@@ -1,5 +1,4 @@
 from .blueprint import Context, RpcWrappedCallable
-from .ctx import AppContext
 from .orm import GeneratedProtocolMessageType, Message
 from .server import Server
 
@@ -32,5 +31,5 @@ class Client:
     ) -> GeneratedProtocolMessageType:
         for name, bp in self.app.blueprints.items():
             for rpc in bp.service_meta.rpcs:
-                rpc.ctx = AppContext(self)
+                rpc.current_app = self.app
         return method(origin_request=request._message, context=context)

@@ -6,9 +6,8 @@
 """
 
 __author__ = """GuangTian Li"""
-__email__ = 'guangtian_li@qq.com'
-__version__ = '0.2.10'
+__email__ = "guangtian_li@qq.com"
+__version__ = "0.2.10"
 
-from .blueprint import Blueprint, Context, current_rpc
-from .globals import current_app
+from .blueprint import Blueprint, Context
 from .server import Server
