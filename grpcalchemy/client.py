@@ -1,14 +1,12 @@
 import importlib
 
 from .blueprint import Blueprint, RpcWrappedCallable
-from .config import default_config
+from .config import get_current_proto_path
 from .orm import Message
 from .utils import generate_proto_file
 
 
 class Client:
-    config = default_config
-
     def __init__(self, target, credentials=None, options=None, compression=None):
         from grpc import _channel
 
@@ -17,7 +15,7 @@ class Client:
         )
 
     def __enter__(self):
-        generate_proto_file(self.config["TEMPLATE_PATH"])
+        generate_proto_file(get_current_proto_path())
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -26,7 +24,7 @@ class Client:
 
     def register(self, bp: Blueprint):
         grpc_pb2_module = importlib.import_module(
-            f".{bp.file_name}_pb2_grpc", self.config["TEMPLATE_PATH"]
+            f".{bp.file_name}_pb2_grpc", get_current_proto_path()
         )
         stub = getattr(grpc_pb2_module, f"{bp.name}Stub")(self.channel)
         setattr(self, bp.name, gRPCRequest(stub))

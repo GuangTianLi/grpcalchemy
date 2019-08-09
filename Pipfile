@@ -22,6 +22,7 @@ protobuf = "*"
 grpcio-tools = "*"
 jinja2 = "*"
 pyyaml = "*"
+configalchemy = "*"
 
 [requires]
 python_version = "3.7"

@@ -17,9 +17,8 @@ from grpc._server import (
     _stop,
     _validate_generic_rpc_handlers,
 )
-
 from .blueprint import Blueprint, Context
-from .config import default_config
+from .config import DefaultConfig, set_current_proto_path
 from .ctx import BaseRequestContextManager
 from .orm import Message
 from .utils import generate_proto_file
@@ -62,7 +61,7 @@ class Server(Blueprint, grpc.Server):
         file_name: str = "",
         pre_processes: List[Callable[[Message, Context], Message]] = None,
         post_processes: List[Callable[[Message, Context], Message]] = None,
-        config: Optional[dict] = None,
+        config: Optional[DefaultConfig] = None,
     ):
         super().__init__(
             name=name,
@@ -71,17 +70,14 @@ class Server(Blueprint, grpc.Server):
             post_processes=post_processes,
         )
 
-        if config is not None:
-            default_config.update(config)
+        self.config = config or DefaultConfig()
+        set_current_proto_path(self.config.PROTO_TEMPLATE_PATH)
 
-        #: The configuration dictionary as :class:`Config`.  This behaves
-        #: exactly like a regular dictionary but supports additional methods
-        #: to load a config from files.
-        self.config = default_config
-
-        thread_pool = futures.ThreadPoolExecutor(max_workers=self.config["MAX_WORKERS"])
+        thread_pool = futures.ThreadPoolExecutor(
+            max_workers=self.config.GPRC_SERVER_MAX_WORKERS
+        )
         completion_queue = cygrpc.CompletionQueue()
-        server = cygrpc.Server(self.config["OPTIONS"])
+        server = cygrpc.Server(self.config.GRPC_SERVER_OPTIONS)
         server.register_completion_queue(completion_queue)
 
         #: gRPC Server State
@@ -93,7 +89,7 @@ class Server(Blueprint, grpc.Server):
             (),
             None,
             thread_pool,
-            self.config["MAXIMUM_CONCURRENT_RPCS"],
+            self.config.GRPC_SERVER_MAXIMUM_CONCURRENT_RPCS,
         )
 
         #: all the attached blueprints in a dictionary by name.
@@ -137,10 +133,10 @@ class Server(Blueprint, grpc.Server):
         test=False,
         server_credentials: Optional[grpc.ServerCredentials] = None,
     ) -> None:
-        generate_proto_file(template_path=self.config["TEMPLATE_PATH"])
+        generate_proto_file(template_path=self.config.PROTO_TEMPLATE_PATH)
         for name, bp in self.blueprints.items():
             grpc_pb2_module = importlib.import_module(
-                f".{bp.file_name}_pb2_grpc", self.config["TEMPLATE_PATH"]
+                f".{bp.file_name}_pb2_grpc", self.config.PROTO_TEMPLATE_PATH
             )
             getattr(grpc_pb2_module, f"add_{bp.name}Servicer_to_server")(bp, self)
             for rpc in bp.service_meta.rpcs:

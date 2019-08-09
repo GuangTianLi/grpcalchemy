@@ -6,7 +6,7 @@ from typing import Dict, Iterator, List, Tuple, Type, Generic, TypeVar
 from google.protobuf.json_format import MessageToDict, MessageToJson
 from google.protobuf.message import Message as GeneratedProtocolMessageType
 
-from .config import default_config
+from .config import get_current_proto_path
 from .meta import MessageMeta, __meta__
 
 # sentinel
@@ -59,7 +59,7 @@ class Message(metaclass=DeclarativeMeta):
     def __init__(__message_self__, **kwargs):
         # Uses something other than `self` the first arg to allow "self" as a settable attribute
         gpr_message_module = importlib.import_module(
-            f".{__message_self__.__filename__}_pb2", default_config["TEMPLATE_PATH"]
+            f".{__message_self__.__filename__}_pb2", get_current_proto_path()
         )
         gRPCMessageClass = getattr(gpr_message_module, f"{__message_self__._type_name}")
         for key, item in kwargs.items():

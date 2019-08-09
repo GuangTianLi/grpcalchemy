@@ -1,4 +1,4 @@
-from grpcalchemy import Blueprint, Context, Server
+from grpcalchemy import Blueprint, Context, Server, DefaultConfig
 from grpcalchemy.client import Client
 from grpcalchemy.orm import Message, StringField
 
@@ -82,6 +82,9 @@ class ServerTestCase(TestGrpcalchemy):
         self.assertEqual([after_server_stop], test_app.listeners["after_server_stop"])
 
     def test_server_config(self):
-        test_app = Server("test_server", config={"TEST": "TEST"})
+        class TestConfig(DefaultConfig):
+            TEST = "TEST"
+
+        test_app = Server("test_server", config=TestConfig())
 
         self.assertEqual("TEST", test_app.config["TEST"])
