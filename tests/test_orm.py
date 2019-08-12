@@ -17,9 +17,6 @@ from .test_grpcalchemy import TestGrpcalchemy
 
 
 class ORMTestCase(TestGrpcalchemy):
-    def setUp(self):
-        super().setUp()
-
     def test_message_with_default_filename(self):
         class Test(Message):
             pass
@@ -50,7 +47,7 @@ class ORMTestCase(TestGrpcalchemy):
         test = Test()
         test.name = "Changed_name"
         self.assertEqual("Changed_name", test.name)
-        self.assertEqual("Changed_name", test._message.name)
+        self.assertEqual("Changed_name", test.__message__.name)
 
         self.assertEqual("string name", str(Test.name))
         self.assertEqual("int32 number", str(Test.number))
@@ -96,10 +93,9 @@ class ORMTestCase(TestGrpcalchemy):
             map_field = MapField(StringField, Test)
 
         generate_proto_file()
-
         test = TestMapRef(map_field={"test": Test(name="test")})
         self.assertEqual("test", test.map_field["test"].name)
-        self.assertEqual("test", test._message.map_field["test"].name)
+        self.assertEqual("test", test.__message__.map_field["test"].name)
         self.assertEqual("map<string, Test> map_field", str(TestMapRef.map_field))
 
     def test_inheritance(self):

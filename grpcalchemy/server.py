@@ -3,9 +3,8 @@ import logging
 import time
 from collections import defaultdict
 from concurrent import futures
-from functools import partial
 from threading import Event
-from typing import Any, Callable, DefaultDict, Dict, List, Optional, Tuple, Union
+from typing import Callable, DefaultDict, Dict, List, Optional, Tuple, Type
 
 import grpc
 from grpc import GenericRpcHandler
@@ -17,10 +16,10 @@ from grpc._server import (
     _stop,
     _validate_generic_rpc_handlers,
 )
-from .blueprint import Blueprint, Context
+
+from .blueprint import Blueprint, RequestType, ResponseType, Context
 from .config import DefaultConfig, set_current_proto_path
 from .ctx import BaseRequestContextManager
-from .orm import Message
 from .utils import generate_proto_file
 
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
@@ -35,16 +34,11 @@ class Server(Blueprint, grpc.Server):
     in the :file:`__init__.py` file of your package like this::
 
         from grpcalchemy import Server
-        app = Server('server')
+        class FooService(Server):
+            ...
 
-    :param str name:
-    :param str file_name:
-    :param pre_processes:
-    :type pre_processes: List[Callable[[Message, Context], Message]]
-    :param post_processes:
-    :type post_processes: List[Callable[[Message, Context], Message]]
     :param config:
-    :type config: Union[str, Type]
+    :type config: Optional[DefaultConfig]
 
     .. versionadded:: 0.2.0
     """
@@ -55,21 +49,7 @@ class Server(Blueprint, grpc.Server):
     #: .. versionchanged:: 0.3.0
     RequestContextManagerCls = BaseRequestContextManager
 
-    def __init__(
-        self,
-        name: str,
-        file_name: str = "",
-        pre_processes: List[Callable[[Message, Context], Message]] = None,
-        post_processes: List[Callable[[Message, Context], Message]] = None,
-        config: Optional[DefaultConfig] = None,
-    ):
-        super().__init__(
-            name=name,
-            file_name=file_name,
-            pre_processes=pre_processes,
-            post_processes=post_processes,
-        )
-
+    def __init__(self, config: Optional[DefaultConfig] = None):
         self.config = config or DefaultConfig()
         set_current_proto_path(self.config.PROTO_TEMPLATE_PATH)
 
@@ -95,7 +75,7 @@ class Server(Blueprint, grpc.Server):
         #: all the attached blueprints in a dictionary by name.
         #:
         #: .. versionadded:: 0.1.6
-        self.blueprints: Dict[str, Blueprint] = {self.name: self}
+        self.blueprints: Dict[str, Blueprint] = {self.service_name: self}
 
         #: all the listened event in a dictionary by name.
         #: And the event will be called according to the name:
@@ -112,20 +92,18 @@ class Server(Blueprint, grpc.Server):
         self.logger.setLevel(logging.DEBUG)
         self.logger.addHandler(logging.StreamHandler())
 
-        self.register_blueprint(self)
+        super().__init__()
+        self.current_app = self
 
-        self.context_manager = self.RequestContextManagerCls(self)
-
-    def register_blueprint(self, bp: Blueprint) -> None:
+    def register_blueprint(self, bp_cls: Type[Blueprint]) -> None:
         """
-        all the gRPC service register in a dictionary by name.
+        all the gRPC service register in a dictionary by service name.
 
-        :param Blueprint bp:
-        :rtype: None
-
-        .. versionadded:: 0.2.0
+        .. versionadded:: 0.3.0
         """
-        self.blueprints[bp.name] = bp
+        bp = bp_cls()
+        bp.current_app = self
+        self.blueprints[bp.service_name] = bp
 
     def run(
         self,
@@ -138,12 +116,11 @@ class Server(Blueprint, grpc.Server):
             grpc_pb2_module = importlib.import_module(
                 f".{bp.file_name}_pb2_grpc", self.config.PROTO_TEMPLATE_PATH
             )
-            getattr(grpc_pb2_module, f"add_{bp.name}Servicer_to_server")(bp, self)
-            for rpc in bp.service_meta.rpcs:
-                rpc.current_app = self
+            getattr(grpc_pb2_module, f"add_{bp.service_name}Servicer_to_server")(
+                bp, self
+            )
 
-        for func in self.listeners["before_server_start"]:
-            func(self)
+        self.before_server_start()
 
         if server_credentials:
             self.add_secure_port(
@@ -163,23 +140,12 @@ class Server(Blueprint, grpc.Server):
                 pass
             finally:
                 self.stop(0)
-                for func in self.listeners["after_server_stop"]:
-                    func(self)
 
-    def listener(
-        self, event: str, listener: Optional[Callable[[Any], None]] = None
-    ) -> Union[partial, Callable[[Any], None]]:
-        """
-        Create a listener from a decorated function.
+    def before_server_start(self):
+        pass
 
-        :param event: event to listen to
-        """
-        if listener is None:
-            return partial(self.listener, event)
-
-        self.listeners[event].append(listener)
-
-        return listener
+    def after_server_stop(self):
+        pass
 
     def start(self) -> None:
         """Starts this Server.
@@ -218,7 +184,9 @@ class Server(Blueprint, grpc.Server):
 
         .. versionadded:: 0.2.1
         """
-        return _stop(self._state, grace)
+        event = _stop(self._state, grace)
+        self.after_server_stop()
+        return event
 
     def add_generic_rpc_handlers(
         self, generic_rpc_handlers: Tuple[GenericRpcHandler]
@@ -252,6 +220,14 @@ class Server(Blueprint, grpc.Server):
             return self._state.server.add_http2_port(
                 address, server_credentials._credentials
             )
+
+    def process_request(self, request: RequestType, context: Context) -> RequestType:
+        return request
+
+    def process_response(
+        self, response: ResponseType, context: Context
+    ) -> ResponseType:
+        return response
 
     def __del__(self):
         """

@@ -19,7 +19,7 @@ class DeclarativeMeta(type):
             file_name = clsdict.get("__filename__", clsname).lower()
             clsdict["__filename__"] = file_name
             clsdict["__meta__"] = {}
-            clsdict["_type_name"] = clsname
+            clsdict["__type_name__"] = clsname
 
             message_meta = MessageMeta(name=clsname, fields=[])
 
@@ -28,58 +28,60 @@ class DeclarativeMeta(type):
                     if base.__meta__:
                         yield from base.__meta__.items()
 
-            for key, value in chain(clsdict.items(), iter_base_meta()):
-                if isinstance(value, BaseField):
-                    value._name = key
-                    message_meta.fields.append(value)
-                    if isinstance(value, ReferenceField):
-                        if issubclass(value._key_type, Message):
-                            if value._key_type.__filename__ != file_name:
+            for key, field in chain(clsdict.items(), iter_base_meta()):
+                if isinstance(field, BaseField):
+                    field.__field_name__ = key
+                    message_meta.fields.append(field)
+                    if isinstance(field, (ReferenceField, ListField, MapField)):
+                        if issubclass(field.__key_type__, Message):
+                            if field.__key_type__.__filename__ != file_name:
                                 __meta__[file_name].import_files.add(
-                                    value._key_type.__filename__
+                                    field.__key_type__.__filename__
                                 )
-                        if isinstance(value, MapField):
-                            if issubclass(value._value_type, Message):
-                                if value._value_type.__filename__ != file_name:
+                        if isinstance(field, MapField):
+                            if issubclass(field.__value_type__, Message):
+                                if field.__value_type__.__filename__ != file_name:
                                     __meta__[file_name].import_files.add(
-                                        value._value_type.__filename__
+                                        field.__value_type__.__filename__
                                     )
-                    clsdict["__meta__"][key] = value
+                    clsdict["__meta__"][key] = field
             __meta__[file_name].messages.append(message_meta)
         return super().__new__(cls, clsname, bases, clsdict)
 
 
 class Message(metaclass=DeclarativeMeta):
-    _type_name = ""
-    _name = ""
+    __meta__: Dict[str, "BaseField"] = {}
+    __filename__: str = ""
+    __message__: GeneratedProtocolMessageType
+
     if TYPE_CHECKING:
         # populated by the metaclass, defined here to help IDEs only
-        __filename__: str
-        _message: GeneratedProtocolMessageType
-        __meta__: Dict[str, "BaseField"]
+        __type_name__: str
 
     def __init__(__message_self__, **kwargs):
         # Uses something other than `self` the first arg to allow "self" as a settable attribute
         gpr_message_module = importlib.import_module(
             f".{__message_self__.__filename__}_pb2", get_current_proto_path()
         )
-        gRPCMessageClass = getattr(gpr_message_module, f"{__message_self__._type_name}")
+        gRPCMessageClass = getattr(
+            gpr_message_module, f"{__message_self__.__type_name__}"
+        )
         for key, item in kwargs.items():
             if isinstance(item, list):
                 for index, value in enumerate(item):
                     if isinstance(value, Message):
-                        item[index] = value._message
+                        item[index] = value.__message__
             elif isinstance(item, Message):
-                kwargs[key] = item._message
+                kwargs[key] = item.__message__
             elif isinstance(item, dict):
                 for key, tmp in item.items():
                     if isinstance(tmp, Message):
-                        item[key] = tmp._message
-        __message_self__._message = gRPCMessageClass(**kwargs)
+                        item[key] = tmp.__message__
+        __message_self__.__message__ = gRPCMessageClass(**kwargs)
         super().__init__()
 
     def init_grpc_message(self, grpc_message: GeneratedProtocolMessageType):
-        self._message = grpc_message
+        self.__message__ = grpc_message
 
     def message_to_dict(
         self,
@@ -107,7 +109,7 @@ class Message(metaclass=DeclarativeMeta):
         #: .. versionadded:: 0.1.7
         """
         return MessageToDict(
-            self._message,
+            self.__message__,
             including_default_value_fields=including_default_value_fields,
             preserving_proto_field_name=preserving_proto_field_name,
             use_integers_for_enums=use_integers_for_enums,
@@ -142,7 +144,7 @@ class Message(metaclass=DeclarativeMeta):
         #: .. versionadded:: 0.1.7
         """
         return MessageToJson(
-            self._message,
+            self.__message__,
             including_default_value_fields=including_default_value_fields,
             preserving_proto_field_name=preserving_proto_field_name,
             indent=indent,
@@ -150,16 +152,15 @@ class Message(metaclass=DeclarativeMeta):
             use_integers_for_enums=use_integers_for_enums,
         )
 
-    def __str__(self):
-        return f"{self._type_name} {self._name}"
-
 
 FieldType = TypeVar("FieldType")
 
 
 class BaseField(Generic[FieldType]):
-    _type_name = ""
-    _name = ""
+    __type_name__: str = ""
+    if TYPE_CHECKING:
+        # populated by the metaclass, defined here to help IDEs only
+        __field_name__: str
 
     def __init__(self):
         self.lock = RLock()
@@ -168,47 +169,47 @@ class BaseField(Generic[FieldType]):
         if obj is None:
             return self  # type: ignore
         with self.lock:
-            value = obj.__dict__.get(self._name, _missing)
+            value = obj.__dict__.get(self.__field_name__, _missing)
             if value is _missing:
-                value = getattr(obj._message, self._name)
-                obj.__dict__[self._name] = value
+                value = getattr(obj.__message__, self.__field_name__)
+                obj.__dict__[self.__field_name__] = value
             return value
 
     def __set__(self, instance: Message, value: FieldType) -> None:
         with self.lock:
-            setattr(instance._message, self._name, value)
-            instance.__dict__[self._name] = value
+            setattr(instance.__message__, self.__field_name__, value)
+            instance.__dict__[self.__field_name__] = value
 
     def __str__(self):
-        return f"{self._type_name} {self._name}"
+        return f"{self.__type_name__} {self.__field_name__}"
 
 
 class StringField(BaseField[str]):
-    _type_name = "string"
+    __type_name__ = "string"
 
 
 class Int32Field(BaseField[int]):
-    _type_name = "int32"
+    __type_name__ = "int32"
 
 
 class FloatField(BaseField[float]):
-    _type_name = "float"
+    __type_name__ = "float"
 
 
 class DoubleField(BaseField[float]):
-    _type_name = "double"
+    __type_name__ = "double"
 
 
 class Int64Field(BaseField[int]):
-    _type_name = "int64"
+    __type_name__ = "int64"
 
 
 class BooleanField(BaseField[bool]):
-    _type_name = "bool"
+    __type_name__ = "bool"
 
 
 class BytesField(BaseField[bytes]):
-    _type_name = "bytes"
+    __type_name__ = "bytes"
 
 
 ReferenceFieldType = TypeVar("ReferenceFieldType", bound=Type[Message])
@@ -220,16 +221,16 @@ ReferenceValueFieldType = TypeVar(
 
 class ReferenceField(BaseField[ReferenceFieldType]):
     def __init__(self, key_type: ReferenceFieldType):
-        self._key_type = key_type  # type: ignore
-        self._type_name = key_type._type_name
+        self.__key_type__ = key_type  # type: ignore
+        self.__type_name__ = key_type.__type_name__
 
         super().__init__()
 
 
 class ListField(BaseField[List[ReferenceValueFieldType]]):
     def __init__(self, key_type: ReferenceValueFieldType):
-        self._key_type = key_type  # type: ignore
-        self._type_name = key_type._type_name
+        self.__key_type__ = key_type  # type: ignore
+        self.__type_name__ = key_type.__type_name__
         super().__init__()
 
     def __str__(self):
@@ -240,12 +241,12 @@ class MapField(BaseField[Dict[ReferenceKeyFieldType, ReferenceValueFieldType]]):
     def __init__(
         self, key_type: ReferenceKeyFieldType, value_type: ReferenceValueFieldType
     ):
-        self._key_type = key_type  # type: ignore
-        self._type_name = key_type._type_name
+        self.__key_type__: ReferenceKeyFieldType = key_type  # type: ignore
+        self.__type_name__ = key_type.__type_name__
 
-        self._value_type: ReferenceValueFieldType = value_type
-        self._value_type_name = value_type._type_name
+        self.__value_type__: ReferenceValueFieldType = value_type
+        self.__value_type_name__ = value_type.__type_name__
         super().__init__()
 
     def __str__(self):
-        return f"map<{self._type_name}, {self._value_type_name}> {self._name}"
+        return f"map<{self.__type_name__}, {self.__value_type_name__}> {self.__field_name__}"

@@ -2,15 +2,15 @@ from collections import defaultdict
 from typing import DefaultDict, List, Set, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .blueprint import RpcWrappedCallable
+    from .blueprint import gRPCMethodsType
     from .orm import BaseField
 
 
 class ServiceMeta:
     name: str
-    rpcs: List["RpcWrappedCallable"]
+    rpcs: "gRPCMethodsType"
 
-    def __init__(self, name: str, rpcs: List["RpcWrappedCallable"]):
+    def __init__(self, name: str, rpcs: "gRPCMethodsType"):
         self.name = name
         self.rpcs = rpcs
 
