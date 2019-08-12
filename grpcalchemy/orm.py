@@ -1,7 +1,7 @@
 import importlib
 from itertools import chain
 from threading import RLock
-from typing import Dict, Iterator, List, Tuple, Type, Generic, TypeVar
+from typing import Dict, Iterator, List, Tuple, Type, Generic, TypeVar, TYPE_CHECKING
 
 from google.protobuf.json_format import MessageToDict, MessageToJson
 from google.protobuf.message import Message as GeneratedProtocolMessageType
@@ -18,7 +18,7 @@ class DeclarativeMeta(type):
         if bases:
             file_name = clsdict.get("__filename__", clsname).lower()
             clsdict["__filename__"] = file_name
-            clsdict["__meta__"]: Dict[str, BaseField] = {}
+            clsdict["__meta__"] = {}
             clsdict["_type_name"] = clsname
 
             message_meta = MessageMeta(name=clsname, fields=[])
@@ -52,9 +52,11 @@ class DeclarativeMeta(type):
 class Message(metaclass=DeclarativeMeta):
     _type_name = ""
     _name = ""
-    __filename__ = ""
-    _message: GeneratedProtocolMessageType = None
-    __meta__: Dict[str, "BaseField"] = {}
+    if TYPE_CHECKING:
+        # populated by the metaclass, defined here to help IDEs only
+        __filename__: str
+        _message: GeneratedProtocolMessageType
+        __meta__: Dict[str, "BaseField"]
 
     def __init__(__message_self__, **kwargs):
         # Uses something other than `self` the first arg to allow "self" as a settable attribute
@@ -218,24 +220,32 @@ ReferenceValueFieldType = TypeVar(
 
 class ReferenceField(BaseField[ReferenceFieldType]):
     def __init__(self, key_type: ReferenceFieldType):
-        self._key_type = key_type
+        self._key_type = key_type  # type: ignore
         self._type_name = key_type._type_name
 
         super().__init__()
 
 
-class ListField(ReferenceField[List[ReferenceValueFieldType]]):
+class ListField(BaseField[List[ReferenceValueFieldType]]):
+    def __init__(self, key_type: ReferenceValueFieldType):
+        self._key_type = key_type  # type: ignore
+        self._type_name = key_type._type_name
+        super().__init__()
+
     def __str__(self):
         return f"repeated {super().__str__()}"
 
 
-class MapField(ReferenceField[Dict[ReferenceKeyFieldType, ReferenceValueFieldType]]):
+class MapField(BaseField[Dict[ReferenceKeyFieldType, ReferenceValueFieldType]]):
     def __init__(
         self, key_type: ReferenceKeyFieldType, value_type: ReferenceValueFieldType
     ):
-        super().__init__(key_type)
-        self._value_type = value_type
+        self._key_type = key_type  # type: ignore
+        self._type_name = key_type._type_name
+
+        self._value_type: ReferenceValueFieldType = value_type
         self._value_type_name = value_type._type_name
+        super().__init__()
 
     def __str__(self):
         return f"map<{self._type_name}, {self._value_type_name}> {self._name}"

@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Tuple, List
 
 from configalchemy import BaseConfig
 
@@ -22,7 +22,7 @@ class DefaultConfig(BaseConfig):
     GPRC_SERVER_MAX_WORKERS = 10
     #  An optional list of key-value pairs (channel args in gRPC runtime)
     #  to configure the channel.
-    GRPC_SERVER_OPTIONS = tuple()
+    GRPC_SERVER_OPTIONS: List[Tuple[str, str]] = []
 
     # The maximum number of concurrent RPCs this server
     # will service before returning RESOURCE_EXHAUSTED status, or None to
