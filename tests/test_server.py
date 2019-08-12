@@ -1,6 +1,6 @@
 from unittest.mock import Mock
 
-from grpcalchemy import Blueprint, Context, Server, grpcservice
+from grpcalchemy import Blueprint, Context, Server, grpcservice, DefaultConfig
 from grpcalchemy.orm import Message, StringField
 from .test_grpcalchemy import TestGrpcalchemy
 
@@ -14,6 +14,9 @@ class ServerTestCase(TestGrpcalchemy):
         app_process_response = Mock()
         blueprint_before_request = Mock()
         blueprint_after_request = Mock()
+
+        class TestConfig(DefaultConfig):
+            GRPC_SERVER_TEST = True
 
         class TestMessage(Message):
             name = StringField()
@@ -62,9 +65,9 @@ class ServerTestCase(TestGrpcalchemy):
                 unittest_self.assertEqual("test", response.name)
                 return response
 
-        unittest_self.app = AppService()
+        unittest_self.app = AppService(config=TestConfig())
         unittest_self.app.register_blueprint(BlueprintService)
-        unittest_self.app.run(test=True)
+        unittest_self.app.run()
         unittest_self.assertEqual(1, server_start.call_count)
         unittest_self.server_stop = server_stop
 
@@ -83,7 +86,7 @@ class ServerTestCase(TestGrpcalchemy):
         from protos.blueprintservice_pb2_grpc import BlueprintServiceStub
         from protos.testmessage_pb2 import TestMessage
 
-        with insecure_channel("[::]:50051") as channel:
+        with insecure_channel("0.0.0.0:50051") as channel:
             response = AppServiceStub(channel).GetName(TestMessage(name="test"))
             self.assertEqual("test", response.name)
             self.assertEqual(1, self.app_process_request.call_count)

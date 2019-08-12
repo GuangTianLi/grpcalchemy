@@ -28,3 +28,7 @@ class DefaultConfig(BaseConfig):
     # will service before returning RESOURCE_EXHAUSTED status, or None to
     # indicate no limit.
     GRPC_SERVER_MAXIMUM_CONCURRENT_RPCS: Optional[int] = None
+
+    GRPC_SERVER_TEST = False
+    GRPC_SERVER_HOST = "[::]"
+    GRPC_SERVER_PORT = 50051
