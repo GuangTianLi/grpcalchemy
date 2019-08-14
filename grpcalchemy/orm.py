@@ -1,7 +1,16 @@
 import importlib
 from itertools import chain
-from threading import RLock
-from typing import Dict, Iterator, List, Tuple, Type, Generic, TypeVar, TYPE_CHECKING
+from typing import (
+    Dict,
+    Iterator,
+    List,
+    Tuple,
+    Type,
+    TypeVar,
+    TYPE_CHECKING,
+    cast,
+    Union,
+)
 
 from google.protobuf.json_format import MessageToDict, MessageToJson
 from google.protobuf.message import Message as GeneratedProtocolMessageType
@@ -85,8 +94,9 @@ class Message(metaclass=DeclarativeMeta):
 
     def message_to_dict(
         self,
-        including_default_value_fields: bool = False,
-        preserving_proto_field_name: bool = False,
+        *,
+        including_default_value_fields: bool = True,
+        preserving_proto_field_name: bool = True,
         use_integers_for_enums: bool = False,
     ) -> dict:
         """Converts protobuf message to a dictionary.
@@ -117,8 +127,9 @@ class Message(metaclass=DeclarativeMeta):
 
     def message_to_json(
         self,
-        including_default_value_fields: bool = False,
-        preserving_proto_field_name: bool = False,
+        *,
+        including_default_value_fields: bool = True,
+        preserving_proto_field_name: bool = True,
         indent: int = 2,
         sort_keys: bool = False,
         use_integers_for_enums: bool = False,
@@ -153,100 +164,134 @@ class Message(metaclass=DeclarativeMeta):
         )
 
 
-FieldType = TypeVar("FieldType")
-
-
-class BaseField(Generic[FieldType]):
+class BaseField:
     __type_name__: str = ""
     if TYPE_CHECKING:
         # populated by the metaclass, defined here to help IDEs only
         __field_name__: str
 
-    def __init__(self):
-        self.lock = RLock()
-
-    def __get__(self, obj: Message, type: Type) -> FieldType:
-        if obj is None:
+    def __get__(self, instance: Message, owner):
+        if instance is None:
             return self  # type: ignore
-        with self.lock:
-            value = obj.__dict__.get(self.__field_name__, _missing)
-            if value is _missing:
-                value = getattr(obj.__message__, self.__field_name__)
-                obj.__dict__[self.__field_name__] = value
-            return value
-
-    def __set__(self, instance: Message, value: FieldType) -> None:
-        with self.lock:
-            setattr(instance.__message__, self.__field_name__, value)
+        value = instance.__dict__.get(self.__field_name__, _missing)
+        if value is _missing:
+            value = getattr(instance.__message__, self.__field_name__)
             instance.__dict__[self.__field_name__] = value
+        return value
+
+    def __set__(self, instance: Message, value) -> None:
+        setattr(instance.__message__, self.__field_name__, value)
+        instance.__dict__[self.__field_name__] = value
 
     def __str__(self):
         return f"{self.__type_name__} {self.__field_name__}"
 
 
-class StringField(BaseField[str]):
+class StringField(BaseField):
     __type_name__ = "string"
+    if TYPE_CHECKING:
+        # defined this to help IDEs only
+        def __new__(cls, *args, **kwargs) -> str:
+            ...
 
 
-class Int32Field(BaseField[int]):
+class Int32Field(BaseField):
     __type_name__ = "int32"
+    if TYPE_CHECKING:
+        # defined this to help IDEs only
+        def __new__(cls, *args, **kwargs) -> int:
+            ...
 
 
-class FloatField(BaseField[float]):
+class FloatField(BaseField):
     __type_name__ = "float"
+    if TYPE_CHECKING:
+        # defined this to help IDEs only
+        def __new__(cls, *args, **kwargs) -> float:
+            ...
 
 
-class DoubleField(BaseField[float]):
+class DoubleField(BaseField):
     __type_name__ = "double"
+    if TYPE_CHECKING:
+        # defined this to help IDEs only
+        def __new__(cls, *args, **kwargs) -> float:
+            ...
 
 
-class Int64Field(BaseField[int]):
+class Int64Field(BaseField):
     __type_name__ = "int64"
+    if TYPE_CHECKING:
+        # defined this to help IDEs only
+        def __new__(cls, *args, **kwargs) -> int:
+            ...
 
 
-class BooleanField(BaseField[bool]):
+class BooleanField(BaseField):
     __type_name__ = "bool"
+    if TYPE_CHECKING:
+        # defined this to help IDEs only
+        def __new__(cls, *args, **kwargs) -> bool:
+            ...
 
 
-class BytesField(BaseField[bytes]):
+class BytesField(BaseField):
     __type_name__ = "bytes"
+    if TYPE_CHECKING:
+        # defined this to help IDEs only
+        def __new__(cls, *args, **kwargs) -> bytes:
+            ...
 
 
-ReferenceFieldType = TypeVar("ReferenceFieldType", bound=Type[Message])
-ReferenceKeyFieldType = TypeVar("ReferenceKeyFieldType", bound=Type[BaseField])
-ReferenceValueFieldType = TypeVar(
-    "ReferenceValueFieldType", Type[Message], Type[BaseField]
-)
+ReferenceFieldType = TypeVar("ReferenceFieldType", bound=Message)
+ReferenceKeyFieldType = TypeVar("ReferenceKeyFieldType", bound=BaseField)
+ReferenceValueFieldType = TypeVar("ReferenceValueFieldType", Message, BaseField)
 
 
-class ReferenceField(BaseField[ReferenceFieldType]):
-    def __init__(self, key_type: ReferenceFieldType):
-        self.__key_type__ = key_type  # type: ignore
+class ReferenceField(BaseField):
+    __key_type__: Type[Message]
+
+    def __new__(cls, key_type: Type[ReferenceFieldType]) -> ReferenceFieldType:
+        self = super().__new__(cls)
+        self.__key_type__ = key_type
         self.__type_name__ = key_type.__type_name__
+        return cast(ReferenceFieldType, self)
 
-        super().__init__()
 
+class ListField(BaseField):
+    # using this way to help IDEs only
+    __key_type__: Union[Type[BaseField], Type[Message]]
 
-class ListField(BaseField[List[ReferenceValueFieldType]]):
-    def __init__(self, key_type: ReferenceValueFieldType):
-        self.__key_type__ = key_type  # type: ignore
+    # using __new__ rather than __init__ to help IDEs only
+    def __new__(
+        cls, key_type: Type[ReferenceValueFieldType]
+    ) -> List[ReferenceValueFieldType]:
+        self = super().__new__(cls)
+        self.__key_type__ = key_type
         self.__type_name__ = key_type.__type_name__
-        super().__init__()
+        return cast(List[ReferenceValueFieldType], self)
 
     def __str__(self):
         return f"repeated {super().__str__()}"
 
 
-class MapField(BaseField[Dict[ReferenceKeyFieldType, ReferenceValueFieldType]]):
-    def __init__(
-        self, key_type: ReferenceKeyFieldType, value_type: ReferenceValueFieldType
-    ):
-        self.__key_type__: ReferenceKeyFieldType = key_type  # type: ignore
+class MapField(BaseField):
+    __key_type__: Type[BaseField]
+    __value_type__: Union[Type[BaseField], Type[Message]]
+
+    # using __new__ rather than __init__ to help IDEs only
+    def __new__(
+        cls,
+        key_type: Type[ReferenceKeyFieldType],
+        value_type: Type[ReferenceValueFieldType],
+    ) -> Dict[ReferenceKeyFieldType, ReferenceValueFieldType]:
+        self = super().__new__(cls)
+        self.__key_type__ = key_type
         self.__type_name__ = key_type.__type_name__
 
-        self.__value_type__: ReferenceValueFieldType = value_type
+        self.__value_type__ = value_type
         self.__value_type_name__ = value_type.__type_name__
-        super().__init__()
+        return cast(Dict[ReferenceKeyFieldType, ReferenceValueFieldType], self)
 
     def __str__(self):
         return f"map<{self.__type_name__}, {self.__value_type_name__}> {self.__field_name__}"

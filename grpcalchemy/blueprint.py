@@ -1,6 +1,6 @@
 from functools import wraps
 from inspect import signature
-from typing import Callable, List, Tuple, Type, TYPE_CHECKING, TypeVar
+from typing import Callable, List, Tuple, Type, TYPE_CHECKING, TypeVar, cast
 
 from google.protobuf.message import Message as GeneratedProtocolMessageType
 from grpc import ServicerContext as Context
@@ -73,6 +73,7 @@ class Blueprint:
 
 
 gRPCFunctionType = Callable[[Blueprint, Message, Context], Message]
+F = TypeVar("F", bound=gRPCFunctionType)
 
 
 def _validate_rpc_method(
@@ -107,7 +108,7 @@ The correct signature is blow::
     )
 
 
-def grpcservice(funcobj: gRPCFunctionType):
+def grpcservice(funcobj: F) -> F:
     """A decorator indicating gRPC methods.
 
 
@@ -145,4 +146,4 @@ def grpcservice(funcobj: gRPCFunctionType):
     wrapper.__grpcmethod__ = True  # type: ignore
     wrapper.request_type = request_type  # type: ignore
     wrapper.response_type = response_type  # type: ignore
-    return wrapper
+    return cast(F, wrapper)
