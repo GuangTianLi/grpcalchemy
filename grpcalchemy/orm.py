@@ -163,22 +163,39 @@ class Message(metaclass=DeclarativeMeta):
         )
 
 
+_SupportValueType = Union[str, bytes, int, float, list, dict, bool, Message]
+_DefaultValueType = Type[_SupportValueType]
+
+
 class BaseField:
+    _default: _DefaultValueType
     __type_name__: str = ""
+
     if TYPE_CHECKING:
         # populated by the metaclass, defined here to help IDEs only
         __field_name__: str
+
+    def __new__(cls):
+        self = super().__new__(cls)
+        self._default_value = cls._default()
+        return self
 
     def __get__(self, instance: Message, owner):
         if instance is None:
             return self  # type: ignore
         value = instance.__dict__.get(self.__field_name__, _missing)
         if value is _missing:
-            value = getattr(instance.__message__, self.__field_name__, _missing)
+            value = getattr(
+                instance.__message__, self.__field_name__, self._default_value
+            )
             instance.__dict__[self.__field_name__] = value
         return value
 
-    def __set__(self, instance: Message, value) -> None:
+    def __set__(self, instance: Message, value: _SupportValueType) -> None:
+        if value is None:
+            value = self._default()
+            if isinstance(value, Message):
+                value = value.__message__
         setattr(instance.__message__, self.__field_name__, value)
         instance.__dict__[self.__field_name__] = value
 
@@ -187,6 +204,7 @@ class BaseField:
 
 
 class StringField(BaseField):
+    _default = str
     __type_name__ = "string"
     if TYPE_CHECKING:
         # defined this to help IDEs only
@@ -195,6 +213,7 @@ class StringField(BaseField):
 
 
 class Int32Field(BaseField):
+    _default = int
     __type_name__ = "int32"
     if TYPE_CHECKING:
         # defined this to help IDEs only
@@ -203,6 +222,7 @@ class Int32Field(BaseField):
 
 
 class FloatField(BaseField):
+    _default = float
     __type_name__ = "float"
     if TYPE_CHECKING:
         # defined this to help IDEs only
@@ -211,6 +231,7 @@ class FloatField(BaseField):
 
 
 class DoubleField(BaseField):
+    _default = float
     __type_name__ = "double"
     if TYPE_CHECKING:
         # defined this to help IDEs only
@@ -219,6 +240,7 @@ class DoubleField(BaseField):
 
 
 class Int64Field(BaseField):
+    _default = int
     __type_name__ = "int64"
     if TYPE_CHECKING:
         # defined this to help IDEs only
@@ -227,6 +249,7 @@ class Int64Field(BaseField):
 
 
 class BooleanField(BaseField):
+    _default = bool
     __type_name__ = "bool"
     if TYPE_CHECKING:
         # defined this to help IDEs only
@@ -235,6 +258,7 @@ class BooleanField(BaseField):
 
 
 class BytesField(BaseField):
+    _default = bytes
     __type_name__ = "bytes"
     if TYPE_CHECKING:
         # defined this to help IDEs only
@@ -251,6 +275,7 @@ class ReferenceField(BaseField):
     __key_type__: Type[Message]
 
     def __new__(cls, key_type: Type[ReferenceFieldType]) -> ReferenceFieldType:
+        cls._default = key_type
         self = super().__new__(cls)
         self.__key_type__ = key_type
         self.__type_name__ = key_type.__type_name__
@@ -258,6 +283,7 @@ class ReferenceField(BaseField):
 
 
 class ListField(BaseField):
+    _default = list
     # using this way to help IDEs only
     __key_type__: Union[Type[BaseField], Type[Message]]
 
@@ -275,6 +301,7 @@ class ListField(BaseField):
 
 
 class MapField(BaseField):
+    _default = dict
     __key_type__: Type[BaseField]
     __value_type__: Union[Type[BaseField], Type[Message]]
 

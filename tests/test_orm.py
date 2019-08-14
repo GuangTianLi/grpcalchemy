@@ -39,13 +39,6 @@ class ORMTestCase(TestGrpcalchemy):
             sex = BooleanField()
             raw_data = BytesField()
 
-        test = Test(name="Test")
-        self.assertEqual("Test", test.name)
-        test = Test()
-        test.name = "Changed_name"
-        self.assertEqual("Changed_name", test.name)
-        self.assertEqual("Changed_name", test.__message__.name)
-
         self.assertEqual("string name", str(Test.name))
         self.assertEqual("int32 number", str(Test.number))
         self.assertEqual("int64 big_number", str(Test.big_number))
@@ -62,6 +55,9 @@ class ORMTestCase(TestGrpcalchemy):
             ref_field = ReferenceField(Test)
             list_test_field = ListField(Test)
             list_int32_field = ListField(Int32Field)
+
+        self.assertEqual([], TestRef().list_test_field)
+        self.assertEqual([], TestRef().list_int32_field)
 
         test = TestRef(
             ref_field=Test(name="Test"),
@@ -130,3 +126,23 @@ class ORMTestCase(TestGrpcalchemy):
         }
         self.assertDictEqual(dict_test, test.message_to_dict())
         self.assertDictEqual(dict_test, json.loads(test.message_to_json()))
+
+    def test_field_default_value(self):
+        class Test(Message):
+            name = StringField()
+            number = Int32Field()
+            big_number = Int64Field()
+            sex = BooleanField()
+            raw_data = BytesField()
+
+        test = Test()
+        self.assertEqual("", test.name)
+        self.assertEqual(0, test.number)
+        self.assertEqual(0, test.big_number)
+        self.assertEqual(False, test.sex)
+        self.assertEqual(b"", test.raw_data)
+
+        test.name = "changed"
+        self.assertEqual("changed", test.name)
+        test.name = None
+        self.assertEqual("", test.name)
