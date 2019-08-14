@@ -1,4 +1,3 @@
-import importlib
 from itertools import chain
 from typing import (
     Dict,
@@ -15,8 +14,7 @@ from typing import (
 from google.protobuf.json_format import MessageToDict, MessageToJson
 from google.protobuf.message import Message as GeneratedProtocolMessageType
 
-from .config import get_current_proto_path
-from .meta import MessageMeta, __meta__
+from .meta import __meta__
 
 # sentinel
 _missing = object()
@@ -30,8 +28,6 @@ class DeclarativeMeta(type):
             clsdict["__meta__"] = {}
             clsdict["__type_name__"] = clsname
 
-            message_meta = MessageMeta(name=clsname, fields=[])
-
             def iter_base_meta() -> Iterator:
                 for base in bases:
                     if base.__meta__:
@@ -40,7 +36,6 @@ class DeclarativeMeta(type):
             for key, field in chain(clsdict.items(), iter_base_meta()):
                 if isinstance(field, BaseField):
                     field.__field_name__ = key
-                    message_meta.fields.append(field)
                     if isinstance(field, (ReferenceField, ListField, MapField)):
                         if issubclass(field.__key_type__, Message):
                             if field.__key_type__.__filename__ != file_name:
@@ -54,13 +49,23 @@ class DeclarativeMeta(type):
                                         field.__value_type__.__filename__
                                     )
                     clsdict["__meta__"][key] = field
-            __meta__[file_name].messages.append(message_meta)
+            MessageCls = super().__new__(cls, clsname, bases, clsdict)
+            __meta__[file_name].messages.append(MessageCls)
+            return MessageCls
         return super().__new__(cls, clsname, bases, clsdict)
+
+
+class _gRPCMessageClass(GeneratedProtocolMessageType):
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
 
 
 class Message(metaclass=DeclarativeMeta):
     __meta__: Dict[str, "BaseField"] = {}
     __filename__: str = ""
+    gRPCMessageClass: Type = _gRPCMessageClass
+    # populated dynamic, defined here to help IDEs only
     __message__: GeneratedProtocolMessageType
 
     if TYPE_CHECKING:
@@ -69,12 +74,6 @@ class Message(metaclass=DeclarativeMeta):
 
     def __init__(__message_self__, **kwargs):
         # Uses something other than `self` the first arg to allow "self" as a settable attribute
-        gpr_message_module = importlib.import_module(
-            f".{__message_self__.__filename__}_pb2", get_current_proto_path()
-        )
-        gRPCMessageClass = getattr(
-            gpr_message_module, f"{__message_self__.__type_name__}"
-        )
         for key, item in kwargs.items():
             if isinstance(item, list):
                 for index, value in enumerate(item):
@@ -86,7 +85,7 @@ class Message(metaclass=DeclarativeMeta):
                 for key, tmp in item.items():
                     if isinstance(tmp, Message):
                         item[key] = tmp.__message__
-        __message_self__.__message__ = gRPCMessageClass(**kwargs)
+        __message_self__.__message__ = __message_self__.gRPCMessageClass(**kwargs)
         super().__init__()
 
     def init_grpc_message(self, grpc_message: GeneratedProtocolMessageType):
@@ -175,7 +174,7 @@ class BaseField:
             return self  # type: ignore
         value = instance.__dict__.get(self.__field_name__, _missing)
         if value is _missing:
-            value = getattr(instance.__message__, self.__field_name__)
+            value = getattr(instance.__message__, self.__field_name__, _missing)
             instance.__dict__[self.__field_name__] = value
         return value
 

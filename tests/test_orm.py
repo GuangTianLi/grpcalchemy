@@ -12,7 +12,6 @@ from grpcalchemy.orm import (
     StringField,
 )
 from grpcalchemy.utils import generate_proto_file
-
 from .test_grpcalchemy import TestGrpcalchemy
 
 
@@ -40,8 +39,6 @@ class ORMTestCase(TestGrpcalchemy):
             sex = BooleanField()
             raw_data = BytesField()
 
-        generate_proto_file()
-
         test = Test(name="Test")
         self.assertEqual("Test", test.name)
         test = Test()
@@ -65,8 +62,6 @@ class ORMTestCase(TestGrpcalchemy):
             ref_field = ReferenceField(Test)
             list_test_field = ListField(Test)
             list_int32_field = ListField(Int32Field)
-
-        generate_proto_file()
 
         test = TestRef(
             ref_field=Test(name="Test"),
@@ -92,7 +87,6 @@ class ORMTestCase(TestGrpcalchemy):
         class TestMapRef(Message):
             map_field = MapField(StringField, Test)
 
-        generate_proto_file()
         test = TestMapRef(map_field={"test": Test(name="test")})
         self.assertEqual("test", test.map_field["test"].name)
         self.assertEqual("test", test.__message__.map_field["test"].name)
@@ -104,8 +98,6 @@ class ORMTestCase(TestGrpcalchemy):
 
         class TextPost(Post):
             content = StringField()
-
-        generate_proto_file()
 
         test = TextPost(content="test", title="test_title")
         self.assertEqual("test", test.content)
@@ -122,6 +114,7 @@ class ORMTestCase(TestGrpcalchemy):
             map_field = MapField(StringField, Test)
 
         generate_proto_file()
+
         test = TestJsonFormat(
             ref_field=Test(name="Test"),
             list_test_field=[Test(name="Test")],
@@ -135,10 +128,5 @@ class ORMTestCase(TestGrpcalchemy):
             "list_int32_field": [1],
             "map_field": {"test": {"name": "Test"}},
         }
-        self.assertDictEqual(
-            dict_test, test.message_to_dict(preserving_proto_field_name=True)
-        )
-        self.assertDictEqual(
-            dict_test,
-            json.loads(test.message_to_json(preserving_proto_field_name=True)),
-        )
+        self.assertDictEqual(dict_test, test.message_to_dict())
+        self.assertDictEqual(dict_test, json.loads(test.message_to_json()))

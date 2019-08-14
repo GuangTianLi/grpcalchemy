@@ -17,8 +17,8 @@ class MetaTestCase(TestGrpcalchemy):
 
         messages = __meta__[TestMessage.__filename__].messages
 
-        self.assertEqual("TestMessage", messages[0].name)
-        self.assertEqual(1, len(messages[0].fields))
+        self.assertEqual("TestMessage", messages[0].__name__)
+        self.assertEqual(1, len(messages[0].__meta__))
 
     def test_single_service(self):
         class TestMessage(Message):

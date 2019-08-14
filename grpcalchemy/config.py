@@ -2,17 +2,6 @@ from typing import Optional, Tuple, List
 
 from configalchemy import BaseConfig
 
-PROTO_TEMPLATE_PATH = "protos"
-
-
-def set_current_proto_path(path: str):
-    global PROTO_TEMPLATE_PATH
-    PROTO_TEMPLATE_PATH = path
-
-
-def get_current_proto_path():
-    return PROTO_TEMPLATE_PATH
-
 
 class DefaultConfig(BaseConfig):
 

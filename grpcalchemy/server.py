@@ -18,7 +18,7 @@ from grpc._server import (
 )
 
 from .blueprint import Blueprint, RequestType, ResponseType, Context
-from .config import DefaultConfig, set_current_proto_path
+from .config import DefaultConfig
 from .ctx import BaseRequestContextManager
 from .utils import generate_proto_file
 
@@ -51,7 +51,6 @@ class Server(Blueprint, grpc.Server):
 
     def __init__(self, config: Optional[DefaultConfig] = None):
         self.config = config or DefaultConfig()
-        set_current_proto_path(self.config.PROTO_TEMPLATE_PATH)
 
         thread_pool = futures.ThreadPoolExecutor(
             max_workers=self.config.GPRC_SERVER_MAX_WORKERS

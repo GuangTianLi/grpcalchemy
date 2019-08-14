@@ -19,8 +19,8 @@ service {{ service.name }} {
 
 {% block message %}
     {% for message in messages %}
-message {{ message.name }} {
-            {% for field in message.fields %}
+message {{ message.__name__ }} {
+            {% for field in message.__meta__.values() %}
     {{ field }} = {{ loop.index }};
             {% endfor %}
 }
