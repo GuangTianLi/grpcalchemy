@@ -8,7 +8,7 @@ from grpc import ServicerContext as Context
 from .meta import ServiceMeta, __meta__
 from .orm import Message
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from .server import Server
 
 gRPCMethodsType = List[Callable[[Message, Context], Message]]
@@ -133,9 +133,7 @@ def grpcservice(funcobj: F) -> F:
     ):
         current_request = request_type()
         current_request.init_grpc_message(grpc_message=origin_request)
-        with self.current_app.RequestContextManagerCls(
-            self.current_app, current_request
-        ):
+        with self.current_app.app_context(self, funcobj, current_request):
             app_request = self.current_app.process_request(current_request, context)
             bp_request = self.before_request(app_request, context)
             response = funcobj(self, bp_request, context)

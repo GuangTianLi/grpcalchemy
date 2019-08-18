@@ -18,6 +18,7 @@ class DefaultConfig(BaseConfig):
     # indicate no limit.
     GRPC_SERVER_MAXIMUM_CONCURRENT_RPCS: Optional[int] = None
 
+    # If set `True` the server run will not be blocked.
     GRPC_SERVER_TEST = False
     GRPC_SERVER_HOST = "[::]"
     GRPC_SERVER_PORT = 50051

@@ -4,7 +4,16 @@ import time
 from collections import defaultdict
 from concurrent import futures
 from threading import Event
-from typing import Callable, DefaultDict, Dict, List, Optional, Tuple, Type
+from typing import (
+    Callable,
+    DefaultDict,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    Type,
+    ContextManager,
+)
 
 import grpc
 from grpc import GenericRpcHandler
@@ -19,7 +28,6 @@ from grpc._server import (
 
 from .blueprint import Blueprint, RequestType, ResponseType, Context
 from .config import DefaultConfig
-from .ctx import BaseRequestContextManager
 from .utils import generate_proto_file
 
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
@@ -42,12 +50,6 @@ class Server(Blueprint, grpc.Server):
 
     .. versionadded:: 0.2.0
     """
-
-    #: Default Create an :class:`~grpcalchemy.ctx.BaseRequestContextManager`.
-    #: Use as a ``with`` block to push the context with current request.
-    #:
-    #: .. versionchanged:: 0.3.0
-    RequestContextManagerCls = BaseRequestContextManager
 
     def __init__(self, config: Optional[DefaultConfig] = None):
         self.config = config or DefaultConfig()
@@ -104,7 +106,12 @@ class Server(Blueprint, grpc.Server):
         bp.current_app = self
         self.blueprints[bp.service_name] = bp
 
-    def run(self, server_credentials: Optional[grpc.ServerCredentials] = None) -> None:
+    def run(
+        self,
+        host: Optional[str] = None,
+        port: Optional[int] = None,
+        server_credentials: Optional[grpc.ServerCredentials] = None,
+    ) -> None:
         generate_proto_file(template_path=self.config.PROTO_TEMPLATE_PATH)
         for name, bp in self.blueprints.items():
             grpc_pb2_module = importlib.import_module(
@@ -115,23 +122,17 @@ class Server(Blueprint, grpc.Server):
             )
 
         self.before_server_start()
-
+        host = host or self.config.GRPC_SERVER_HOST
+        port = port or self.config.GRPC_SERVER_PORT
         if server_credentials:
             self.add_secure_port(
-                f"{self.config.GRPC_SERVER_HOST}:{self.config.GRPC_SERVER_PORT}".encode(
-                    "utf-8"
-                ),
-                server_credentials=server_credentials,
+                f"{host}:{port}".encode("utf-8"), server_credentials=server_credentials
             )
         else:
-            self.add_insecure_port(
-                f"[::]:{self.config.GRPC_SERVER_PORT}".encode("utf-8")
-            )
+            self.add_insecure_port(f"{host}:{port}".encode("utf-8"))
         self.start()
 
-        self.logger.info(
-            f"gRPC server is running on 0.0.0.0:{self.config.GRPC_SERVER_PORT}"
-        )
+        self.logger.info(f"gRPC server is running on {host}:{port}")
 
         if not self.config.GRPC_SERVER_TEST:
             try:
@@ -238,3 +239,20 @@ class Server(Blueprint, grpc.Server):
             # We can not grab a lock in __del__(), so set a flag to signal the
             # serving daemon thread (if it exists) to initiate shutdown.
             self._state.server_deallocated = True
+
+    def __enter__(self):
+        pass
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass
+
+    def app_context(
+        self,
+        current_service: Blueprint,
+        current_method: Callable,
+        current_request: RequestType,
+    ) -> ContextManager:
+        #: Use to construct context for each request.
+        #:
+        #: .. versionchanged:: 0.3.0
+        return self

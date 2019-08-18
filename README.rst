@@ -46,38 +46,37 @@ Server
 .. code-block:: python
 
     from grpcalchemy.orm import Message, StringField
-    from grpcalchemy import Server, Context
-
-    app = Server('server')
+    from grpcalchemy import Server, Context, grpcservice
 
     class HelloMessage(Message):
         __filename__ = 'hello'
         text = StringField()
 
-    @app.register
-    def test(request: HelloMessage, context: Context) -> HelloMessage:
-        return HelloMessage(text=f'Hello {request.text}')
+    class HelloService(Server):
+        @grpcservice
+        def Hello(self, request: HelloMessage, context: Context) -> HelloMessage:
+            return HelloMessage(text=f'Hello {request.text}')
 
     if __name__ == '__main__':
-        app.run()
+        HelloService().run()
 
 Features
 ----------
 
 * gPRC Service Support
-* gRPC Client Support
 * gRPC Message Support
     * Scalar Value Types
     * Message Types
     * Repeated Field
     * Maps
-* Middleware And Listeners
-* Global Variable Support
-* Current App Context Support
-* Current Rpc Context Support
+* Middleware
+* App Context Manger
 
 TODO
 -------
 
-* Stream Method Support
-* Error Handler Support
+- Test Client Support
+- gRPC Client Support
+    - Thoroughly Deprecate **pb2** and **pb2_grpc** file
+- Stream Method Support
+- Error Handler Support

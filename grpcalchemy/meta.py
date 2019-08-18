@@ -1,7 +1,7 @@
 from collections import defaultdict
 from typing import DefaultDict, List, Set, TYPE_CHECKING, Type
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from .blueprint import gRPCMethodsType
     from .orm import Message
 

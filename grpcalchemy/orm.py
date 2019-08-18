@@ -68,7 +68,7 @@ class Message(metaclass=DeclarativeMeta):
     # populated dynamic, defined here to help IDEs only
     __message__: GeneratedProtocolMessageType
 
-    if TYPE_CHECKING:
+    if TYPE_CHECKING:  # pragma: no cover
         # populated by the metaclass, defined here to help IDEs only
         __type_name__: str
 
@@ -171,9 +171,10 @@ class BaseField:
     _default: _DefaultValueType
     __type_name__: str = ""
 
-    if TYPE_CHECKING:
+    if TYPE_CHECKING:  # pragma: no cover
         # populated by the metaclass, defined here to help IDEs only
         __field_name__: str
+        _default_value: _SupportValueType
 
     def __new__(cls):
         self = super().__new__(cls)
@@ -206,7 +207,7 @@ class BaseField:
 class StringField(BaseField):
     _default = str
     __type_name__ = "string"
-    if TYPE_CHECKING:
+    if TYPE_CHECKING:  # pragma: no cover
         # defined this to help IDEs only
         def __new__(cls, *args, **kwargs) -> str:
             ...
@@ -215,7 +216,7 @@ class StringField(BaseField):
 class Int32Field(BaseField):
     _default = int
     __type_name__ = "int32"
-    if TYPE_CHECKING:
+    if TYPE_CHECKING:  # pragma: no cover
         # defined this to help IDEs only
         def __new__(cls, *args, **kwargs) -> int:
             ...
@@ -224,7 +225,7 @@ class Int32Field(BaseField):
 class FloatField(BaseField):
     _default = float
     __type_name__ = "float"
-    if TYPE_CHECKING:
+    if TYPE_CHECKING:  # pragma: no cover
         # defined this to help IDEs only
         def __new__(cls, *args, **kwargs) -> float:
             ...
@@ -233,7 +234,7 @@ class FloatField(BaseField):
 class DoubleField(BaseField):
     _default = float
     __type_name__ = "double"
-    if TYPE_CHECKING:
+    if TYPE_CHECKING:  # pragma: no cover
         # defined this to help IDEs only
         def __new__(cls, *args, **kwargs) -> float:
             ...
@@ -242,7 +243,7 @@ class DoubleField(BaseField):
 class Int64Field(BaseField):
     _default = int
     __type_name__ = "int64"
-    if TYPE_CHECKING:
+    if TYPE_CHECKING:  # pragma: no cover
         # defined this to help IDEs only
         def __new__(cls, *args, **kwargs) -> int:
             ...
@@ -251,7 +252,7 @@ class Int64Field(BaseField):
 class BooleanField(BaseField):
     _default = bool
     __type_name__ = "bool"
-    if TYPE_CHECKING:
+    if TYPE_CHECKING:  # pragma: no cover
         # defined this to help IDEs only
         def __new__(cls, *args, **kwargs) -> bool:
             ...
@@ -260,7 +261,7 @@ class BooleanField(BaseField):
 class BytesField(BaseField):
     _default = bytes
     __type_name__ = "bytes"
-    if TYPE_CHECKING:
+    if TYPE_CHECKING:  # pragma: no cover
         # defined this to help IDEs only
         def __new__(cls, *args, **kwargs) -> bytes:
             ...

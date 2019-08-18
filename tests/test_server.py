@@ -1,3 +1,4 @@
+from typing import Callable, ContextManager
 from unittest.mock import Mock
 
 from grpcalchemy import Blueprint, Context, Server, grpcservice, DefaultConfig
@@ -14,6 +15,7 @@ class ServerTestCase(TestGrpcalchemy):
         app_process_response = Mock()
         blueprint_before_request = Mock()
         blueprint_after_request = Mock()
+        enter_context = Mock()
 
         class TestConfig(DefaultConfig):
             GRPC_SERVER_TEST = True
@@ -46,6 +48,17 @@ class ServerTestCase(TestGrpcalchemy):
                 app_process_response()
                 return response
 
+            def app_context(
+                self,
+                current_service: Blueprint,
+                current_method: Callable,
+                current_request: Message,
+            ) -> ContextManager:
+                enter_context()
+                return super().app_context(
+                    current_service, current_method, current_request
+                )
+
         class BlueprintService(Blueprint):
             @grpcservice
             def GetName(self, request: TestMessage, context: Context) -> TestMessage:
@@ -75,6 +88,7 @@ class ServerTestCase(TestGrpcalchemy):
         unittest_self.app_process_response = app_process_response
         unittest_self.blueprint_after_request = blueprint_after_request
         unittest_self.blueprint_before_request = blueprint_before_request
+        unittest_self.enter_context = enter_context
 
     def tearDown(self):
         self.app.stop(0)
@@ -97,3 +111,4 @@ class ServerTestCase(TestGrpcalchemy):
             self.assertEqual(2, self.app_process_response.call_count)
             self.assertEqual(1, self.blueprint_after_request.call_count)
             self.assertEqual(1, self.blueprint_before_request.call_count)
+        self.assertEqual(2, self.enter_context.call_count)
