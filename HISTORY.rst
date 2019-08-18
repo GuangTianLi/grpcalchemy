@@ -2,6 +2,11 @@
 History
 =======
 
+0.3.0(2019-08-19)
+--------------------
+
+https://github.com/GuangTianLi/grpcalchemy/projects/1
+
 0.2.7-10(2019-04-16)
 ----------------------
 

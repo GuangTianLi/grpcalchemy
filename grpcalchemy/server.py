@@ -38,14 +38,11 @@ class Server(Blueprint, grpc.Server):
     object. It is passed the name of gRPC Service of the application. Once it is
     created it will act as a central registry for the gRPC Service.
 
-    Usually you create a :class:`Server` instance in your main module or
-    in the :file:`__init__.py` file of your package like this::
-
         from grpcalchemy import Server
         class FooService(Server):
             ...
 
-    :param config:
+    :param config: Your Custom Configuration
     :type config: Optional[DefaultConfig]
 
     .. versionadded:: 0.2.0
@@ -224,11 +221,17 @@ class Server(Blueprint, grpc.Server):
             )
 
     def process_request(self, request: RequestType, context: Context) -> RequestType:
+        """The code to be executed for each request before
+         the gRPC method are called.
+        """
         return request
 
     def process_response(
         self, response: ResponseType, context: Context
     ) -> ResponseType:
+        """The code to be executed for each response after
+        the gRPC method are called.
+        """
         return response
 
     def __del__(self):

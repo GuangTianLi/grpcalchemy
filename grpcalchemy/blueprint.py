@@ -47,11 +47,15 @@ class Blueprint:
         return self.service_name.lower()
 
     def before_request(self, request: RequestType, context: Context) -> RequestType:
-        """The function run before each request"""
+        """The code to be executed for each request before
+        the gRPC method in this blueprint are called.
+        """
         return request
 
     def after_request(self, response: ResponseType, context: Context) -> ResponseType:
-        """The function run after each request."""
+        """The code to be executed for each response after
+        the gRPC method in this blueprint are called.
+        """
         return response
 
     def as_view(self) -> gRPCMethodsType:
@@ -116,14 +120,18 @@ def grpcservice(funcobj: F) -> F:
     https://developers.google.com/protocol-buffers/docs/style#services,
     the function name should use CamelCase (with an initial capital).
 
-    Any gRPC method must define request and response's Message Type with `Type Hint`:
+    Any gRPC method must define request and response's Message Type with `Type Hint`.
 
-    Usage:
+    Usage::
 
         class FooService(Blueprint):
             @grpcservice
             def GetSomething(self, request: Message, context: Context) -> Message:
                 ...
+
+    :param funcobj: gRPC Method
+    :type funcobj: Callable[[Message, Context], Message]
+    :rtype: Callable[[Message, Context], Message]
     """
     request_type, response_type = _validate_rpc_method(funcobj)
 
