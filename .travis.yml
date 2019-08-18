@@ -5,10 +5,13 @@ install:
 script: tox
 matrix:
   include:
-    - python: 3.6
-    - python: 3.7
-      dist: xenial
-      sudo: required
+  - name: Linting
+    python: 3.7
+    script: tox -e linters
+  - python: 3.6
+  - python: 3.7
+    dist: xenial
+    sudo: required
 after_success:
   - codecov
 deploy:
@@ -20,4 +23,4 @@ deploy:
   on:
     tags: true
     repo: GuangTianLi/grpcalchemy
-    python: 3.6
+    python: 3.7
