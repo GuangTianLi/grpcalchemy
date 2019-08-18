@@ -5,7 +5,7 @@ install:
 script: tox
 matrix:
   include:
-  - python: 3.7
+  - python: 3.6
     env: TOXENV=linters
   - python: 3.6
     env: TOXENV=py36
@@ -21,3 +21,4 @@ deploy:
     tags: true
     repo: GuangTianLi/grpcalchemy
     python: 3.7
+    skip_existing: true
