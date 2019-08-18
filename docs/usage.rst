@@ -7,20 +7,19 @@ To use gRPCAlchemy in a project:
 .. code-block:: python
 
     from grpcalchemy.orm import Message, StringField
-    from grpcalchemy import Server, Context
-
-    app = Server('server')
+    from grpcalchemy import Server, Context, grpcservice
 
     class HelloMessage(Message):
         __filename__ = 'hello'
-        name = StringField()
+        text = StringField()
 
-    @app.register
-    def test(request: HelloMessage, context: Context) -> HelloMessage:
-        return HelloMessage(name=f'Hello {request.name}')
+    class HelloService(Server):
+        @grpcservice
+        def Hello(self, request: HelloMessage, context: Context) -> HelloMessage:
+            return HelloMessage(text=f'Hello {request.text}')
 
     if __name__ == '__main__':
-        app.run()
+        HelloService().run()
 
 
 Defining our Message
@@ -50,6 +49,7 @@ which fields a :class:`User` may have, and what types of data they might have:
 
 .. code-block:: python
 
+    from grpcalchemy.orm import Message, StringField
     class User(Message):
         email = StringField()
         first_name = StringField()
@@ -70,6 +70,7 @@ We can think of :class:`Post` as a base class, and :class:`TextPost`, :class:`Im
 
 .. code-block:: python
 
+    from grpcalchemy.orm import Message, StringField, ReferenceField
     class Post(Message):
         title = StringField()
         author = ReferenceField(User)
@@ -97,6 +98,7 @@ within the post. Let's take a look at the code of our modified :class:`Post` cla
 
 .. code-block:: python
 
+    from grpcalchemy.orm import Message, StringField, ReferenceField, ListField
     class Post(Message):
         title = StringField()
         author = ReferenceField(User)
@@ -117,6 +119,7 @@ in exactly the same way we do with regular documents:
 
 .. code-block:: python
 
+    from grpcalchemy.orm import Message, StringField
     class Comment(Message):
         content = StringField()
         name = StringField()
@@ -125,6 +128,7 @@ We can then define a list of comment documents in our post message:
 
 .. code-block:: python
 
+    from grpcalchemy.orm import Message, StringField, ReferenceField, ListField
     class Post(Message):
         title = StringField()
         author = ReferenceField(User)
@@ -134,22 +138,26 @@ We can then define a list of comment documents in our post message:
 Defining our gRPC Method
 ===================================
 
-The ``valid registered function`` must be with `explicit type hint <https://www.python.org/dev/peps/pep-0484/#type-definition-syntax>`_
+:any:`grpcservice` is a decorator indicating gRPC methods.
+
+The ``valid gRPC Method`` must be with `explicit type hint <https://www.python.org/dev/peps/pep-0484/#type-definition-syntax>`_
 to define the type of request and return value.
 
 .. code-block:: python
 
-    app = Server('hello')
+    class HelloService(Server):
+        @grpcservice
+        def Hello(self, request: HelloMessage, context: Context) -> HelloMessage:
+            return HelloMessage(text=f'Hello {request.text}')
 
-    @app.register
-    def test(request: HelloMessage, context: Context) -> HelloMessage: ...
+The above code is equal to an RPC service with a method:
 
-The above code is equal to an RPC service with a method::
+.. code-block:: proto
 
     syntax = "proto3";
 
-    service hello {
-        rpc test (HelloMessage) returns (HelloMessage) {
+    service HelloService {
+        rpc Hello (HelloMessage) returns (HelloMessage) {
         }
     }
 
@@ -166,133 +174,50 @@ supporting common patterns within an application or across applications.
     from grpcalchemy.orm import Message, StringField
     from grpcalchemy import Server, Context, Blueprint
 
-    app = Server('server')
-
-    first_blueprint = Blueprint('first_blueprint')
+    class MyService(Server):
+        ...
 
     class HelloMessage(Message):
         __filename__ = 'hello'
-        name = StringField()
+        text = StringField()
 
-    @first_blueprint.register
-    def test(request: HelloMessage, context: Context) -> HelloMessage:
-        return HelloMessage(name=f'Hello {request.name}')
+    class HelloService(Blueprint):
+        @grpcservice
+        def Hello(self, request: HelloMessage, context: Context) -> HelloMessage:
+            return HelloMessage(text=f'Hello {request.text}')
 
     if __name__ == '__main__':
-        app.register_blueprint(first_blueprint)
+        app = MyService()
+        app.register_blueprint(HelloService)
         app.run()
 
 
-How to Use the Config
+Configuration
 ==============================================
 
-Using :any:`Config` to construct your config.
+You can define your custom config by inherit from :any:`DefaultConfig` which defined
+a list of configuration available in gRPCAlchemy and their default values.
 
-* Priority: *env > local config file > remote center > project config*
-
-Define the Base Config Class
------------------------------------------
-
-Using `Class` to define your config value explicitly and pass it to initialize :any:`Config`:
-
-.. note:: `BaseConfig` should define all config used in the project **explicitly** and initialize it.
-.. note:: the config key should be **uppercase**.
+.. note:: DefaultConfig is defined by `configalchemy` - https://configalchemy.readthedocs.io
 
 .. code-block:: python
 
-    from grpcalchemy.config import Config
+    from grpcalchemy import DefaultConfig
 
-    class BaseConfig:
-        DEBUG = False
-        TESTING = False
-        DATABASE_URI = 'sqlite:///:memory:'
+    from hello import HelloService
 
-    class ProductionConfig(BaseConfig):
-        DATABASE_URI = 'mysql://user@localhost/foo'
+    class MyConfig(DefaultConfig):
+        ...
 
-    class DevelopmentConfig(BaseConfig):
-        DEBUG = True
+    config = MyConfig()
 
-    class TestingConfig(BaseConfig):
-        TESTING = True
+    app = HelloService(config=config)
+    app.run()
 
-    config = Config(obj='configmodule.ProductionConfig')
-    # or
-    config = Config(obj=ProductionConfig)
+Middleware
+================
 
-Using environment variables explicitly
-----------------------------------------
-Defining the `ENV_PREFIX` to load the environment variables:
+Middleware is a framework of hooks into gRPCAlchemy's request/response processing.
 
-.. note:: The :any:`Config` will try to load all `ENV_PREFIX` + `attributes name`.
-
-.. code-block:: python
-
-    from grpcalchemy.config import Config
-    import os
-
-    os.environ['TEST_NAME'] = 'env'
-
-    class BaseConfig:
-        ENV_PREFIX = 'TEST_'
-        NAME = 'base'
-
-    config = Config(obj=BaseConfig)
-
-    >>> config['NAME']
-    env
-
-Using the config file explicitly
----------------------------------
-Defining the `CONFIG_FILE` to load the environment variables:
-
-.. note:: YAML or JSON file
-
-.. code-block:: python
-
-    from grpcalchemy.config import Config
-
-    class BaseConfig:
-        CONFIG_FILE = 'test.json' #: etc: {'NAME': 'json'}
-        NAME = 'base'
-
-    config = Config(obj=BaseConfig)
-
-    >>> config['NAME']
-    json
-
-Using the Custom way to Access Config Explicitly
-----------------------------------------------------
-Using  `sync_access_config_list` or `async_access_config_list` access your config:
-
-.. note:: When the `ENABLE_CONFIG_LIST` is `True`, the config will init with your custom way:
-
-.. code-block:: python
-
-    from grpcalchemy.config import Config
-
-    async def get_config_async(current_config: dict) -> dict:
-        return {'TYPE': 'async'}
-
-
-    def get_config(current_config: dict) -> dict:
-        return {'NAME': 'sync'}
-
-
-    class BaseConfig:
-        ENABLE_CONFIG_LIST = True
-        TYPE = 'base'
-        NAME = 'base'
-
-
-    config = Config(
-        obj=BaseConfig,
-        sync_access_config_list=[get_config],
-        async_access_config_list=[get_config_async])
-
-    >>> config['TYPE']
-    async
-    >>> config['NAME']
-    sync
-
-
+Costume middleware can implement by overriding :any:`Blueprint.before_request`, :any:`Blueprint.after_request`,
+:any:`Server.process_request` and :any:`Server.process_response`.

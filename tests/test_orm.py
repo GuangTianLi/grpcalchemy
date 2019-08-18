@@ -12,14 +12,10 @@ from grpcalchemy.orm import (
     StringField,
 )
 from grpcalchemy.utils import generate_proto_file
-
 from .test_grpcalchemy import TestGrpcalchemy
 
 
 class ORMTestCase(TestGrpcalchemy):
-    def setUp(self):
-        super().setUp()
-
     def test_message_with_default_filename(self):
         class Test(Message):
             pass
@@ -43,15 +39,6 @@ class ORMTestCase(TestGrpcalchemy):
             sex = BooleanField()
             raw_data = BytesField()
 
-        generate_proto_file()
-
-        test = Test(name="Test")
-        self.assertEqual("Test", test.name)
-        test = Test()
-        test.name = "Changed_name"
-        self.assertEqual("Changed_name", test.name)
-        self.assertEqual("Changed_name", test._message.name)
-
         self.assertEqual("string name", str(Test.name))
         self.assertEqual("int32 number", str(Test.number))
         self.assertEqual("int64 big_number", str(Test.big_number))
@@ -69,7 +56,8 @@ class ORMTestCase(TestGrpcalchemy):
             list_test_field = ListField(Test)
             list_int32_field = ListField(Int32Field)
 
-        generate_proto_file()
+        self.assertEqual([], TestRef().list_test_field)
+        self.assertEqual([], TestRef().list_int32_field)
 
         test = TestRef(
             ref_field=Test(name="Test"),
@@ -95,11 +83,9 @@ class ORMTestCase(TestGrpcalchemy):
         class TestMapRef(Message):
             map_field = MapField(StringField, Test)
 
-        generate_proto_file()
-
         test = TestMapRef(map_field={"test": Test(name="test")})
         self.assertEqual("test", test.map_field["test"].name)
-        self.assertEqual("test", test._message.map_field["test"].name)
+        self.assertEqual("test", test.__message__.map_field["test"].name)
         self.assertEqual("map<string, Test> map_field", str(TestMapRef.map_field))
 
     def test_inheritance(self):
@@ -108,8 +94,6 @@ class ORMTestCase(TestGrpcalchemy):
 
         class TextPost(Post):
             content = StringField()
-
-        generate_proto_file()
 
         test = TextPost(content="test", title="test_title")
         self.assertEqual("test", test.content)
@@ -126,6 +110,7 @@ class ORMTestCase(TestGrpcalchemy):
             map_field = MapField(StringField, Test)
 
         generate_proto_file()
+
         test = TestJsonFormat(
             ref_field=Test(name="Test"),
             list_test_field=[Test(name="Test")],
@@ -139,10 +124,25 @@ class ORMTestCase(TestGrpcalchemy):
             "list_int32_field": [1],
             "map_field": {"test": {"name": "Test"}},
         }
-        self.assertDictEqual(
-            dict_test, test.message_to_dict(preserving_proto_field_name=True)
-        )
-        self.assertDictEqual(
-            dict_test,
-            json.loads(test.message_to_json(preserving_proto_field_name=True)),
-        )
+        self.assertDictEqual(dict_test, test.message_to_dict())
+        self.assertDictEqual(dict_test, json.loads(test.message_to_json()))
+
+    def test_field_default_value(self):
+        class Test(Message):
+            name = StringField()
+            number = Int32Field()
+            big_number = Int64Field()
+            sex = BooleanField()
+            raw_data = BytesField()
+
+        test = Test()
+        self.assertEqual("", test.name)
+        self.assertEqual(0, test.number)
+        self.assertEqual(0, test.big_number)
+        self.assertEqual(False, test.sex)
+        self.assertEqual(b"", test.raw_data)
+
+        test.name = "changed"
+        self.assertEqual("changed", test.name)
+        test.name = None
+        self.assertEqual("", test.name)

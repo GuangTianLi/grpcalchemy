@@ -108,5 +108,5 @@ ENV/
 # proto
 protos/
 
-# pyre
-.pyre/
+# pipenv
+Pipfile.lock

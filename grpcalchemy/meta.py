@@ -1,14 +1,24 @@
-from collections import defaultdict, namedtuple
-from typing import DefaultDict, List, Set
+from collections import defaultdict
+from typing import DefaultDict, List, Set, TYPE_CHECKING, Type
 
-MessageMeta = namedtuple("MessageMeta", ["name", "fields"])
-ServiceMeta = namedtuple("Service", ["name", "rpcs"])
+if TYPE_CHECKING:  # pragma: no cover
+    from .blueprint import gRPCMethodsType
+    from .orm import Message
+
+
+class ServiceMeta:
+    name: str
+    rpcs: "gRPCMethodsType"
+
+    def __init__(self, name: str, rpcs: "gRPCMethodsType"):
+        self.name = name
+        self.rpcs = rpcs
 
 
 class ProtoBuffMeta:
     def __init__(self):
         self.import_files: Set[str] = set()
-        self.messages: List[MessageMeta] = []
+        self.messages: List[Type[Message]] = []
         self.services: List[ServiceMeta] = []
 
 

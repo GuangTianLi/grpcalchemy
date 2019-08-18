@@ -1,102 +1,58 @@
-from grpcalchemy.blueprint import Blueprint, DuplicatedRPCMethod, InvalidRPCMethod
+from grpcalchemy.blueprint import InvalidRPCMethod, Blueprint, grpcservice
 from grpcalchemy.orm import Message, StringField
-
 from .test_grpcalchemy import TestGrpcalchemy
 
 
-class TestMessage(Message):
-    test_name = StringField()
-
-
 class BlueprintTestCase(TestGrpcalchemy):
-    def test_init_without_set_file_name(self):
-        test = Blueprint("test")
-        self.assertEqual("test", test.file_name)
+    def test_init_blueprint(self):
+        class TestMessage(Message):
+            name = StringField()
 
-    def test_register_invalid_rpc_process(self):
-        def test_without_typing(request, context):
-            pass
+        class FooService(Blueprint):
+            @grpcservice
+            def GetSomething(self, request: TestMessage, context) -> TestMessage:
+                ...
 
-        with self.assertRaises(InvalidRPCMethod):
-            Blueprint("test", pre_processes=[test_without_typing])
-
-        with self.assertRaises(InvalidRPCMethod):
-            Blueprint("test", post_processes=[test_without_typing])
-
-        test = Blueprint("test")
-
-        with self.assertRaises(InvalidRPCMethod):
-
-            @test.register(pre_processes=[test_without_typing])
-            def test_message(request: TestMessage, context) -> TestMessage:
-                return TestMessage(test_name=request.test_name)
-
-        with self.assertRaises(InvalidRPCMethod):
-
-            @test.register(post_processes=[test_without_typing])
-            def test_message(request: TestMessage, context) -> TestMessage:
-                return TestMessage(test_name=request.test_name)
+        test = FooService()
+        self.assertEqual("fooservice", test.file_name)
+        self.assertEqual("FooService", test.service_name)
 
     def test_register_invalid_rpc_method(self):
-        test = Blueprint("test")
-
-        with self.assertRaises(InvalidRPCMethod):
-
-            @test.register
-            def test_without_typing(request, context):
-                pass
-
-        with self.assertRaises(InvalidRPCMethod):
-
-            @test.register
-            def test_one_args(request):
-                pass
-
-        with self.assertRaises(InvalidRPCMethod):
-
-            @test.register
-            def test_more_than_two_args(request, context, test):
-                pass
-
         class TestMessage(Message):
-            test_name = StringField()
+            name = StringField()
 
         with self.assertRaises(InvalidRPCMethod):
 
-            @test.register
-            def test_message_one(request: TestMessage, context):
-                pass
+            @grpcservice
+            def test_without_typing(self, request, context):
+                ...
 
         with self.assertRaises(InvalidRPCMethod):
 
-            @test.register
-            def test_message_two(request, context) -> TestMessage:
-                pass
+            @grpcservice
+            def test_one_args(self, request):
+                ...
 
-    def test_register_duplicated_rpc_method(self):
-        test = Blueprint("test")
+        with self.assertRaises(InvalidRPCMethod):
 
-        @test.register
-        def test_message(request: TestMessage, context) -> TestMessage:
-            return TestMessage(test_name=request.test_name)
+            @grpcservice
+            def test_more_than_two_args(self, request, context, test):
+                ...
 
-        with self.assertRaises(DuplicatedRPCMethod):
+        with self.assertRaises(InvalidRPCMethod):
 
-            @test.register
-            def test_message(request: TestMessage, context) -> TestMessage:
-                return TestMessage(test_name=request.test_name)
+            @grpcservice
+            def test_message_one(self, request: TestMessage, context):
+                ...
 
-    def test_register_process(self):
-        def test_process(request: TestMessage, context) -> TestMessage:
-            return TestMessage(test_name=request.test_name)
+        with self.assertRaises(InvalidRPCMethod):
 
-        test = Blueprint(
-            "test", pre_processes=[test_process], post_processes=[test_process]
-        )
+            @grpcservice
+            def test_message_two(self, request, context) -> TestMessage:
+                ...
 
-        @test.register(pre_processes=[test_process])
-        def test_message(request: TestMessage, context) -> TestMessage:
-            return TestMessage(test_name=request.test_name)
+        with self.assertRaises(InvalidRPCMethod):
 
-        self.assertListEqual(test_message.pre_processes, [test_process, test_process])
-        self.assertListEqual(test_message.post_processes, [test_process])
+            @grpcservice
+            def test_message_two(self, request: int, context) -> int:
+                ...

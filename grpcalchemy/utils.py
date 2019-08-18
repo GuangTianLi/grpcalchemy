@@ -1,3 +1,4 @@
+import importlib
 from os import getcwd, mkdir, walk
 from os.path import abspath, dirname, exists, join
 
@@ -30,10 +31,9 @@ def generate_proto_file(template_path: str = "protos"):
 
     template = env.get_template("rpc.proto.tmpl")
     for filename, meta in __meta__.items():
-        meta.import_files = sorted(meta.import_files)
         template.stream(
             file_path=template_path,
-            import_files=meta.import_files,
+            import_files=sorted(meta.import_files),
             messages=meta.messages,
             services=meta.services,
         ).dump(join(abs_template_path, f"{filename}.proto"))
@@ -54,3 +54,13 @@ def generate_proto_file(template_path: str = "protos"):
                     ]
                     + ["-I{}".format(proto_include)]
                 )
+    for meta in __meta__.values():
+        # populated exact gRPCMessageClass from pb2 file
+        for messageCls in meta.messages:
+            gpr_message_module = importlib.import_module(
+                f".{messageCls.__filename__}_pb2", template_path
+            )
+            gRPCMessageClass = getattr(
+                gpr_message_module, f"{messageCls.__type_name__}"
+            )
+            messageCls.gRPCMessageClass = gRPCMessageClass
