@@ -5,15 +5,12 @@ install:
 script: tox
 matrix:
   include:
-  - name: Linting
-    python: 3.7
-    script: tox -e linters
-  - python: 3.6
   - python: 3.7
-    dist: xenial
-    sudo: required
-after_success:
-  - codecov
+    env: TOXENV=linters
+  - python: 3.6
+    env: TOXENV=py36
+  - python: 3.7
+    env: TOXENV=py37
 deploy:
   provider: pypi
   distributions: sdist bdist_wheel
