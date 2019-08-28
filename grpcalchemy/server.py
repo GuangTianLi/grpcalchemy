@@ -1,19 +1,9 @@
 import importlib
 import logging
 import time
-from collections import defaultdict
 from concurrent import futures
 from threading import Event
-from typing import (
-    Callable,
-    DefaultDict,
-    Dict,
-    List,
-    Optional,
-    Tuple,
-    Type,
-    ContextManager,
-)
+from typing import Callable, Dict, Optional, Tuple, Type, ContextManager
 
 import grpc
 from grpc import GenericRpcHandler
@@ -74,16 +64,6 @@ class Server(Blueprint, grpc.Server):
         #:
         #: .. versionadded:: 0.1.6
         self.blueprints: Dict[str, Blueprint] = {self.service_name: self}
-
-        #: all the listened event in a dictionary by name.
-        #: And the event will be called according to the name:
-        #: ``before_server_start``
-        #: ``after_server_stop``
-        #:
-        #: .. versionadded:: 0.1.6
-        self.listeners: DefaultDict[str, List[Callable[[Server], None]]] = defaultdict(
-            list
-        )
 
         #: init logger
         self.logger = logging.getLogger()

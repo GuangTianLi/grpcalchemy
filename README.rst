@@ -63,14 +63,14 @@ Server
 Features
 ----------
 
-* gPRC Service Support
-* gRPC Message Support
-    * Scalar Value Types
-    * Message Types
-    * Repeated Field
-    * Maps
-* Middleware
-* App Context Manger
+- gPRC Service Support
+- gRPC Message Support
+    - Scalar Value Types
+    - Message Types
+    - Repeated Field
+    - Maps
+- Middleware
+- App Context Manger
 
 TODO
 -------
