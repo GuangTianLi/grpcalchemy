@@ -7,7 +7,7 @@
 
 __author__ = """GuangTian Li"""
 __email__ = "guangtian_li@qq.com"
-__version__ = "0.4.0"
+__version__ = "0.4.1"
 
 __all__ = ["Blueprint", "Context", "grpcservice", "DefaultConfig", "Server"]
 
