@@ -3,7 +3,7 @@ from inspect import signature
 from typing import Callable, List, Tuple, Type, TYPE_CHECKING, TypeVar, cast
 
 from google.protobuf.message import Message as GeneratedProtocolMessageType
-from grpc import ServicerContext as Context
+from grpc._server import _Context as Context
 
 from .meta import ServiceMeta, __meta__
 from .orm import Message
@@ -142,12 +142,17 @@ def grpcservice(funcobj: F) -> F:
         current_request = request_type()
         current_request.init_grpc_message(grpc_message=origin_request)
         with self.current_app.app_context(self, funcobj, current_request):
-            app_request = self.current_app.process_request(current_request, context)
-            bp_request = self.before_request(app_request, context)
-            response = funcobj(self, bp_request, context)
-            bp_response = self.after_request(response, context)
-            app_response = self.current_app.process_response(bp_response, context)
-            return app_response.__message__
+            try:
+                current_request = self.current_app.process_request(
+                    current_request, context
+                )
+                current_request = self.before_request(current_request, context)
+                response = funcobj(self, current_request, context)
+                bp_response = self.after_request(response, context)
+                app_response = self.current_app.process_response(bp_response, context)
+                return app_response.__message__
+            except Exception as e:
+                return self.current_app.handle_exception(e, current_request, context)
 
     wrapper.__grpcmethod__ = True  # type: ignore
     wrapper.request_type = request_type  # type: ignore

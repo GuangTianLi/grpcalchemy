@@ -243,3 +243,8 @@ class Server(Blueprint, grpc.Server):
         #:
         #: .. versionchanged:: 0.3.0
         return self
+
+    def handle_exception(
+        self, e: Exception, request: RequestType, context: Context
+    ) -> ResponseType:
+        raise e
