@@ -21,7 +21,6 @@ grpcio = "*"
 protobuf = "*"
 grpcio-tools = "*"
 jinja2 = "*"
-pyyaml = "*"
 configalchemy = "*"
 
 [requires]

@@ -7,7 +7,6 @@ from typing import (
     Type,
     TypeVar,
     TYPE_CHECKING,
-    Union,
     Generic,
     Any,
     Callable,
@@ -340,8 +339,6 @@ class ReferenceField(BaseField):
 
 class ListField(BaseField[list]):
     _default = list
-    # using this way to help IDEs only
-    __key_type__: Union[Type[BaseField], Type[Message]]
 
     if TYPE_CHECKING:  # pragma: no cover
         # defined this to help IDEs only
@@ -357,8 +354,8 @@ class ListField(BaseField[list]):
         self,
         key_type: ReferenceKeyFieldType,
         *,
-        default: ReferenceKeyFieldType = _missing,
-        default_factory: Callable[[], ReferenceKeyFieldType] = _missing_factory,
+        default: List[ReferenceKeyFieldType] = _missing,
+        default_factory: Callable[[], List[ReferenceKeyFieldType]] = _missing_factory,
     ):
         self.__key_type__ = key_type
         self.__type_name__ = key_type.__type_name__
@@ -406,7 +403,7 @@ class MapField(BaseField[dict]):
         return f"map<{self.__type_name__}, {self.__value_type_name__}> {self.__field_name__}"
 
 
-_TYPE_FIELD_MAP = {
+_TYPE_FIELD_MAP: Dict[type, BaseField] = {
     str: StringField(),
     int: Int32Field(),
     float: DoubleField(),
@@ -419,7 +416,17 @@ def iter_attributes(
     attributes: Iterable[Tuple[str, Any]]
 ) -> Iterator[Tuple[str, BaseField]]:
     for name, o in attributes:
-        if isinstance(o, BaseField):
+        origin = getattr(o, "__origin__", None)
+        if origin:
+            if isinstance(origin, type):
+                if issubclass(origin, List):  #: typing.List
+                    _, p = next(iter_attributes([(name, o.__args__[0])]))
+                    yield name, ListField(p)
+                elif issubclass(origin, Dict):
+                    _, k = next(iter_attributes([(name, o.__args__[0])]))
+                    _, v = next(iter_attributes([(name, o.__args__[1])]))
+                    yield name, MapField(k, v)
+        elif isinstance(o, BaseField):
             yield name, o
         elif isinstance(o, type):
             if issubclass(o, BaseField):
@@ -428,14 +435,3 @@ def iter_attributes(
                 yield name, _TYPE_FIELD_MAP[o]
             elif issubclass(o, Message):
                 yield name, ReferenceField(o())
-        else:
-            origin = getattr(o, "__origin__", None)
-            if origin:
-                if isinstance(origin, type):
-                    if issubclass(origin, List):  #: typing.List
-                        _, p = next(iter_attributes([(name, o.__args__[0])]))
-                        yield name, ListField(p)
-                    if issubclass(origin, Dict):
-                        _, k = next(iter_attributes([(name, o.__args__[0])]))
-                        _, v = next(iter_attributes([(name, o.__args__[1])]))
-                        yield name, MapField(k, v)

@@ -11,7 +11,7 @@ from jinja2 import Environment, FileSystemLoader
 try:
     af_unix = socket.AF_UNIX
 except AttributeError:
-    af_unix = None
+    af_unix = None  # type: ignore
 
 from .meta import __meta__
 
