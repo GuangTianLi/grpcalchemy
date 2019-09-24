@@ -18,7 +18,7 @@ from grpc._server import (
 
 from .blueprint import Blueprint, RequestType, ResponseType, Context
 from .config import DefaultConfig
-from .utils import generate_proto_file
+from .utils import generate_proto_file, socket_bind_test
 
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
 
@@ -89,6 +89,11 @@ class Server(Blueprint, grpc.Server):
         port: Optional[int] = None,
         server_credentials: Optional[grpc.ServerCredentials] = None,
     ) -> None:
+        host = host or self.config.GRPC_SERVER_HOST
+        port = port or self.config.GRPC_SERVER_PORT
+
+        socket_bind_test(host, port)
+
         generate_proto_file(template_path=self.config.PROTO_TEMPLATE_PATH)
         for name, bp in self.blueprints.items():
             grpc_pb2_module = importlib.import_module(
@@ -99,8 +104,7 @@ class Server(Blueprint, grpc.Server):
             )
 
         self.before_server_start()
-        host = host or self.config.GRPC_SERVER_HOST
-        port = port or self.config.GRPC_SERVER_PORT
+
         if server_credentials:
             self.add_secure_port(
                 f"{host}:{port}".encode("utf-8"), server_credentials=server_credentials

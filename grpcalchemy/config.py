@@ -23,6 +23,6 @@ class DefaultConfig(BaseConfig):
     #: If set `True` the server run will not be blocked.
     GRPC_SERVER_TEST = False
     #: The host/domain name that this server can serve
-    GRPC_SERVER_HOST = "[::]"
+    GRPC_SERVER_HOST = "127.0.0.1"
     #: The port this server listen.
     GRPC_SERVER_PORT = 50051
