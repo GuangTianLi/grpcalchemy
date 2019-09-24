@@ -1,4 +1,4 @@
-from typing import Callable, ContextManager
+from typing import Callable, ContextManager, List, Type
 from unittest.mock import Mock
 
 from grpcalchemy import Blueprint, Context, Server, grpcservice, DefaultConfig
@@ -59,6 +59,9 @@ class ServerTestCase(TestGrpcalchemy):
                     current_service, current_method, current_request
                 )
 
+            def get_blueprints(self) -> List[Type[Blueprint]]:
+                return [BlueprintService]
+
         class BlueprintService(Blueprint):
             @grpcservice
             def GetName(self, request: TestMessage, context: Context) -> TestMessage:
@@ -79,7 +82,6 @@ class ServerTestCase(TestGrpcalchemy):
                 return response
 
         unittest_self.app = AppService(config=TestConfig())
-        unittest_self.app.register_blueprint(BlueprintService)
         unittest_self.app.run()
         unittest_self.assertEqual(1, server_start.call_count)
         unittest_self.server_stop = server_stop

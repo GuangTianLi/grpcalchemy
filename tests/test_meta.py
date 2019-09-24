@@ -60,7 +60,7 @@ class MetaTestCase(TestGrpcalchemy):
 
         class TestMessageThree(Message):
             name = StringField()
-            ref = ReferenceField(TestMessageOne)
+            ref = ReferenceField(TestMessageOne())
 
         self.assertEqual(2, len(__meta__.keys()))
         self.assertEqual(1, len(__meta__[TestMessageThree.__filename__].import_files))

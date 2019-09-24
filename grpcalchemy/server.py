@@ -3,7 +3,7 @@ import logging
 import time
 from concurrent import futures
 from threading import Event
-from typing import Callable, Dict, Optional, Tuple, Type, ContextManager
+from typing import Callable, Dict, Optional, Tuple, Type, ContextManager, List
 
 import grpc
 from grpc import GenericRpcHandler
@@ -93,6 +93,9 @@ class Server(Blueprint, grpc.Server):
         port = port or self.config.GRPC_SERVER_PORT
 
         socket_bind_test(host, port)
+
+        for bp_cls in self.get_blueprints():
+            self.register_blueprint(bp_cls)
 
         generate_proto_file(template_path=self.config.PROTO_TEMPLATE_PATH)
         for name, bp in self.blueprints.items():
@@ -248,3 +251,6 @@ class Server(Blueprint, grpc.Server):
         self, e: Exception, request: RequestType, context: Context
     ) -> ResponseType:
         raise e
+
+    def get_blueprints(self) -> List[Type[Blueprint]]:
+        return []

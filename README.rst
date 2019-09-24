@@ -50,7 +50,7 @@ Server
 
     class HelloMessage(Message):
         __filename__ = 'hello'
-        text = StringField()
+        text: str
 
     class HelloService(Server):
         @grpcservice
@@ -69,8 +69,10 @@ Features
     - Message Types
     - Repeated Field
     - Maps
+- Define Message With Type Hint
 - Middleware
 - App Context Manger
+- Error Handler Support
 
 TODO
 -------
@@ -79,4 +81,3 @@ TODO
 - gRPC Client Support
     - Thoroughly Deprecate **pb2** and **pb2_grpc** file
 - Stream Method Support
-- Error Handler Support

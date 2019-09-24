@@ -7,8 +7,11 @@ from typing import (
     Type,
     TypeVar,
     TYPE_CHECKING,
-    cast,
     Union,
+    Generic,
+    Any,
+    Callable,
+    Iterable,
 )
 
 from google.protobuf.json_format import MessageToDict, MessageToJson
@@ -17,7 +20,8 @@ from google.protobuf.message import Message as GeneratedProtocolMessageType
 from .meta import __meta__
 
 # sentinel
-_missing = object()
+_missing: Any = object()
+_missing_factory = lambda: _missing
 
 
 class DeclarativeMeta(type):
@@ -33,22 +37,31 @@ class DeclarativeMeta(type):
                     if base.__meta__:
                         yield from base.__meta__.items()
 
-            for key, field in chain(clsdict.items(), iter_base_meta()):
-                if isinstance(field, BaseField):
-                    field.__field_name__ = key
-                    if isinstance(field, (ReferenceField, ListField, MapField)):
-                        if issubclass(field.__key_type__, Message):
-                            if field.__key_type__.__filename__ != file_name:
+            for key, field in iter_attributes(
+                chain(
+                    filter(
+                        lambda x: not x[0].startswith("_"),
+                        clsdict.get("__annotations__", {}).items(),
+                    ),
+                    iter_base_meta(),
+                    clsdict.items(),
+                )
+            ):
+                field.__field_name__ = key
+                if isinstance(field, (ReferenceField, ListField, MapField)):
+                    if isinstance(field.__key_type__, Message):
+                        if field.__key_type__.__filename__ != file_name:
+                            __meta__[file_name].import_files.add(
+                                field.__key_type__.__filename__
+                            )
+                    if isinstance(field, MapField):
+                        if isinstance(field.__value_type__, Message):
+                            if field.__value_type__.__filename__ != file_name:
                                 __meta__[file_name].import_files.add(
-                                    field.__key_type__.__filename__
+                                    field.__value_type__.__filename__
                                 )
-                        if isinstance(field, MapField):
-                            if issubclass(field.__value_type__, Message):
-                                if field.__value_type__.__filename__ != file_name:
-                                    __meta__[file_name].import_files.add(
-                                        field.__value_type__.__filename__
-                                    )
-                    clsdict["__meta__"][key] = field
+                clsdict["__meta__"][key] = field
+                clsdict[key] = field
             MessageCls = super().__new__(cls, clsname, bases, clsdict)
             __meta__[file_name].messages.append(MessageCls)
             return MessageCls
@@ -71,6 +84,12 @@ class Message(metaclass=DeclarativeMeta):
     if TYPE_CHECKING:  # pragma: no cover
         # populated by the metaclass, defined here to help IDEs only
         __type_name__: str
+
+    def __str__(self) -> str:
+        return str(self.__message__)
+
+    def __repr__(self) -> str:
+        return repr(self.__message__)
 
     def __init__(__message_self__, **kwargs):
         # Uses something other than `self` the first arg to allow "self" as a settable attribute
@@ -163,162 +182,260 @@ class Message(metaclass=DeclarativeMeta):
         )
 
 
-_SupportValueType = Union[str, bytes, int, float, list, dict, bool, Message]
-_DefaultValueType = Type[_SupportValueType]
+FieldType = TypeVar("FieldType")
 
 
-class BaseField:
-    _default: _DefaultValueType
+class BaseField(Generic[FieldType]):
     __type_name__: str = ""
 
     if TYPE_CHECKING:  # pragma: no cover
         # populated by the metaclass, defined here to help IDEs only
         __field_name__: str
-        _default_value: _SupportValueType
+        default: FieldType
+        __orig_bases__: Tuple[Any, ...]
 
-    def __new__(cls):
-        self = super().__new__(cls)
-        self._default_value = cls._default()
-        return self
+    def __init__(
+        self,
+        default: FieldType = _missing,
+        default_factory: Callable[[], FieldType] = _missing_factory,
+        **kwargs,
+    ):
+        if default is not _missing and default_factory is not _missing_factory:
+            raise ValueError("cannot specify both default and default_factory")
+        if default is not _missing:
+            self.default = default
+        elif default_factory is not _missing_factory:
+            self.default = default_factory()
+        else:
+            self.default = self.type()
 
     def __get__(self, instance: Message, owner):
         if instance is None:
             return self  # type: ignore
-        value = instance.__dict__.get(self.__field_name__, _missing)
-        if value is _missing:
-            value = getattr(
-                instance.__message__, self.__field_name__, self._default_value
-            )
-            instance.__dict__[self.__field_name__] = value
+        value = getattr(instance.__message__, self.__field_name__, None) or self.default
         return value
 
-    def __set__(self, instance: Message, value: _SupportValueType) -> None:
+    def __set__(self, instance: Message, value: FieldType) -> None:
         if value is None:
-            value = self._default()
+            value = self.default
             if isinstance(value, Message):
                 value = value.__message__
         setattr(instance.__message__, self.__field_name__, value)
-        instance.__dict__[self.__field_name__] = value
 
     def __str__(self):
         return f"{self.__type_name__} {self.__field_name__}"
 
+    @property
+    def type(self) -> Type[FieldType]:
+        return self.__orig_bases__[0].__args__[0]
 
-class StringField(BaseField):
-    _default = str
+
+class StringField(BaseField[str]):
     __type_name__ = "string"
     if TYPE_CHECKING:  # pragma: no cover
         # defined this to help IDEs only
-        def __new__(cls, *args, **kwargs) -> str:
+        def __get__(self, instance: Message, owner) -> str:
+            ...
+
+        def __set__(self, instance: Message, value: str) -> None:
             ...
 
 
-class Int32Field(BaseField):
-    _default = int
+class Int32Field(BaseField[int]):
     __type_name__ = "int32"
     if TYPE_CHECKING:  # pragma: no cover
         # defined this to help IDEs only
-        def __new__(cls, *args, **kwargs) -> int:
+        def __get__(self, instance: Message, owner) -> int:
+            ...
+
+        def __set__(self, instance: Message, value: int) -> None:
             ...
 
 
-class FloatField(BaseField):
-    _default = float
+class FloatField(BaseField[float]):
     __type_name__ = "float"
     if TYPE_CHECKING:  # pragma: no cover
         # defined this to help IDEs only
-        def __new__(cls, *args, **kwargs) -> float:
+        def __get__(self, instance: Message, owner) -> float:
+            ...
+
+        def __set__(self, instance: Message, value: float) -> None:
             ...
 
 
-class DoubleField(BaseField):
-    _default = float
+class DoubleField(BaseField[float]):
     __type_name__ = "double"
     if TYPE_CHECKING:  # pragma: no cover
         # defined this to help IDEs only
-        def __new__(cls, *args, **kwargs) -> float:
+        def __get__(self, instance: Message, owner) -> float:
+            ...
+
+        def __set__(self, instance: Message, value: float) -> None:
             ...
 
 
-class Int64Field(BaseField):
-    _default = int
+class Int64Field(BaseField[int]):
     __type_name__ = "int64"
     if TYPE_CHECKING:  # pragma: no cover
         # defined this to help IDEs only
-        def __new__(cls, *args, **kwargs) -> int:
+        def __get__(self, instance: Message, owner) -> int:
+            ...
+
+        def __set__(self, instance: Message, value: int) -> None:
             ...
 
 
-class BooleanField(BaseField):
-    _default = bool
+class BooleanField(BaseField[bool]):
     __type_name__ = "bool"
     if TYPE_CHECKING:  # pragma: no cover
         # defined this to help IDEs only
-        def __new__(cls, *args, **kwargs) -> bool:
+        def __get__(self, instance: Message, owner) -> bool:
+            ...
+
+        def __set__(self, instance: Message, value: bool) -> None:
             ...
 
 
-class BytesField(BaseField):
-    _default = bytes
+class BytesField(BaseField[bytes]):
     __type_name__ = "bytes"
     if TYPE_CHECKING:  # pragma: no cover
         # defined this to help IDEs only
-        def __new__(cls, *args, **kwargs) -> bytes:
+        def __get__(self, instance: Message, owner) -> bytes:
+            ...
+
+        def __set__(self, instance: Message, value: bytes) -> None:
             ...
 
 
 ReferenceFieldType = TypeVar("ReferenceFieldType", bound=Message)
 ReferenceKeyFieldType = TypeVar("ReferenceKeyFieldType", bound=BaseField)
-ReferenceValueFieldType = TypeVar("ReferenceValueFieldType", Message, BaseField)
+ReferenceValueFieldType = TypeVar("ReferenceValueFieldType", bound=BaseField)
 
 
 class ReferenceField(BaseField):
-    __key_type__: Type[Message]
 
-    def __new__(cls, key_type: Type[ReferenceFieldType]) -> ReferenceFieldType:
-        cls._default = key_type
-        self = super().__new__(cls)
+    if TYPE_CHECKING:  # pragma: no cover
+        # defined this to help IDEs only
+        def __get__(self, instance: Message, owner) -> ReferenceFieldType:
+            ...
+
+        def __set__(self, instance: Message, value: ReferenceFieldType) -> None:
+            ...
+
+    def __init__(
+        self,
+        key_type: ReferenceFieldType,
+        *,
+        default: ReferenceFieldType = _missing,
+        default_factory: Callable[[], ReferenceFieldType] = _missing_factory,
+    ):
         self.__key_type__ = key_type
         self.__type_name__ = key_type.__type_name__
-        return cast(ReferenceFieldType, self)
+        super().__init__(default=default, default_factory=default_factory)
+
+    @property
+    def type(self) -> Type[ReferenceFieldType]:
+        return type(self.__key_type__)
 
 
-class ListField(BaseField):
+class ListField(BaseField[list]):
     _default = list
     # using this way to help IDEs only
     __key_type__: Union[Type[BaseField], Type[Message]]
 
-    # using __new__ rather than __init__ to help IDEs only
-    def __new__(
-        cls, key_type: Type[ReferenceValueFieldType]
-    ) -> List[ReferenceValueFieldType]:
-        self = super().__new__(cls)
+    if TYPE_CHECKING:  # pragma: no cover
+        # defined this to help IDEs only
+        def __get__(self, instance: Message, owner) -> List[ReferenceKeyFieldType]:
+            ...
+
+        def __set__(
+            self, instance: Message, value: List[ReferenceKeyFieldType]
+        ) -> None:
+            ...
+
+    def __init__(
+        self,
+        key_type: ReferenceKeyFieldType,
+        *,
+        default: ReferenceKeyFieldType = _missing,
+        default_factory: Callable[[], ReferenceKeyFieldType] = _missing_factory,
+    ):
         self.__key_type__ = key_type
         self.__type_name__ = key_type.__type_name__
-        return cast(List[ReferenceValueFieldType], self)
+        super().__init__(default=default, default_factory=default_factory)
 
     def __str__(self):
         return f"repeated {super().__str__()}"
 
 
-class MapField(BaseField):
+class MapField(BaseField[dict]):
     _default = dict
-    __key_type__: Type[BaseField]
-    __value_type__: Union[Type[BaseField], Type[Message]]
 
-    # using __new__ rather than __init__ to help IDEs only
-    def __new__(
-        cls,
-        key_type: Type[ReferenceKeyFieldType],
-        value_type: Type[ReferenceValueFieldType],
-    ) -> Dict[ReferenceKeyFieldType, ReferenceValueFieldType]:
-        self = super().__new__(cls)
+    if TYPE_CHECKING:  # pragma: no cover
+        # defined this to help IDEs only
+        def __get__(
+            self, instance: Message, owner
+        ) -> Dict[ReferenceKeyFieldType, ReferenceKeyFieldType]:
+            ...
+
+        def __set__(
+            self,
+            instance: Message,
+            value: Dict[ReferenceKeyFieldType, ReferenceKeyFieldType],
+        ) -> None:
+            ...
+
+    def __init__(
+        self,
+        key_type: ReferenceKeyFieldType,
+        value_type: ReferenceValueFieldType,
+        *,
+        default: Dict[ReferenceKeyFieldType, ReferenceValueFieldType] = _missing,
+        default_factory: Callable[
+            [], Dict[ReferenceKeyFieldType, ReferenceValueFieldType]
+        ] = _missing_factory,
+    ):
         self.__key_type__ = key_type
         self.__type_name__ = key_type.__type_name__
 
         self.__value_type__ = value_type
         self.__value_type_name__ = value_type.__type_name__
-        return cast(Dict[ReferenceKeyFieldType, ReferenceValueFieldType], self)
+        super().__init__(default=default, default_factory=default_factory)
 
     def __str__(self):
         return f"map<{self.__type_name__}, {self.__value_type_name__}> {self.__field_name__}"
+
+
+_TYPE_FIELD_MAP = {
+    str: StringField(),
+    int: Int32Field(),
+    float: DoubleField(),
+    bytes: BytesField(),
+    bool: BooleanField(),
+}
+
+
+def iter_attributes(
+    attributes: Iterable[Tuple[str, Any]]
+) -> Iterator[Tuple[str, BaseField]]:
+    for name, o in attributes:
+        if isinstance(o, BaseField):
+            yield name, o
+        elif isinstance(o, type):
+            if issubclass(o, BaseField):
+                yield name, o()
+            elif o in _TYPE_FIELD_MAP:
+                yield name, _TYPE_FIELD_MAP[o]
+            elif issubclass(o, Message):
+                yield name, ReferenceField(o())
+        else:
+            origin = getattr(o, "__origin__", None)
+            if origin:
+                if isinstance(origin, type):
+                    if issubclass(origin, List):  #: typing.List
+                        _, p = next(iter_attributes([(name, o.__args__[0])]))
+                        yield name, ListField(p)
+                    if issubclass(origin, Dict):
+                        _, k = next(iter_attributes([(name, o.__args__[0])]))
+                        _, v = next(iter_attributes([(name, o.__args__[1])]))
+                        yield name, MapField(k, v)

@@ -2,6 +2,13 @@
 History
 =======
 
+0.4.0(2019-09-24)
+--------------------
+
+* Enable use type hint to define message
+* Add error handle to handle Exception
+* Add ``get_blueprints`` to get blueprints need to register
+
 0.3.0(2019-08-19)
 --------------------
 

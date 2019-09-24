@@ -6,12 +6,12 @@ To use gRPCAlchemy in a project:
 
 .. code-block:: python
 
-    from grpcalchemy.orm import Message, StringField
+    from grpcalchemy.orm import Message
     from grpcalchemy import Server, Context, grpcservice
 
     class HelloMessage(Message):
         __filename__ = 'hello'
-        text = StringField()
+        text: str
 
     class HelloService(Server):
         @grpcservice
@@ -49,11 +49,11 @@ which fields a :class:`User` may have, and what types of data they might have:
 
 .. code-block:: python
 
-    from grpcalchemy.orm import Message, StringField
+    from grpcalchemy.orm import Message
     class User(Message):
-        email = StringField()
-        first_name = StringField()
-        last_name = StringField()
+        email: str
+        first_name: str
+        last_name: str
 
 Posts, Comments and Tags
 ------------------------
@@ -70,19 +70,19 @@ We can think of :class:`Post` as a base class, and :class:`TextPost`, :class:`Im
 
 .. code-block:: python
 
-    from grpcalchemy.orm import Message, StringField, ReferenceField
+    from grpcalchemy.orm import Message
     class Post(Message):
-        title = StringField()
-        author = ReferenceField(User)
+        title: str
+        author: str
 
     class TextPost(Post):
-        content = StringField()
+        content: str
 
     class ImagePost(Post):
-        image_path = StringField()
+        image_path: str
 
     class LinkPost(Post):
-        link_url = StringField()
+        link_url: str
 
 We are storing a reference to the author of the posts using a
 :class:`~grpcalchemy.orm.ReferenceField` object. These are equal to use other
@@ -98,11 +98,12 @@ within the post. Let's take a look at the code of our modified :class:`Post` cla
 
 .. code-block:: python
 
-    from grpcalchemy.orm import Message, StringField, ReferenceField, ListField
+    from typing import List
+    from grpcalchemy.orm import Message
     class Post(Message):
-        title = StringField()
-        author = ReferenceField(User)
-        tags = ListField(StringField)
+        title: str
+        author: User
+        tags: List[str]
 
 The :class:`~grpcalchemy.orm.ListField` object that is used to define a Post's tags
 takes a field object as its first argument --- this means that you can have
@@ -119,21 +120,22 @@ in exactly the same way we do with regular documents:
 
 .. code-block:: python
 
-    from grpcalchemy.orm import Message, StringField
+    from grpcalchemy.orm import Message
     class Comment(Message):
-        content = StringField()
-        name = StringField()
+        content: str
+        name: str
 
 We can then define a list of comment documents in our post message:
 
 .. code-block:: python
 
-    from grpcalchemy.orm import Message, StringField, ReferenceField, ListField
+    from typing import List
+    from grpcalchemy.orm import Message
     class Post(Message):
-        title = StringField()
-        author = ReferenceField(User)
-        tags = ListField(StringField)
-        comments = ListField(Comment)
+        title: str
+        author: User
+        tags: List[str]
+        comments: List[Comment]
 
 Defining our gRPC Method
 ===================================
@@ -171,25 +173,26 @@ supporting common patterns within an application or across applications.
 
 .. code-block:: python
 
-    from grpcalchemy.orm import Message, StringField
+    from typing import List, Type
+    from grpcalchemy.orm import Message
     from grpcalchemy import Server, Context, Blueprint
 
     class MyService(Server):
-        ...
+        def get_blueprints(self) -> List[Type[Blueprint]]:
+            return [HelloService]
 
     class HelloMessage(Message):
         __filename__ = 'hello'
-        text = StringField()
+        text: str
 
     class HelloService(Blueprint):
         @grpcservice
         def Hello(self, request: HelloMessage, context: Context) -> HelloMessage:
             return HelloMessage(text=f'Hello {request.text}')
 
+
     if __name__ == '__main__':
-        app = MyService()
-        app.register_blueprint(HelloService)
-        app.run()
+        MyService().run()
 
 
 Configuration
