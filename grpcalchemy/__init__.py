@@ -9,8 +9,8 @@ __author__ = """GuangTian Li"""
 __email__ = "guangtian_li@qq.com"
 __version__ = "0.4.4"
 
-__all__ = ["Blueprint", "Context", "grpcservice", "DefaultConfig", "Server"]
+__all__ = ["Blueprint", "Context", "grpcmethod", "DefaultConfig", "Server"]
 
-from .blueprint import Blueprint, Context, grpcservice
+from .blueprint import Blueprint, Context, grpcmethod
 from .config import DefaultConfig
 from .server import Server

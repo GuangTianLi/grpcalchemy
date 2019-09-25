@@ -1,4 +1,4 @@
-from grpcalchemy.blueprint import Blueprint, grpcservice
+from grpcalchemy.blueprint import Blueprint, grpcmethod
 from grpcalchemy.meta import __meta__
 from grpcalchemy.orm import Message, ReferenceField, StringField
 
@@ -25,7 +25,7 @@ class MetaTestCase(TestGrpcalchemy):
             name = StringField()
 
         class TestService(Blueprint):
-            @grpcservice
+            @grpcmethod
             def test_message(self, request: TestMessage, context) -> TestMessage:
                 ...
 
@@ -77,11 +77,11 @@ class MetaTestCase(TestGrpcalchemy):
             def service_name(self) -> str:
                 return "test"
 
-            @grpcservice
+            @grpcmethod
             def test_message_one(self, request: TestMessage, context) -> TestMessage:
                 return TestMessage(test_name=request.name)
 
-            @grpcservice
+            @grpcmethod
             def test_message_two(self, request: TestMessage, context) -> TestMessage:
                 return TestMessage(test_name=request.name)
 
@@ -96,7 +96,7 @@ class MetaTestCase(TestGrpcalchemy):
             def service_name(self) -> str:
                 return "test"
 
-            @grpcservice
+            @grpcmethod
             def test_message_three(self, request: TestMessage, context) -> TestMessage:
                 return TestMessage(test_name=request.name)
 

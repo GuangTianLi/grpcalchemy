@@ -1,4 +1,4 @@
-from grpcalchemy.blueprint import InvalidRPCMethod, Blueprint, grpcservice
+from grpcalchemy.blueprint import InvalidRPCMethod, Blueprint, grpcmethod
 from grpcalchemy.orm import Message, StringField
 from .test_grpcalchemy import TestGrpcalchemy
 
@@ -9,7 +9,7 @@ class BlueprintTestCase(TestGrpcalchemy):
             name = StringField()
 
         class FooService(Blueprint):
-            @grpcservice
+            @grpcmethod
             def GetSomething(self, request: TestMessage, context) -> TestMessage:
                 ...
 
@@ -23,36 +23,36 @@ class BlueprintTestCase(TestGrpcalchemy):
 
         with self.assertRaises(InvalidRPCMethod):
 
-            @grpcservice
+            @grpcmethod
             def test_without_typing(self, request, context):
                 ...
 
         with self.assertRaises(InvalidRPCMethod):
 
-            @grpcservice
+            @grpcmethod
             def test_one_args(self, request):
                 ...
 
         with self.assertRaises(InvalidRPCMethod):
 
-            @grpcservice
+            @grpcmethod
             def test_more_than_two_args(self, request, context, test):
                 ...
 
         with self.assertRaises(InvalidRPCMethod):
 
-            @grpcservice
+            @grpcmethod
             def test_message_one(self, request: TestMessage, context):
                 ...
 
         with self.assertRaises(InvalidRPCMethod):
 
-            @grpcservice
+            @grpcmethod
             def test_message_two(self, request, context) -> TestMessage:
                 ...
 
         with self.assertRaises(InvalidRPCMethod):
 
-            @grpcservice
+            @grpcmethod
             def test_message_two(self, request: int, context) -> int:
                 ...

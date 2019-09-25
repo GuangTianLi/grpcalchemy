@@ -46,14 +46,14 @@ Server
 .. code-block:: python
 
     from grpcalchemy.orm import Message, StringField
-    from grpcalchemy import Server, Context, grpcservice
+    from grpcalchemy import Server, Context, grpcmethod
 
     class HelloMessage(Message):
         __filename__ = 'hello'
         text: str
 
     class HelloService(Server):
-        @grpcservice
+        @grpcmethod
         def Hello(self, request: HelloMessage, context: Context) -> HelloMessage:
             return HelloMessage(text=f'Hello {request.text}')
 

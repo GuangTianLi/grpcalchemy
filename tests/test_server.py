@@ -1,7 +1,7 @@
 from typing import Callable, ContextManager, List, Type, Dict
 from unittest.mock import Mock
 
-from grpcalchemy import Blueprint, Context, Server, grpcservice, DefaultConfig
+from grpcalchemy import Blueprint, Context, Server, grpcmethod, DefaultConfig
 from grpcalchemy.orm import Message
 from .test_grpcalchemy import TestGrpcalchemy
 
@@ -32,7 +32,7 @@ class ServerTestCase(TestGrpcalchemy):
             tag: Dict[str, Post]
 
         class AppService(Server):
-            @grpcservice
+            @grpcmethod
             def GetName(self, request: TestMessage, context: Context) -> TestMessage:
                 return TestMessage(
                     user={"name": request.user.name},
@@ -75,7 +75,7 @@ class ServerTestCase(TestGrpcalchemy):
                 return [BlueprintService]
 
         class BlueprintService(Blueprint):
-            @grpcservice
+            @grpcmethod
             def GetName(self, request: TestMessage, context: Context) -> TestMessage:
                 return TestMessage(user={"name": request.user.name})
 

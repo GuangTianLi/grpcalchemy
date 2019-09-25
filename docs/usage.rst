@@ -7,14 +7,14 @@ To use gRPCAlchemy in a project:
 .. code-block:: python
 
     from grpcalchemy.orm import Message
-    from grpcalchemy import Server, Context, grpcservice
+    from grpcalchemy import Server, Context, grpcmethod
 
     class HelloMessage(Message):
         __filename__ = 'hello'
         text: str
 
     class HelloService(Server):
-        @grpcservice
+        @grpcmethod
         def Hello(self, request: HelloMessage, context: Context) -> HelloMessage:
             return HelloMessage(text=f'Hello {request.text}')
 
@@ -140,7 +140,7 @@ We can then define a list of comment documents in our post message:
 Defining our gRPC Method
 ===================================
 
-:any:`grpcservice` is a decorator indicating gRPC methods.
+:any:`grpcmethod` is a decorator indicating gRPC methods.
 
 The ``valid gRPC Method`` must be with `explicit type hint <https://www.python.org/dev/peps/pep-0484/#type-definition-syntax>`_
 to define the type of request and return value.
@@ -148,7 +148,7 @@ to define the type of request and return value.
 .. code-block:: python
 
     class HelloService(Server):
-        @grpcservice
+        @grpcmethod
         def Hello(self, request: HelloMessage, context: Context) -> HelloMessage:
             return HelloMessage(text=f'Hello {request.text}')
 
@@ -186,7 +186,7 @@ supporting common patterns within an application or across applications.
         text: str
 
     class HelloService(Blueprint):
-        @grpcservice
+        @grpcmethod
         def Hello(self, request: HelloMessage, context: Context) -> HelloMessage:
             return HelloMessage(text=f'Hello {request.text}')
 

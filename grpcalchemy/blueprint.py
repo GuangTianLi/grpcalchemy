@@ -105,14 +105,14 @@ The correct signature is blow::
     class MyMessage(Message):
         ...
         
-    @grpcservice
+    @grpcmethod
     def GetSomething(self, request: MyMessage, context: Context) -> MyMessage:
         ...
 """
     )
 
 
-def grpcservice(funcobj: F) -> F:
+def grpcmethod(funcobj: F) -> F:
     """A decorator indicating gRPC methods.
 
 
@@ -125,7 +125,7 @@ def grpcservice(funcobj: F) -> F:
     Usage::
 
         class FooService(Blueprint):
-            @grpcservice
+            @grpcmethod
             def GetSomething(self, request: Message, context: Context) -> Message:
                 ...
 
