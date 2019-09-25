@@ -70,6 +70,8 @@ class DeclarativeMeta(type):
 class _gRPCMessageClass(GeneratedProtocolMessageType):
     def __init__(self, **kwargs):
         for key, value in kwargs.items():
+            if isinstance(value, map):
+                value = list(value)
             setattr(self, key, value)
 
 
@@ -93,18 +95,17 @@ class Message(metaclass=DeclarativeMeta):
     def __init__(__message_self__, **kwargs):
         # Uses something other than `self` the first arg to allow "self" as a settable attribute
         for key, item in kwargs.items():
-            if isinstance(item, list):
-                for index, value in enumerate(item):
-                    if isinstance(value, Message):
-                        item[index] = value.__message__
-            elif isinstance(item, Message):
+            if isinstance(__message_self__.__meta__[key], ReferenceField):
                 kwargs[key] = item.__message__
-            elif isinstance(item, dict):
+            elif isinstance(__message_self__.__meta__[key], ListField):
+                kwargs[key] = map(lambda item: getattr(item, "__message__", item), item)
+            elif isinstance(__message_self__.__meta__[key], MapField) and isinstance(
+                __message_self__.__meta__[key].__value_type__, ReferenceField
+            ):
                 for key, tmp in item.items():
-                    if isinstance(tmp, Message):
-                        item[key] = tmp.__message__
+                    item[key] = tmp.__message__
+
         __message_self__.__message__ = __message_self__.gRPCMessageClass(**kwargs)
-        super().__init__()
 
     def init_grpc_message(self, grpc_message: GeneratedProtocolMessageType):
         self.__message__ = grpc_message

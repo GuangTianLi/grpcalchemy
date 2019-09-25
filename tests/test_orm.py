@@ -141,14 +141,13 @@ class ORMTestCase(TestGrpcalchemy):
         test = TestJsonFormat(
             ref_field=Test(name="Test"),
             list_test_field=[Test(name="Test")],
-            list_int32_field=[1],
+            list_int32_field=range(10),
             map_field={"test": Test(name="Test")},
         )
-
         dict_test = {
             "ref_field": {"name": "Test"},
             "list_test_field": [{"name": "Test"}],
-            "list_int32_field": [1],
+            "list_int32_field": list(range(10)),
             "map_field": {"test": {"name": "Test"}},
         }
         self.assertDictEqual(dict_test, test.message_to_dict())
