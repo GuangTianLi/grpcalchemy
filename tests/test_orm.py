@@ -38,6 +38,7 @@ class ORMTestCase(TestGrpcalchemy):
             number = Int32Field()
             big_number = Int64Field()
             active = BooleanField()
+            deleted = BooleanField()
             raw_data = BytesField()
 
         self.assertEqual("int64 big_number", str(Test.big_number))
@@ -46,12 +47,14 @@ class ORMTestCase(TestGrpcalchemy):
             name: str
             number: int
             active: bool
+            deleted: bool
             raw_data: bytes
 
-        for object in [Test, TestWithTyping]:
+        for object in [TestWithTyping]:
             self.assertEqual("string name", str(object.name))
             self.assertEqual("int32 number", str(object.number))
             self.assertEqual("bool active", str(object.active))
+            self.assertEqual("bool deleted", str(object.deleted))
             self.assertEqual("bytes raw_data", str(object.raw_data))
 
     def test_ReferenceField(self):

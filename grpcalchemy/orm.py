@@ -404,12 +404,12 @@ class MapField(BaseField[dict]):
         return f"map<{self.__type_name__}, {self.__value_type_name__}> {self.__field_name__}"
 
 
-_TYPE_FIELD_MAP: Dict[type, BaseField] = {
-    str: StringField(),
-    int: Int32Field(),
-    float: DoubleField(),
-    bytes: BytesField(),
-    bool: BooleanField(),
+_TYPE_FIELD_MAP: Dict[type, Type[BaseField]] = {
+    str: StringField,
+    int: Int32Field,
+    float: DoubleField,
+    bytes: BytesField,
+    bool: BooleanField,
 }
 
 
@@ -433,6 +433,6 @@ def iter_attributes(
             if issubclass(o, BaseField):
                 yield name, o()
             elif o in _TYPE_FIELD_MAP:
-                yield name, _TYPE_FIELD_MAP[o]
+                yield name, _TYPE_FIELD_MAP[o]()
             elif issubclass(o, Message):
                 yield name, ReferenceField(o())
