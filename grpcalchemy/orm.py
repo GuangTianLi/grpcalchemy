@@ -46,19 +46,19 @@ class DeclarativeMeta(type):
                     clsdict.items(),
                 )
             ):
+                field_filename = file_name
+
                 field.__field_name__ = key
-                if isinstance(field, (ReferenceField, ListField, MapField)):
-                    if isinstance(field.__key_type__, Message):
-                        if field.__key_type__.__filename__ != file_name:
-                            __meta__[file_name].import_files.add(
-                                field.__key_type__.__filename__
-                            )
-                    if isinstance(field, MapField):
-                        if isinstance(field.__value_type__, Message):
-                            if field.__value_type__.__filename__ != file_name:
-                                __meta__[file_name].import_files.add(
-                                    field.__value_type__.__filename__
-                                )
+                if isinstance(field, ReferenceField):
+                    field_filename = field.__key_type__.__filename__
+                elif isinstance(field, ListField):
+                    if isinstance(field.__key_type__, ReferenceField):
+                        field_filename = field.__key_type__.__key_type__.__filename__
+                elif isinstance(field, MapField):
+                    if isinstance(field.__value_type__, ReferenceField):
+                        field_filename = field.__value_type__.__key_type__.__filename__
+                if field_filename != file_name:
+                    __meta__[file_name].import_files.add(field_filename)
                 clsdict["__meta__"][key] = field
                 clsdict[key] = field
             MessageCls = super().__new__(cls, clsname, bases, clsdict)
@@ -96,14 +96,14 @@ class Message(metaclass=DeclarativeMeta):
         # Uses something other than `self` the first arg to allow "self" as a settable attribute
         for key, item in kwargs.items():
             if isinstance(__message_self__.__meta__[key], ReferenceField):
-                kwargs[key] = item.__message__
+                kwargs[key] = getattr(item, "__message__", item)
             elif isinstance(__message_self__.__meta__[key], ListField):
                 kwargs[key] = map(lambda item: getattr(item, "__message__", item), item)
             elif isinstance(__message_self__.__meta__[key], MapField) and isinstance(
                 __message_self__.__meta__[key].__value_type__, ReferenceField
             ):
                 for key, tmp in item.items():
-                    item[key] = tmp.__message__
+                    item[key] = getattr(tmp, "__message__", tmp)
 
         __message_self__.__message__ = __message_self__.gRPCMessageClass(**kwargs)
 
