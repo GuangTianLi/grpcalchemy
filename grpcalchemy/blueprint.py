@@ -81,7 +81,7 @@ F = TypeVar("F", bound=gRPCFunctionType)
 
 
 def _validate_rpc_method(
-    rpc_method: gRPCFunctionType
+    rpc_method: gRPCFunctionType,
 ) -> Tuple[Type[Message], Type[Message]]:
     sig = signature(rpc_method)
 

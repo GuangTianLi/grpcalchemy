@@ -48,7 +48,6 @@ class DeclarativeMeta(type):
             ):
                 field_filename = file_name
 
-                field.__field_name__ = key
                 if isinstance(field, ReferenceField):
                     field_filename = field.__key_type__.__filename__
                 elif isinstance(field, ListField):
@@ -70,7 +69,7 @@ class DeclarativeMeta(type):
 class _gRPCMessageClass(GeneratedProtocolMessageType):
     def __init__(self, **kwargs):
         for key, value in kwargs.items():
-            if isinstance(value, map):
+            if isinstance(value, Iterator):
                 value = list(value)
             setattr(self, key, value)
 
@@ -190,7 +189,6 @@ class BaseField(Generic[FieldType]):
 
     if TYPE_CHECKING:  # pragma: no cover
         # populated by the metaclass, defined here to help IDEs only
-        __field_name__: str
         default: FieldType
         __orig_bases__: Tuple[Any, ...]
 
@@ -228,6 +226,9 @@ class BaseField(Generic[FieldType]):
     @property
     def type(self) -> Type[FieldType]:
         return self.__orig_bases__[0].__args__[0]
+
+    def __set_name__(self, owner, name: str):
+        self.__field_name__ = name
 
 
 class StringField(BaseField[str]):
