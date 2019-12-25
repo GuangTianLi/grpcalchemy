@@ -370,20 +370,20 @@ class ListField(BaseField[list]):
         return f"repeated {super().__str__()}"
 
 
-class MapField(BaseField[Mapping]):
+class MapField(BaseField[dict]):
     _default = dict
 
     if TYPE_CHECKING:  # pragma: no cover
         # defined this to help IDEs only
         def __get__(
             self, instance: Message, owner
-        ) -> Mapping[ReferenceKeyFieldType, ReferenceKeyFieldType]:
+        ) -> Dict[ReferenceKeyFieldType, ReferenceKeyFieldType]:
             ...
 
         def __set__(
             self,
             instance: Message,
-            value: Mapping[ReferenceKeyFieldType, ReferenceKeyFieldType],
+            value: Dict[ReferenceKeyFieldType, ReferenceKeyFieldType],
         ) -> None:
             ...
 
@@ -392,9 +392,9 @@ class MapField(BaseField[Mapping]):
         key_type: ReferenceKeyFieldType,
         value_type: ReferenceValueFieldType,
         *,
-        default: Mapping[ReferenceKeyFieldType, ReferenceValueFieldType] = _missing,
+        default: Dict[ReferenceKeyFieldType, ReferenceValueFieldType] = _missing,
         default_factory: Callable[
-            [], Mapping[ReferenceKeyFieldType, ReferenceValueFieldType]
+            [], Dict[ReferenceKeyFieldType, ReferenceValueFieldType]
         ] = _missing_factory,
     ):
         self.__key_type__ = key_type
