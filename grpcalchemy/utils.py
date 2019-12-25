@@ -95,7 +95,9 @@ def select_address_family(host: str) -> int:
     return socket.AF_INET
 
 
-def get_sockaddr(host: str, port: int, family: int) -> Union[tuple, str, bytes]:
+def get_sockaddr(
+    host: str, port: Optional[int], family: int
+) -> Union[tuple, str, bytes]:
     """Return a fully qualified socket address that can be passed to
     :func:`socket.bind`."""
     if family == af_unix:

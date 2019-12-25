@@ -370,7 +370,7 @@ class ListField(BaseField[list]):
         return f"repeated {super().__str__()}"
 
 
-class MapField(BaseField[dict]):
+class MapField(BaseField[Mapping]):
     _default = dict
 
     if TYPE_CHECKING:  # pragma: no cover
