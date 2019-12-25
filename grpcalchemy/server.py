@@ -118,7 +118,7 @@ class Server(Blueprint, grpc.Server):
 
         self.logger.info(f"gRPC server is running on {host}:{port}")
 
-        if not self.config.GRPC_SERVER_TEST:
+        if not self.config.GRPC_SERVER_TEST:  # pragma: no cover
             try:
                 while True:
                     time.sleep(_ONE_DAY_IN_SECONDS)

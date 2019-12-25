@@ -49,7 +49,6 @@ Server
     from grpcalchemy import Server, Context, grpcmethod
 
     class HelloMessage(Message):
-        __filename__ = 'hello'
         text: str
 
     class HelloService(Server):

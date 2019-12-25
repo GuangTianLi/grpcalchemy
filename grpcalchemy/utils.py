@@ -2,7 +2,7 @@ import importlib
 import socket
 from os import getcwd, mkdir, walk
 from os.path import abspath, dirname, exists, join
-from typing import Union
+from typing import Union, Optional
 
 import grpc_tools.protoc
 import pkg_resources
@@ -10,7 +10,7 @@ from jinja2 import Environment, FileSystemLoader
 
 try:
     af_unix = socket.AF_UNIX
-except AttributeError:
+except AttributeError:  # pragma: no cover
     af_unix = None  # type: ignore
 
 from .meta import __meta__
@@ -109,7 +109,7 @@ def get_sockaddr(host: str, port: int, family: int) -> Union[tuple, str, bytes]:
     return res[0][4]
 
 
-def socket_bind_test(host: str, port: int):
+def socket_bind_test(host: str, port: Optional[int] = None):
     address_family = select_address_family(host)
     server_address = get_sockaddr(host, port, address_family)
     with socket.socket(address_family, socket.SOCK_STREAM) as s:

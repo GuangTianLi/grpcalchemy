@@ -11,6 +11,7 @@ from typing import (
     Any,
     Callable,
     Iterable,
+    Mapping,
 )
 
 from google.protobuf.json_format import MessageToDict, MessageToJson
@@ -76,6 +77,8 @@ class _gRPCMessageClass(GeneratedProtocolMessageType):
 
 class Message(metaclass=DeclarativeMeta):
     __meta__: Dict[str, "BaseField"] = {}
+
+    # default: class name's lowercase
     __filename__: str = ""
     gRPCMessageClass: Type = _gRPCMessageClass
     # populated dynamic, defined here to help IDEs only
@@ -374,13 +377,13 @@ class MapField(BaseField[dict]):
         # defined this to help IDEs only
         def __get__(
             self, instance: Message, owner
-        ) -> Dict[ReferenceKeyFieldType, ReferenceKeyFieldType]:
+        ) -> Mapping[ReferenceKeyFieldType, ReferenceKeyFieldType]:
             ...
 
         def __set__(
             self,
             instance: Message,
-            value: Dict[ReferenceKeyFieldType, ReferenceKeyFieldType],
+            value: Mapping[ReferenceKeyFieldType, ReferenceKeyFieldType],
         ) -> None:
             ...
 
@@ -389,9 +392,9 @@ class MapField(BaseField[dict]):
         key_type: ReferenceKeyFieldType,
         value_type: ReferenceValueFieldType,
         *,
-        default: Dict[ReferenceKeyFieldType, ReferenceValueFieldType] = _missing,
+        default: Mapping[ReferenceKeyFieldType, ReferenceValueFieldType] = _missing,
         default_factory: Callable[
-            [], Dict[ReferenceKeyFieldType, ReferenceValueFieldType]
+            [], Mapping[ReferenceKeyFieldType, ReferenceValueFieldType]
         ] = _missing_factory,
     ):
         self.__key_type__ = key_type
@@ -422,11 +425,11 @@ def iter_attributes(
         if origin:
             if isinstance(origin, type):
                 if issubclass(origin, List):  #: typing.List
-                    _, p = next(iter_attributes([(name, o.__args__[0])]))
+                    name, p = next(iter_attributes([(name, o.__args__[0])]))
                     yield name, ListField(p)
-                elif issubclass(origin, Dict):
-                    _, k = next(iter_attributes([(name, o.__args__[0])]))
-                    _, v = next(iter_attributes([(name, o.__args__[1])]))
+                elif issubclass(origin, Mapping):
+                    name, k = next(iter_attributes([(name, o.__args__[0])]))
+                    name, v = next(iter_attributes([(name, o.__args__[1])]))
                     yield name, MapField(k, v)
         elif isinstance(o, BaseField):
             yield name, o
