@@ -1,7 +1,7 @@
 from typing import Callable, ContextManager, List, Type, Dict
 from unittest.mock import Mock
 
-from grpcalchemy import Blueprint, Context, Server, grpcmethod, DefaultConfig
+from grpcalchemy import Blueprint, Context, Server, grpcmethod
 from grpcalchemy.orm import Message
 from .test_grpcalchemy import TestGrpcalchemy
 
@@ -16,9 +16,6 @@ class ServerTestCase(TestGrpcalchemy):
         blueprint_before_request = Mock()
         blueprint_after_request = Mock()
         enter_context = Mock()
-
-        class TestConfig(DefaultConfig):
-            GRPC_SERVER_TEST = True
 
         class User(Message):
             name: str
@@ -93,8 +90,8 @@ class ServerTestCase(TestGrpcalchemy):
                 unittest_self.assertEqual("test", response.user.name)
                 return response
 
-        unittest_self.app = AppService(config=TestConfig())
-        unittest_self.app.run()
+        unittest_self.app = AppService()
+        unittest_self.app.run(block=False)
         unittest_self.assertEqual(1, server_start.call_count)
         unittest_self.server_stop = server_stop
 

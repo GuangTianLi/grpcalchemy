@@ -1,3 +1,4 @@
+import logging
 from typing import Optional, Tuple, List
 
 from configalchemy import BaseConfig
@@ -20,9 +21,12 @@ class DefaultConfig(BaseConfig):
     #: indicate no limit.
     GRPC_SERVER_MAXIMUM_CONCURRENT_RPCS: Optional[int] = None
 
-    #: If set `True` the server run will not be blocked.
-    GRPC_SERVER_TEST = False
+    #: If set `True` the server will be blocked after run
+    GRPC_SERVER_RUN_WITH_BLOCK = True
     #: The host/domain name that this server can serve
     GRPC_SERVER_HOST = "127.0.0.1"
     #: The port this server listen.
     GRPC_SERVER_PORT = 50051
+
+    #: logger level
+    GRPC_ALCHEMY_LOGGER_LEVEL = logging.INFO

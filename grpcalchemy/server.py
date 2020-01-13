@@ -66,8 +66,8 @@ class Server(Blueprint, grpc.Server):
         self.blueprints: Dict[str, Blueprint] = {self.service_name: self}
 
         #: init logger
-        self.logger = logging.getLogger()
-        self.logger.setLevel(logging.DEBUG)
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(self.config.GRPC_ALCHEMY_LOGGER_LEVEL)
         self.logger.addHandler(logging.StreamHandler())
 
         super().__init__()
@@ -88,9 +88,13 @@ class Server(Blueprint, grpc.Server):
         host: Optional[str] = None,
         port: Optional[int] = None,
         server_credentials: Optional[grpc.ServerCredentials] = None,
+        block: Optional[bool] = None,
     ) -> None:
         host = host or self.config.GRPC_SERVER_HOST
         port = port or self.config.GRPC_SERVER_PORT
+
+        if block is None:
+            block = self.config.GRPC_SERVER_RUN_WITH_BLOCK
 
         socket_bind_test(host, port)
 
@@ -118,7 +122,7 @@ class Server(Blueprint, grpc.Server):
 
         self.logger.info(f"gRPC server is running on {host}:{port}")
 
-        if not self.config.GRPC_SERVER_TEST:  # pragma: no cover
+        if block:  # pragma: no cover
             try:
                 while True:
                     time.sleep(_ONE_DAY_IN_SECONDS)
