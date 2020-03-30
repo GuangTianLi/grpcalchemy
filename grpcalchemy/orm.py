@@ -12,6 +12,7 @@ from typing import (
     Callable,
     Iterable,
     Mapping,
+    Set,
 )
 
 from google.protobuf.json_format import MessageToDict, MessageToJson
@@ -27,8 +28,6 @@ _missing_factory = lambda: _missing
 class DeclarativeMeta(type):
     def __new__(cls, clsname: str, bases: Tuple, clsdict: dict):
         if bases:
-            file_name = clsdict.get("__filename__", clsname).lower()
-            clsdict["__filename__"] = file_name
             clsdict["__meta__"] = {}
             clsdict["__type_name__"] = clsname
 
@@ -37,6 +36,7 @@ class DeclarativeMeta(type):
                     if base.__meta__:
                         yield from base.__meta__.items()
 
+            need_import_files: Set[str] = set()
             for key, field in iter_attributes(
                 chain(
                     filter(
@@ -47,22 +47,26 @@ class DeclarativeMeta(type):
                     clsdict.items(),
                 )
             ):
-                field_filename = file_name
-
                 if isinstance(field, ReferenceField):
-                    field_filename = field.__key_type__.__filename__
+                    need_import_files.add(field.__key_type__.__filename__)
                 elif isinstance(field, ListField):
                     if isinstance(field.__key_type__, ReferenceField):
-                        field_filename = field.__key_type__.__key_type__.__filename__
+                        need_import_files.add(
+                            field.__key_type__.__key_type__.__filename__
+                        )
                 elif isinstance(field, MapField):
                     if isinstance(field.__value_type__, ReferenceField):
-                        field_filename = field.__value_type__.__key_type__.__filename__
-                if field_filename != file_name:
-                    __meta__[file_name].import_files.add(field_filename)
+                        need_import_files.add(
+                            field.__value_type__.__key_type__.__filename__
+                        )
                 clsdict["__meta__"][key] = field
                 clsdict[key] = field
             MessageCls = super().__new__(cls, clsname, bases, clsdict)
+            file_name = getattr(MessageCls, "__filename__", clsname.lower())
+            setattr(MessageCls, "__filename__", file_name)
+            need_import_files.discard(file_name)
             __meta__[file_name].messages.append(MessageCls)
+            __meta__[file_name].import_files |= need_import_files
             return MessageCls
         return super().__new__(cls, clsname, bases, clsdict)
 
@@ -78,8 +82,6 @@ class _gRPCMessageClass(GeneratedProtocolMessageType):
 class Message(metaclass=DeclarativeMeta):
     __meta__: Dict[str, "BaseField"] = {}
 
-    # default: class name's lowercase
-    __filename__: str = ""
     gRPCMessageClass: Type = _gRPCMessageClass
     # populated dynamic, defined here to help IDEs only
     __message__: GeneratedProtocolMessageType
@@ -87,6 +89,8 @@ class Message(metaclass=DeclarativeMeta):
     if TYPE_CHECKING:  # pragma: no cover
         # populated by the metaclass, defined here to help IDEs only
         __type_name__: str
+        # default: class name's lowercase
+        __filename__: str
 
     def __str__(self) -> str:
         return str(self.__message__)

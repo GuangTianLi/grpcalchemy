@@ -1,11 +1,13 @@
-import importlib
 import logging
+import logging
+import os.path
 import time
 from concurrent import futures
 from threading import Event
 from typing import Callable, Dict, Optional, Tuple, Type, ContextManager, List
-
+from importlib import import_module
 import grpc
+from configalchemy.utils import import_reference
 from grpc import GenericRpcHandler
 from grpc._cython import cygrpc
 from grpc._server import (
@@ -101,10 +103,13 @@ class Server(Blueprint, grpc.Server):
         for bp_cls in self.get_blueprints():
             self.register_blueprint(bp_cls)
 
-        generate_proto_file(template_path=self.config.PROTO_TEMPLATE_PATH)
+        generate_proto_file(
+            template_path_root=self.config.PROTO_TEMPLATE_ROOT,
+            template_path=self.config.PROTO_TEMPLATE_PATH,
+        )
         for name, bp in self.blueprints.items():
-            grpc_pb2_module = importlib.import_module(
-                f".{bp.file_name}_pb2_grpc", self.config.PROTO_TEMPLATE_PATH
+            grpc_pb2_module = import_module(
+                f"{os.path.join(self.config.PROTO_TEMPLATE_ROOT, self.config.PROTO_TEMPLATE_PATH, bp.file_name).replace('/', '.')}_pb2_grpc"
             )
             getattr(grpc_pb2_module, f"add_{bp.service_name}Servicer_to_server")(
                 bp, self

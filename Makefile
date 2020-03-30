@@ -57,7 +57,7 @@ lint: ## check type with mypy
 	mypy grpcalchemy
 
 test: ## run tests quickly with the default Python
-	python setup.py test
+	python -m unittest discover tests/
 
 test-all: ## run tests on every Python version with tox
 	tox

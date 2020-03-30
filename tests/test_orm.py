@@ -13,7 +13,7 @@ from grpcalchemy.orm import (
     StringField,
 )
 from grpcalchemy.utils import generate_proto_file
-from .test_grpcalchemy import TestGrpcalchemy
+from tests.test_grpcalchemy import TestGrpcalchemy
 
 
 class ORMTestCase(TestGrpcalchemy):
@@ -28,7 +28,11 @@ class ORMTestCase(TestGrpcalchemy):
         class Test(Message):
             __filename__ = "specified"
 
+        class TempTest(Test):
+            ...
+
         self.assertEqual("specified", Test.__filename__)
+        self.assertEqual("specified", TempTest.__filename__)
 
     def test_field_str(self):
         """Test field to str."""

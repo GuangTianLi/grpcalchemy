@@ -3,7 +3,7 @@ from unittest.mock import Mock
 
 from grpcalchemy import Blueprint, Context, Server, grpcmethod
 from grpcalchemy.orm import Message
-from .test_grpcalchemy import TestGrpcalchemy
+from tests.test_grpcalchemy import TestGrpcalchemy
 
 
 class ServerTestCase(TestGrpcalchemy):

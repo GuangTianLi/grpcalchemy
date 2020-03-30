@@ -1,6 +1,6 @@
 from grpcalchemy.blueprint import InvalidRPCMethod, Blueprint, grpcmethod
 from grpcalchemy.orm import Message, StringField
-from .test_grpcalchemy import TestGrpcalchemy
+from tests.test_grpcalchemy import TestGrpcalchemy
 
 
 class BlueprintTestCase(TestGrpcalchemy):

@@ -1,6 +1,6 @@
-import importlib
 import socket
-from os import getcwd, mkdir, walk
+from importlib import import_module
+from os import walk, path, mkdir
 from os.path import abspath, dirname, exists, join
 from typing import Union, Optional
 
@@ -15,9 +15,48 @@ except AttributeError:  # pragma: no cover
 
 from .meta import __meta__
 
+curdir = "."
 
-def generate_proto_file(template_path: str = "protos"):
-    abs_template_path = join(getcwd(), template_path)
+
+def make_packages(name, mode=0o777, exist_ok=False):
+    """make_packages(name [, mode=0o777][, exist_ok=False])
+
+    Super-mkdir; create a leaf directory with python package and all intermediate ones.
+    Works like mkdir, except that any intermediate path segment (not just the rightmost)
+    will be created if it does not exist. If the target directory already
+    exists, raise an OSError if exist_ok is False. Otherwise no exception is
+    raised.  This is recursive.
+
+    """
+    head, tail = path.split(name)
+    if not tail:
+        head, tail = path.split(head)
+    if head and tail and not path.exists(head):
+        try:
+            make_packages(head, exist_ok=exist_ok)
+        except FileExistsError:
+            # Defeats race condition when another thread created the path
+            pass
+        cdir = curdir
+        if isinstance(tail, bytes):
+            cdir = bytes(curdir, "ASCII")
+        if tail == cdir:  # xxx/newdir/. exists if xxx/newdir exists
+            return
+    try:
+        mkdir(name, mode)
+    except OSError:
+        # Cannot rely on checking for EEXIST, since the operating system
+        # could give priority to other errors like EACCES or EROFS
+        if not exist_ok or not path.isdir(name):
+            raise
+    else:
+        init_file = join(name, "__init__.py")
+        if not path.exists(init_file):
+            open(init_file, "a").close()
+
+
+def generate_proto_file(template_path_root: str = "", template_path: str = "protos"):
+    abs_template_path = join(template_path_root, template_path)
 
     env = Environment(
         loader=FileSystemLoader(
@@ -28,10 +67,7 @@ def generate_proto_file(template_path: str = "protos"):
     )
 
     if not exists(abs_template_path):
-        mkdir(abs_template_path)
-        env.get_template("__init__.py.tmpl").stream().dump(
-            join(abs_template_path, "__init__.py")
-        )
+        make_packages(abs_template_path)
         env.get_template("README.md.tmpl").stream().dump(
             join(abs_template_path, "README.md")
         )
@@ -64,8 +100,8 @@ def generate_proto_file(template_path: str = "protos"):
     for meta in __meta__.values():
         # populated exact gRPCMessageClass from pb2 file
         for messageCls in meta.messages:
-            gpr_message_module = importlib.import_module(
-                f".{messageCls.__filename__}_pb2", template_path
+            gpr_message_module = import_module(
+                f"{join(abs_template_path, messageCls.__filename__).replace('/', '.')}_pb2"
             )
             gRPCMessageClass = getattr(
                 gpr_message_module, f"{messageCls.__type_name__}"

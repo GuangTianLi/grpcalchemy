@@ -2,7 +2,7 @@ from grpcalchemy.blueprint import Blueprint, grpcmethod
 from grpcalchemy.meta import __meta__
 from grpcalchemy.orm import Message, ReferenceField, StringField
 
-from .test_grpcalchemy import TestGrpcalchemy
+from tests.test_grpcalchemy import TestGrpcalchemy
 
 
 class MetaTestCase(TestGrpcalchemy):
