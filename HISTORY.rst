@@ -5,6 +5,7 @@ History
 0.4.0(2019-09-24)
 --------------------
 
+* Support related directory path to generate protocol buffer files
 * Enable use type hint to define message
 * Add error handle to handle Exception
 * Add ``get_blueprints`` to get blueprints need to register
