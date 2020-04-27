@@ -2,6 +2,12 @@
 History
 =======
 
+0.5.0(2020-04-27)
+--------------------
+
+* Support Streaming Method
+* Deprecate request parameter in app context and handle exception
+
 0.4.0(2019-09-24)
 --------------------
 
