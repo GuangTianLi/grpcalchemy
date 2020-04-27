@@ -89,7 +89,7 @@ class Message(metaclass=DeclarativeMeta):
     if TYPE_CHECKING:  # pragma: no cover
         # populated by the metaclass, defined here to help IDEs only
         __type_name__: str
-        # default: class name's lowercase
+        # optional. if no filename is specified, class name's lowercase is used.
         __filename__: str
 
     def __str__(self) -> str:
@@ -189,6 +189,7 @@ class Message(metaclass=DeclarativeMeta):
 
 
 FieldType = TypeVar("FieldType")
+M = TypeVar("M", bound=Message)
 
 
 class BaseField(Generic[FieldType]):
@@ -324,10 +325,10 @@ class ReferenceField(BaseField):
 
     if TYPE_CHECKING:  # pragma: no cover
         # defined this to help IDEs only
-        def __get__(self, instance: Message, owner) -> ReferenceFieldType:
+        def __get__(self, instance: M, owner) -> ReferenceFieldType:
             ...
 
-        def __set__(self, instance: Message, value: ReferenceFieldType) -> None:
+        def __set__(self, instance: M, value: ReferenceFieldType) -> None:
             ...
 
     def __init__(
@@ -351,12 +352,10 @@ class ListField(BaseField[list]):
 
     if TYPE_CHECKING:  # pragma: no cover
         # defined this to help IDEs only
-        def __get__(self, instance: Message, owner) -> List[ReferenceKeyFieldType]:
+        def __get__(self, instance: M, owner) -> List[ReferenceKeyFieldType]:
             ...
 
-        def __set__(
-            self, instance: Message, value: List[ReferenceKeyFieldType]
-        ) -> None:
+        def __set__(self, instance: M, value: List[ReferenceKeyFieldType]) -> None:
             ...
 
     def __init__(

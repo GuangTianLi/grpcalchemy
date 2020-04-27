@@ -224,3 +224,7 @@ Middleware is a framework of hooks into gRPCAlchemy's request/response processin
 
 Costume middleware can implement by overriding :any:`Blueprint.before_request`, :any:`Blueprint.after_request`,
 :any:`Server.process_request` and :any:`Server.process_response`.
+
+
+Streaming Support
+===========================

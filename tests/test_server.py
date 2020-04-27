@@ -1,4 +1,4 @@
-from typing import Callable, ContextManager, List, Type, Dict
+from typing import Callable, ContextManager, List, Type, Dict, Iterator
 from unittest.mock import Mock
 
 from grpcalchemy import Blueprint, Context, Server, grpcmethod
@@ -29,14 +29,6 @@ class ServerTestCase(TestGrpcalchemy):
             tag: Dict[str, Post]
 
         class AppService(Server):
-            @grpcmethod
-            def GetName(self, request: TestMessage, context: Context) -> TestMessage:
-                return TestMessage(
-                    user={"name": request.user.name},
-                    posts=[dict(content="")],
-                    tag={"test": Post(content="")},
-                )
-
             def before_server_start(self):
                 server_start()
 
@@ -46,48 +38,85 @@ class ServerTestCase(TestGrpcalchemy):
             def process_request(
                 self, request: TestMessage, context: Context
             ) -> TestMessage:
-                unittest_self.assertEqual("test", request.user.name)
+                unittest_self.assertIn(
+                    request.user.name, {"unary_unary", "unary_stream"}
+                )
                 app_process_request()
                 return request
 
             def process_response(
                 self, response: TestMessage, context: Context
             ) -> TestMessage:
-                unittest_self.assertEqual("test", response.user.name)
+                unittest_self.assertIn(
+                    response.user.name, {"unary_unary", "stream_unary"}
+                )
                 app_process_response()
                 return response
 
             def app_context(
-                self,
-                current_service: Blueprint,
-                current_method: Callable,
-                current_request: Message,
+                self, current_service: Blueprint, current_method: Callable,
             ) -> ContextManager:
                 enter_context()
-                return super().app_context(
-                    current_service, current_method, current_request
-                )
+                return super().app_context(current_service, current_method)
 
             def get_blueprints(self) -> List[Type[Blueprint]]:
                 return [BlueprintService]
 
         class BlueprintService(Blueprint):
             @grpcmethod
-            def GetName(self, request: TestMessage, context: Context) -> TestMessage:
-                return TestMessage(user={"name": request.user.name})
+            def UnaryUnary(self, request: TestMessage, context: Context) -> TestMessage:
+                return TestMessage(
+                    user={"name": "unary_unary"},
+                    posts=[dict(content=request.user.name)],
+                    tag={"test": Post(content="")},
+                )
+
+            @grpcmethod
+            def UnaryStream(
+                self, request: TestMessage, context: Context
+            ) -> Iterator[TestMessage]:
+                yield TestMessage(
+                    user={"name": "unary_stream"},
+                    posts=[dict(content=request.user.name)],
+                    tag={"test": Post(content="")},
+                )
+
+            @grpcmethod
+            def StreamUnary(
+                self, request: Iterator[TestMessage], context: Context
+            ) -> TestMessage:
+                return TestMessage(
+                    user={"name": "stream_unary"},
+                    posts=[dict(content=r.user.name) for r in request],
+                    tag={"test": Post(content="")},
+                )
+
+            @grpcmethod
+            def StreamStream(
+                self, request: Iterator[TestMessage], context: Context
+            ) -> Iterator[TestMessage]:
+                yield TestMessage(
+                    user={"name": "stream_stream"},
+                    posts=[dict(content=r.user.name) for r in request],
+                    tag={"test": Post(content="")},
+                )
 
             def before_request(
                 self, request: TestMessage, context: Context
             ) -> TestMessage:
                 blueprint_before_request()
-                unittest_self.assertEqual("test", request.user.name)
+                unittest_self.assertIn(
+                    request.user.name, {"unary_unary", "unary_stream"}
+                )
                 return request
 
             def after_request(
                 self, response: TestMessage, context: Context
             ) -> TestMessage:
                 blueprint_after_request()
-                unittest_self.assertEqual("test", response.user.name)
+                unittest_self.assertIn(
+                    response.user.name, {"unary_unary", "stream_unary"}
+                )
                 return response
 
         unittest_self.app = AppService()
@@ -107,24 +136,47 @@ class ServerTestCase(TestGrpcalchemy):
 
     def test_server(self):
         from grpc import insecure_channel
-        from protos.appservice_pb2_grpc import AppServiceStub
         from protos.blueprintservice_pb2_grpc import BlueprintServiceStub
         from protos.testmessage_pb2 import TestMessage
         from protos.user_pb2 import User
 
         with insecure_channel("0.0.0.0:50051") as channel:
-            response = AppServiceStub(channel).GetName(
-                TestMessage(user=User(name="test"))
+            response = BlueprintServiceStub(channel).UnaryUnary(
+                TestMessage(user=User(name="unary_unary"))
             )
-            self.assertEqual("test", response.user.name)
+            self.assertEqual("unary_unary", response.user.name)
             self.assertEqual(1, self.app_process_request.call_count)
             self.assertEqual(1, self.app_process_response.call_count)
-            response = BlueprintServiceStub(channel).GetName(
-                TestMessage(user=User(name="test"))
-            )
-            self.assertEqual("test", response.user.name)
-            self.assertEqual(2, self.app_process_request.call_count)
-            self.assertEqual(2, self.app_process_response.call_count)
             self.assertEqual(1, self.blueprint_after_request.call_count)
             self.assertEqual(1, self.blueprint_before_request.call_count)
-        self.assertEqual(2, self.enter_context.call_count)
+
+            for response in BlueprintServiceStub(channel).UnaryStream(
+                TestMessage(user=User(name="unary_stream"))
+            ):
+                pass
+            self.assertEqual("unary_stream", response.user.name)
+            self.assertEqual(2, self.app_process_request.call_count)
+            self.assertEqual(1, self.app_process_response.call_count)
+            self.assertEqual(1, self.blueprint_after_request.call_count)
+            self.assertEqual(2, self.blueprint_before_request.call_count)
+
+            response = BlueprintServiceStub(channel).StreamUnary(
+                iter([TestMessage(user=User(name="stream_unary"))])
+            )
+            self.assertEqual("stream_unary", response.user.name)
+            self.assertEqual(2, self.app_process_request.call_count)
+            self.assertEqual(2, self.app_process_response.call_count)
+            self.assertEqual(2, self.blueprint_after_request.call_count)
+            self.assertEqual(2, self.blueprint_before_request.call_count)
+
+            for response in BlueprintServiceStub(channel).StreamStream(
+                iter([TestMessage(user=User(name="stream_stream"))])
+            ):
+                pass
+            self.assertEqual("stream_stream", response.user.name)
+            self.assertEqual(2, self.app_process_request.call_count)
+            self.assertEqual(2, self.app_process_response.call_count)
+            self.assertEqual(2, self.blueprint_after_request.call_count)
+            self.assertEqual(2, self.blueprint_before_request.call_count)
+
+        self.assertEqual(4, self.enter_context.call_count)

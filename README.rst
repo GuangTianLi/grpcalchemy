@@ -72,6 +72,7 @@ Features
 - Middleware
 - App Context Manger
 - Error Handler Support
+- Streaming Method Support
 
 TODO
 -------
@@ -79,4 +80,5 @@ TODO
 - Test Client Support
 - gRPC Client Support
     - Thoroughly Deprecate **pb2** and **pb2_grpc** file
-- Stream Method Support
+- Multiple Processor Support
+- Async Server Support

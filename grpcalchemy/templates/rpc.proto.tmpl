@@ -10,8 +10,7 @@ import "{{ file_path }}/{{ file }}.proto";
     {% for service in services %}
 service {{ service.name }} {
         {% for rpc in service.rpcs %}
-    rpc {{ rpc.__name__ }} ({{ rpc.request_type.__name__ }}) returns ({{ rpc.response_type.__name__ }}) {
-    }
+    {{ rpc.to_rpc_method() }}
         {% endfor %}
 }
     {% endfor %}

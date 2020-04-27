@@ -45,9 +45,9 @@ class MetaTestCase(TestGrpcalchemy):
         self.assertEqual(test_service.service_name, services[0].name)
         self.assertEqual(1, len(services[0].rpcs))
 
-        self.assertEqual("test_message", services[0].rpcs[0].__name__)
-        self.assertEqual("TestMessage", services[0].rpcs[0].request_type.__name__)
-        self.assertEqual("TestMessage", services[0].rpcs[0].response_type.__name__)
+        self.assertEqual("test_message", services[0].rpcs[0].name)
+        self.assertEqual("TestMessage", services[0].rpcs[0].request_cls.__name__)
+        self.assertEqual("TestMessage", services[0].rpcs[0].response_cls.__name__)
 
     def test_multiple_messages(self):
         class TestMessageOne(Message):

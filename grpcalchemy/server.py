@@ -1,13 +1,22 @@
 import logging
-import logging
 import os.path
 import time
 from concurrent import futures
-from threading import Event
-from typing import Callable, Dict, Optional, Tuple, Type, ContextManager, List
 from importlib import import_module
+from threading import Event
+from typing import (
+    Callable,
+    Dict,
+    Optional,
+    Tuple,
+    Type,
+    ContextManager,
+    List,
+    NoReturn,
+    Union,
+)
+
 import grpc
-from configalchemy.utils import import_reference
 from grpc import GenericRpcHandler
 from grpc._cython import cygrpc
 from grpc._server import (
@@ -218,7 +227,7 @@ class Server(Blueprint, grpc.Server):
 
     def process_request(self, request: RequestType, context: Context) -> RequestType:
         """The code to be executed for each request before
-         the gRPC method are called.
+         the gRPC method are called. Only in **UnaryUnary** and **UnarySteam** method
         """
         return request
 
@@ -226,7 +235,7 @@ class Server(Blueprint, grpc.Server):
         self, response: ResponseType, context: Context
     ) -> ResponseType:
         """The code to be executed for each response after
-        the gRPC method are called.
+        the gRPC method are called. Only in **UnaryUnary** and **StreamUnary** method
         """
         return response
 
@@ -246,19 +255,16 @@ class Server(Blueprint, grpc.Server):
         pass
 
     def app_context(
-        self,
-        current_service: Blueprint,
-        current_method: Callable,
-        current_request: RequestType,
+        self, current_service: Blueprint, current_method: Callable,
     ) -> ContextManager:
         #: Use to construct context for each request.
-        #:
-        #: .. versionchanged:: 0.3.0
+        #: TODO: using cygrpc.install_context_from_request_call_event to prepare context
+        #: .. versionchanged:: 0.5.0
         return self
 
     def handle_exception(
-        self, e: Exception, request: RequestType, context: Context
-    ) -> ResponseType:
+        self, e: Exception, context: Context
+    ) -> Union[ResponseType, NoReturn]:
         raise e
 
     def get_blueprints(self) -> List[Type[Blueprint]]:
