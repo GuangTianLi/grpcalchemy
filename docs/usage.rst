@@ -145,12 +145,30 @@ Defining our gRPC Method
 The ``valid gRPC Method`` must be with `explicit type hint <https://www.python.org/dev/peps/pep-0484/#type-definition-syntax>`_
 to define the type of request and return value.
 
+Using Iterator to define Stream gRPC Method:
+
 .. code-block:: python
+    from typing import Iterator
 
     class HelloService(Server):
+
         @grpcmethod
-        def Hello(self, request: HelloMessage, context: Context) -> HelloMessage:
+        def UnaryUnary(self, request: HelloMessage, context: Context) -> HelloMessage:
             return HelloMessage(text=f'Hello {request.text}')
+        @grpcmethod
+        def UnaryStream(self, request: HelloMessage, context: Context) -> Iterator[HelloMessage]:
+            yield HelloMessage(text=f'Hello {request.text}')
+
+        @grpcmethod
+        def StreamUnary(self, request: Iterator[HelloMessage], context: Context) -> HelloMessage:
+            for r in request:
+                pass
+            return HelloMessage(text=f'Hello {r.text}')
+
+        @StreamStream
+        def StreamStream(self, request: Iterator[HelloMessage], context: Context) -> Iterator[HelloMessage]:
+            for r in request:
+                yield HelloMessage(text=f'Hello {r.text}')
 
 The above code is equal to an RPC service with a method:
 
@@ -159,8 +177,13 @@ The above code is equal to an RPC service with a method:
     syntax = "proto3";
 
     service HelloService {
-        rpc Hello (HelloMessage) returns (HelloMessage) {
-        }
+        rpc StreamStream (stream HelloMessage) returns (stream HelloMessage) {}
+
+        rpc StreamUnary (stream HelloMessage) returns (HelloMessage) {}
+
+        rpc UnaryStream (HelloMessage) returns (stream HelloMessage) {}
+
+        rpc UnaryUnary (HelloMessage) returns (HelloMessage) {}
     }
 
 
@@ -226,5 +249,3 @@ Costume middleware can implement by overriding :any:`Blueprint.before_request`, 
 :any:`Server.process_request` and :any:`Server.process_response`.
 
 
-Streaming Support
-===========================
