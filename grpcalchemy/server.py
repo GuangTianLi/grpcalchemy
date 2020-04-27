@@ -12,8 +12,6 @@ from typing import (
     Type,
     ContextManager,
     List,
-    NoReturn,
-    Union,
 )
 
 import grpc
@@ -262,9 +260,7 @@ class Server(Blueprint, grpc.Server):
         #: .. versionchanged:: 0.5.0
         return self
 
-    def handle_exception(
-        self, e: Exception, context: Context
-    ) -> Union[ResponseType, NoReturn]:
+    def handle_exception(self, e: Exception, context: Context) -> ResponseType:
         raise e
 
     def get_blueprints(self) -> List[Type[Blueprint]]:
