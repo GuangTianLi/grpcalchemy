@@ -148,6 +148,7 @@ to define the type of request and return value.
 Using Iterator to define Stream gRPC Method:
 
 .. code-block:: python
+
     from typing import Iterator
 
     class HelloService(Server):
@@ -155,6 +156,7 @@ Using Iterator to define Stream gRPC Method:
         @grpcmethod
         def UnaryUnary(self, request: HelloMessage, context: Context) -> HelloMessage:
             return HelloMessage(text=f'Hello {request.text}')
+
         @grpcmethod
         def UnaryStream(self, request: HelloMessage, context: Context) -> Iterator[HelloMessage]:
             yield HelloMessage(text=f'Hello {request.text}')
