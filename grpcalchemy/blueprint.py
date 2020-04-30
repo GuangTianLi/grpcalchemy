@@ -79,7 +79,7 @@ class UnaryUnaryRpcMethod(AbstractRpcMethod):
     ) -> GeneratedProtocolMessageType:
         current_request = self.request_cls()
         current_request.init_grpc_message(grpc_message=message)
-        with bp.current_app.app_context(bp, self.funcobj):
+        with bp.current_app.app_context(bp, self.funcobj, context):
             # TODO: using cygrpc.install_context_from_request_call_event to prepare context
             try:
                 current_request = bp.current_app.process_request(
@@ -113,7 +113,7 @@ class UnaryStreamRpcMethod(AbstractRpcMethod):
     ) -> Iterable[GeneratedProtocolMessageType]:
         current_request = self.request_cls()
         current_request.init_grpc_message(grpc_message=message)
-        with bp.current_app.app_context(bp, self.funcobj):
+        with bp.current_app.app_context(bp, self.funcobj, context):
             # TODO: using cygrpc.install_context_from_request_call_event to prepare context
             try:
                 current_request = bp.current_app.process_request(
@@ -148,7 +148,7 @@ class StreamUnaryRpcMethod(AbstractRpcMethod):
         context: Context,
     ) -> GeneratedProtocolMessageType:
         request_iterator = self.request_iterator(message)
-        with bp.current_app.app_context(bp, self.funcobj):
+        with bp.current_app.app_context(bp, self.funcobj, context):
             # TODO: using cygrpc.install_context_from_request_call_event to prepare context
             try:
                 response = self.funcobj(bp, request_iterator, context)
@@ -180,7 +180,7 @@ class StreamStreamRpcMethod(AbstractRpcMethod):
         context: Context,
     ) -> Iterable[GeneratedProtocolMessageType]:
         request_iterator = self.request_iterator(message)
-        with bp.current_app.app_context(bp, self.funcobj):
+        with bp.current_app.app_context(bp, self.funcobj, context):
             # TODO: using cygrpc.install_context_from_request_call_event to prepare context
             try:
                 for response in self.funcobj(bp, request_iterator, context):

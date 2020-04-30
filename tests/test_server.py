@@ -54,10 +54,13 @@ class ServerTestCase(TestGrpcalchemy):
                 return response
 
             def app_context(
-                self, current_service: Blueprint, current_method: Callable,
+                self,
+                current_service: Blueprint,
+                current_method: Callable,
+                context: Context,
             ) -> ContextManager:
                 enter_context()
-                return super().app_context(current_service, current_method)
+                return super().app_context(current_service, current_method, context)
 
             def get_blueprints(self) -> List[Type[Blueprint]]:
                 return [BlueprintService]

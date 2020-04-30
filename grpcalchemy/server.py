@@ -253,7 +253,7 @@ class Server(Blueprint, grpc.Server):
         pass
 
     def app_context(
-        self, current_service: Blueprint, current_method: Callable,
+        self, current_service: Blueprint, current_method: Callable, context: Context
     ) -> ContextManager:
         #: Use to construct context for each request.
         #: TODO: using cygrpc.install_context_from_request_call_event to prepare context
