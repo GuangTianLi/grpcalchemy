@@ -31,3 +31,10 @@ class DefaultConfig(BaseConfig):
 
     #: logger level
     GRPC_ALCHEMY_LOGGER_LEVEL = logging.INFO
+
+    #: Health Check
+    GRPC_HEALTH_CHECKING_ENABLE = True
+    GRPC_HEALTH_CHECKING_THREAD_POOL_NUM = 1
+
+    #: Server Reflection
+    GRPC_SEVER_REFLECTION_ENABLE = False

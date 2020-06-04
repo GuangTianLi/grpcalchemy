@@ -1,6 +1,11 @@
 from typing import Callable, ContextManager, List, Type, Dict, Iterator
 from unittest.mock import Mock
 
+from grpc_health.v1.health_pb2 import HealthCheckRequest
+from grpc_health.v1.health_pb2_grpc import HealthStub
+from grpc_reflection.v1alpha.reflection_pb2 import ServerReflectionRequest
+from grpc_reflection.v1alpha.reflection_pb2_grpc import ServerReflectionStub
+from google.protobuf.json_format import MessageToDict
 from grpcalchemy import Blueprint, Context, Server, grpcmethod
 from grpcalchemy.orm import Message
 from tests.test_grpcalchemy import TestGrpcalchemy
@@ -122,7 +127,7 @@ class ServerTestCase(TestGrpcalchemy):
                 )
                 return response
 
-        unittest_self.app = AppService()
+        unittest_self.app = AppService(unittest_self.config)
         unittest_self.app.run(block=False)
         unittest_self.assertEqual(1, server_start.call_count)
         unittest_self.server_stop = server_stop
@@ -181,5 +186,21 @@ class ServerTestCase(TestGrpcalchemy):
             self.assertEqual(2, self.app_process_response.call_count)
             self.assertEqual(2, self.blueprint_after_request.call_count)
             self.assertEqual(2, self.blueprint_before_request.call_count)
+
+            self.assertEqual(1, HealthStub(channel).Check(HealthCheckRequest()).status)
+            for response in ServerReflectionStub(channel).ServerReflectionInfo(
+                iter([ServerReflectionRequest(list_services="")])
+            ):
+                self.assertEqual(
+                    {
+                        "service": [
+                            {"name": "AppService"},
+                            {"name": "BlueprintService"},
+                            {"name": "grpc.health.v1.Health"},
+                            {"name": "grpc.reflection.v1alpha.ServerReflection"},
+                        ]
+                    },
+                    MessageToDict(response.list_services_response),
+                )
 
         self.assertEqual(4, self.enter_context.call_count)

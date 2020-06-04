@@ -24,6 +24,9 @@ from grpc._server import (
     _stop,
     _validate_generic_rpc_handlers,
 )
+from grpc_health.v1 import health
+from grpc_health.v1 import health_pb2_grpc
+from grpc_reflection.v1alpha import reflection
 
 from .blueprint import Blueprint, RequestType, ResponseType, Context
 from .config import DefaultConfig
@@ -114,13 +117,33 @@ class Server(Blueprint, grpc.Server):
             template_path_root=self.config.PROTO_TEMPLATE_ROOT,
             template_path=self.config.PROTO_TEMPLATE_PATH,
         )
+        services = (reflection.SERVICE_NAME, health.SERVICE_NAME)
         for name, bp in self.blueprints.items():
-            grpc_pb2_module = import_module(
+            grpc_pb2_grpc_module = import_module(
                 f"{os.path.join(self.config.PROTO_TEMPLATE_ROOT, self.config.PROTO_TEMPLATE_PATH, bp.file_name).replace('/', '.')}_pb2_grpc"
             )
-            getattr(grpc_pb2_module, f"add_{bp.service_name}Servicer_to_server")(
+            grpc_pb2_module = import_module(
+                f"{os.path.join(self.config.PROTO_TEMPLATE_ROOT, self.config.PROTO_TEMPLATE_PATH, bp.file_name).replace('/', '.')}_pb2"
+            )
+            getattr(grpc_pb2_grpc_module, f"add_{bp.service_name}Servicer_to_server")(
                 bp, self
             )
+            services += tuple(
+                service.full_name
+                for service in grpc_pb2_module.DESCRIPTOR.services_by_name.values()
+            )
+
+        if self.config.GRPC_HEALTH_CHECKING_ENABLE:
+            health_service = health.HealthServicer(
+                experimental_non_blocking=True,
+                experimental_thread_pool=futures.ThreadPoolExecutor(
+                    max_workers=self.config.GRPC_HEALTH_CHECKING_THREAD_POOL_NUM
+                ),
+            )
+            health_pb2_grpc.add_HealthServicer_to_server(health_service, self)
+
+        if self.config.GRPC_SEVER_REFLECTION_ENABLE:
+            reflection.enable_server_reflection(services, self)
 
         self.before_server_start()
 

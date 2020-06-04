@@ -22,6 +22,8 @@ protobuf = "*"
 grpcio-tools = "*"
 jinja2 = "*"
 configalchemy = "*"
+grpcio-reflection = "*"
+grpcio-health-checking = "*"
 
 [requires]
 python_version = "3.7"

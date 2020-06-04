@@ -4,10 +4,17 @@ import unittest
 from shutil import rmtree
 
 from grpcalchemy.meta import __meta__
+from grpcalchemy import DefaultConfig
+
+
+class TestConfig(DefaultConfig):
+    GRPC_SEVER_REFLECTION_ENABLE = True
 
 
 class TestGrpcalchemy(unittest.TestCase):
     """Tests for `grpcalchemy` package."""
+
+    config = TestConfig()
 
     def setUp(self):
         """Set up test fixtures, if any."""

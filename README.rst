@@ -73,12 +73,11 @@ Features
 - App Context Manger
 - Error Handler Support
 - Streaming Method Support
+- gRPC-Health Checking and Reflection Support
 
 TODO
 -------
 
 - Test Client Support
-- gRPC Client Support
-    - Thoroughly Deprecate **pb2** and **pb2_grpc** file
 - Multiple Processor Support
 - Async Server Support
