@@ -117,7 +117,7 @@ class Server(Blueprint, grpc.Server):
             template_path_root=self.config.PROTO_TEMPLATE_ROOT,
             template_path=self.config.PROTO_TEMPLATE_PATH,
         )
-        services = (reflection.SERVICE_NAME, health.SERVICE_NAME)
+        services: Tuple[str, ...] = (reflection.SERVICE_NAME, health.SERVICE_NAME)
         for name, bp in self.blueprints.items():
             grpc_pb2_grpc_module = import_module(
                 f"{os.path.join(self.config.PROTO_TEMPLATE_ROOT, self.config.PROTO_TEMPLATE_PATH, bp.file_name).replace('/', '.')}_pb2_grpc"
@@ -130,7 +130,9 @@ class Server(Blueprint, grpc.Server):
             )
             services += tuple(
                 service.full_name
-                for service in grpc_pb2_module.DESCRIPTOR.services_by_name.values()
+                for service in getattr(
+                    grpc_pb2_module, "DESCRIPTOR"
+                ).services_by_name.values()
             )
 
         if self.config.GRPC_HEALTH_CHECKING_ENABLE:
