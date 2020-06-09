@@ -19,7 +19,7 @@ To use gRPCAlchemy in a project:
             return HelloMessage(text=f'Hello {request.text}')
 
     if __name__ == '__main__':
-        HelloService().run()
+        HelloService.run()
 
 
 Defining our Message
@@ -203,7 +203,8 @@ supporting common patterns within an application or across applications.
     from grpcalchemy import Server, Context, Blueprint
 
     class MyService(Server):
-        def get_blueprints(self) -> List[Type[Blueprint]]:
+        @classmethod
+        def get_blueprints(cls) -> List[Type[Blueprint]]:
             return [HelloService]
 
     class HelloMessage(Message):
@@ -217,7 +218,7 @@ supporting common patterns within an application or across applications.
 
 
     if __name__ == '__main__':
-        MyService().run()
+        MyService.run()
 
 
 Configuration
@@ -239,8 +240,7 @@ a list of configuration available in gRPCAlchemy and their default values.
 
     config = MyConfig()
 
-    app = HelloService(config=config)
-    app.run()
+    HelloService.run(config=config)
 
 Middleware
 ================
