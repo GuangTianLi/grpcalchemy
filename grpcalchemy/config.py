@@ -1,5 +1,5 @@
 import logging
-from typing import Optional, Tuple, List
+from typing import Optional, Tuple, List, Union
 
 from configalchemy import BaseConfig
 
@@ -19,7 +19,7 @@ class DefaultConfig(BaseConfig):
 
     #: An optional list of key-value pairs (channel args in gRPC runtime)
     #: to configure the channel.
-    GRPC_SERVER_OPTIONS: List[Tuple[str, str]] = []
+    GRPC_SERVER_OPTIONS: List[Tuple[str, Union[str, int, bool]]] = []
 
     #: The maximum number of concurrent RPCs this server
     #: will service before returning RESOURCE_EXHAUSTED status, or None to
