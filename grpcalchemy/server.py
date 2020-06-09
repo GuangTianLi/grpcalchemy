@@ -1,5 +1,8 @@
 import logging
+import multiprocessing
 import os.path
+import socket
+import sys
 import time
 from concurrent import futures
 from importlib import import_module
@@ -30,7 +33,12 @@ from grpc_reflection.v1alpha import reflection
 
 from .blueprint import Blueprint, RequestType, ResponseType, Context
 from .config import DefaultConfig
-from .utils import generate_proto_file, socket_bind_test
+from .utils import (
+    generate_proto_file,
+    socket_bind_test,
+    select_address_family,
+    get_sockaddr,
+)
 
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
 
@@ -50,14 +58,29 @@ class Server(Blueprint, grpc.Server):
     .. versionadded:: 0.2.0
     """
 
-    def __init__(self, config: Optional[DefaultConfig] = None):
-        self.config = config or DefaultConfig()
+    #: All multiple processor.
+    #:
+    #: .. versionadded:: 0.6.0
+    workers: List[multiprocessing.Process] = []
 
+    def __init__(self, config: DefaultConfig):
+        self.config = config
+
+        #: init logger
+        self.logger = logging.getLogger(__name__)
+        handler = logging.StreamHandler(sys.stdout)
+        formatter = logging.Formatter(self.config.GRPC_ALCHEMY_LOGGER_FORMATTER)
+        handler.setFormatter(formatter)
+        self.logger.setLevel(self.config.GRPC_ALCHEMY_LOGGER_LEVEL)
+        self.logger.addHandler(handler)
+
+        self.logger.info(f"workers number: {self.config.GRPC_SERVER_MAX_WORKERS}")
         thread_pool = futures.ThreadPoolExecutor(
-            max_workers=self.config.GPRC_SERVER_MAX_WORKERS
+            max_workers=self.config.GRPC_SERVER_MAX_WORKERS
         )
         completion_queue = cygrpc.CompletionQueue()
-        server = cygrpc.Server(self.config.GRPC_SERVER_OPTIONS)
+        self.logger.info(f"server options: {self.config.GRPC_SERVER_OPTIONS}")
+        server = cygrpc.Server(tuple(self.config.GRPC_SERVER_OPTIONS))
         server.register_completion_queue(completion_queue)
 
         #: gRPC Server State
@@ -75,12 +98,7 @@ class Server(Blueprint, grpc.Server):
         #: all the attached blueprints in a dictionary by name.
         #:
         #: .. versionadded:: 0.1.6
-        self.blueprints: Dict[str, Blueprint] = {self.service_name: self}
-
-        #: init logger
-        self.logger = logging.getLogger(__name__)
-        self.logger.setLevel(self.config.GRPC_ALCHEMY_LOGGER_LEVEL)
-        self.logger.addHandler(logging.StreamHandler())
+        self.blueprints: Dict[str, Blueprint] = {self.access_service_name(): self}
 
         super().__init__()
         self.current_app = self
@@ -93,41 +111,94 @@ class Server(Blueprint, grpc.Server):
         """
         bp = bp_cls()
         bp.current_app = self
-        self.blueprints[bp.service_name] = bp
+        self.blueprints[bp.access_service_name()] = bp
 
+    @classmethod
     def run(
-        self,
+        cls,
+        config: Optional[DefaultConfig] = None,
         host: Optional[str] = None,
         port: Optional[int] = None,
         server_credentials: Optional[grpc.ServerCredentials] = None,
         block: Optional[bool] = None,
-    ) -> None:
-        host = host or self.config.GRPC_SERVER_HOST
-        port = port or self.config.GRPC_SERVER_PORT
-
-        if block is None:
-            block = self.config.GRPC_SERVER_RUN_WITH_BLOCK
+    ):
+        if config is None:
+            config = DefaultConfig()
+        host = host or config.GRPC_SERVER_HOST
+        port = port or config.GRPC_SERVER_PORT
 
         socket_bind_test(host, port)
+
+        cls.as_view()
+        for bp_cls in cls.get_blueprints():
+            bp_cls.as_view()
+
+        generate_proto_file(
+            template_path_root=config.PROTO_TEMPLATE_ROOT,
+            template_path=config.PROTO_TEMPLATE_PATH,
+        )
+
+        if config.GRPC_SERVER_PROCESS_COUNT > 1:
+            address_family = select_address_family(host)
+            server_address = get_sockaddr(host, port, address_family)
+            with socket.socket(address_family, socket.SOCK_STREAM) as sock:
+                sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+                if sock.getsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT) == 0:
+                    raise RuntimeError("Failed to set SO_REUSEPORT.")
+                print(server_address)
+                sock.bind(server_address)
+                config.GRPC_SERVER_OPTIONS.append(("grpc.so_reuseport", 1))
+                for _ in range(config.GRPC_SERVER_PROCESS_COUNT):
+                    # NOTE: It is imperative that the worker subprocesses be forked before
+                    # any gRPC servers start up. See
+                    # https://github.com/grpc/grpc/issues/16001 for more details.
+                    worker = multiprocessing.Process(
+                        target=cls._run,
+                        kwargs=dict(
+                            config=config,
+                            target=f"{host}:{port}",
+                            server_credentials=server_credentials,
+                            block=True,
+                        ),
+                    )
+                    worker.start()
+                    cls.workers.append(worker)
+                if block:
+                    for worker in cls.workers:
+                        worker.join()
+        else:
+            return cls._run(
+                config=config,
+                target=f"{host}:{port}",
+                server_credentials=server_credentials,
+                block=block,
+            )
+
+    @classmethod
+    def _run(
+        cls,
+        config: DefaultConfig,
+        target: str,
+        server_credentials: Optional[grpc.ServerCredentials] = None,
+        block: Optional[bool] = None,
+    ):
+        self = cls(config)
 
         for bp_cls in self.get_blueprints():
             self.register_blueprint(bp_cls)
 
-        generate_proto_file(
-            template_path_root=self.config.PROTO_TEMPLATE_ROOT,
-            template_path=self.config.PROTO_TEMPLATE_PATH,
-        )
         services: Tuple[str, ...] = (reflection.SERVICE_NAME, health.SERVICE_NAME)
         for name, bp in self.blueprints.items():
             grpc_pb2_grpc_module = import_module(
-                f"{os.path.join(self.config.PROTO_TEMPLATE_ROOT, self.config.PROTO_TEMPLATE_PATH, bp.file_name).replace('/', '.')}_pb2_grpc"
+                f"{os.path.join(self.config.PROTO_TEMPLATE_ROOT, self.config.PROTO_TEMPLATE_PATH, bp.access_file_name()).replace('/', '.')}_pb2_grpc"
             )
             grpc_pb2_module = import_module(
-                f"{os.path.join(self.config.PROTO_TEMPLATE_ROOT, self.config.PROTO_TEMPLATE_PATH, bp.file_name).replace('/', '.')}_pb2"
+                f"{os.path.join(self.config.PROTO_TEMPLATE_ROOT, self.config.PROTO_TEMPLATE_PATH, bp.access_file_name()).replace('/', '.')}_pb2"
             )
-            getattr(grpc_pb2_grpc_module, f"add_{bp.service_name}Servicer_to_server")(
-                bp, self
-            )
+            getattr(
+                grpc_pb2_grpc_module,
+                f"add_{bp.access_service_name()}Servicer_to_server",
+            )(bp, self)
             services += tuple(
                 service.full_name
                 for service in getattr(
@@ -147,17 +218,21 @@ class Server(Blueprint, grpc.Server):
         if self.config.GRPC_SEVER_REFLECTION_ENABLE:
             reflection.enable_server_reflection(services, self)
 
+        if block is None:
+            block = self.config.GRPC_SERVER_RUN_WITH_BLOCK
+
         self.before_server_start()
 
         if server_credentials:
             self.add_secure_port(
-                f"{host}:{port}".encode("utf-8"), server_credentials=server_credentials
+                target.encode("utf-8"), server_credentials=server_credentials
             )
         else:
-            self.add_insecure_port(f"{host}:{port}".encode("utf-8"))
+            self.add_insecure_port(target.encode("utf-8"))
+
         self.start()
 
-        self.logger.info(f"gRPC server is running on {host}:{port}")
+        self.logger.info(f"gRPC server is running on {target}")
 
         if block:  # pragma: no cover
             try:
@@ -167,6 +242,7 @@ class Server(Blueprint, grpc.Server):
                 pass
             finally:
                 self.stop(0)
+        return self
 
     def before_server_start(self):
         pass
@@ -288,5 +364,6 @@ class Server(Blueprint, grpc.Server):
     def handle_exception(self, e: Exception, context: Context) -> ResponseType:
         raise e
 
+    @classmethod
     def get_blueprints(self) -> List[Type[Blueprint]]:
         return []

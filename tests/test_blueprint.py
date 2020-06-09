@@ -25,8 +25,8 @@ class BlueprintTestCase(TestGrpcalchemy):
                 ...
 
         test = FooService()
-        self.assertEqual("fooservice", test.file_name)
-        self.assertEqual("FooService", test.service_name)
+        self.assertEqual("fooservice", test.access_file_name())
+        self.assertEqual("FooService", test.access_service_name())
 
     def test_register_invalid_rpc_method(self):
         class TestMessage(Message):

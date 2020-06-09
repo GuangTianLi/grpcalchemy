@@ -212,19 +212,13 @@ class Blueprint:
 
     current_app: "Server"
 
-    def __init__(self):
-        self.service_meta = ServiceMeta(name=self.service_name, rpcs=[])
+    @classmethod
+    def access_service_name(cls) -> str:
+        return cls.__name__
 
-        __meta__[self.file_name].services.append(self.service_meta)
-        self.as_view()
-
-    @property
-    def service_name(self) -> str:
-        return self.__class__.__name__
-
-    @property
-    def file_name(self) -> str:
-        return self.service_name.lower()
+    @classmethod
+    def access_file_name(cls) -> str:
+        return cls.access_service_name().lower()
 
     def before_request(self, request: RequestType, context: Context) -> RequestType:
         """The code to be executed for each request before
@@ -238,21 +232,25 @@ class Blueprint:
         """
         return response
 
-    def as_view(self) -> gRPCMethodsType:
+    @classmethod
+    def as_view(cls) -> gRPCMethodsType:
         """Is there a necessary to implement this with Meta Programming"""
-        for method_str in dir(self):
-            method = getattr(self, method_str)
+        file_name = cls.access_file_name()
+        service_meta = ServiceMeta(name=cls.access_service_name(), rpcs=[])
+        __meta__[file_name].services.append(service_meta)
+        for method_str in dir(cls):
+            method = getattr(cls, method_str)
             if getattr(method, "__grpcmethod__", False):
-                self.service_meta.rpcs.append(method.__rpc_method__)
+                service_meta.rpcs.append(method.__rpc_method__)
                 rpc_method: AbstractRpcMethod = method.__rpc_method__
                 request_cls = rpc_method.request_cls
                 response_cls = rpc_method.response_cls
-                if request_cls.__filename__ != self.file_name:
-                    __meta__[self.file_name].import_files.add(request_cls.__filename__)
+                if request_cls.__filename__ != file_name:
+                    __meta__[file_name].import_files.add(request_cls.__filename__)
 
-                if response_cls.__filename__ != self.file_name:
-                    __meta__[self.file_name].import_files.add(response_cls.__filename__)
-        return self.service_meta.rpcs
+                if response_cls.__filename__ != file_name:
+                    __meta__[file_name].import_files.add(response_cls.__filename__)
+        return service_meta.rpcs
 
 
 gRPCFunctionType = Callable[

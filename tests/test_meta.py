@@ -29,20 +29,21 @@ class MetaTestCase(TestGrpcalchemy):
             def test_message(self, request: TestMessage, context) -> TestMessage:
                 ...
 
-        test_service = TestService()
+        TestService.as_view()
 
         self.assertListEqual(
-            [TestMessage.__filename__, test_service.file_name], list(__meta__.keys())
+            [TestMessage.__filename__, TestService.access_file_name()],
+            list(__meta__.keys()),
         )
-        self.assertEqual(1, len(__meta__[test_service.file_name].import_files))
-        self.assertEqual(0, len(__meta__[test_service.file_name].messages))
-        self.assertEqual(1, len(__meta__[test_service.file_name].services))
+        self.assertEqual(1, len(__meta__[TestService.access_file_name()].import_files))
+        self.assertEqual(0, len(__meta__[TestService.access_file_name()].messages))
+        self.assertEqual(1, len(__meta__[TestService.access_file_name()].services))
 
-        import_files = __meta__[test_service.file_name].import_files
-        services = __meta__[test_service.file_name].services
+        import_files = __meta__[TestService.access_file_name()].import_files
+        services = __meta__[TestService.access_file_name()].services
 
         self.assertSetEqual({TestMessage.__filename__}, import_files)
-        self.assertEqual(test_service.service_name, services[0].name)
+        self.assertEqual(TestService.access_service_name(), services[0].name)
         self.assertEqual(1, len(services[0].rpcs))
 
         self.assertEqual("test_message", services[0].rpcs[0].name)
@@ -73,8 +74,8 @@ class MetaTestCase(TestGrpcalchemy):
             name = StringField()
 
         class TestService(Blueprint):
-            @property
-            def service_name(self) -> str:
+            @classmethod
+            def access_service_name(cls) -> str:
                 return "test"
 
             @grpcmethod
@@ -85,24 +86,24 @@ class MetaTestCase(TestGrpcalchemy):
             def test_message_two(self, request: TestMessage, context) -> TestMessage:
                 return TestMessage(test_name=request.name)
 
-        test_blueprint = TestService()
-        services = __meta__[test_blueprint.file_name].services
+        TestService.as_view()
+        services = __meta__[TestService.access_file_name()].services
 
         self.assertEqual(1, len(services))
         self.assertEqual(2, len(services[0].rpcs))
 
         class TestServiceTmp(Blueprint):
-            @property
-            def service_name(self) -> str:
+            @classmethod
+            def access_service_name(cls) -> str:
                 return "test"
 
             @grpcmethod
             def test_message_three(self, request: TestMessage, context) -> TestMessage:
                 return TestMessage(test_name=request.name)
 
-        test_blueprint_tmp = TestServiceTmp()
+        TestServiceTmp.as_view()
 
-        services = __meta__[test_blueprint.file_name].services
+        services = __meta__[TestServiceTmp.access_file_name()].services
 
         self.assertEqual(2, len(services))
         self.assertEqual(2, len(services[0].rpcs))

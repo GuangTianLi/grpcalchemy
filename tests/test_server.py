@@ -1,11 +1,13 @@
 from typing import Callable, ContextManager, List, Type, Dict, Iterator
 from unittest.mock import Mock
 
+from google.protobuf.json_format import MessageToDict
+from grpc import insecure_channel
 from grpc_health.v1.health_pb2 import HealthCheckRequest
 from grpc_health.v1.health_pb2_grpc import HealthStub
 from grpc_reflection.v1alpha.reflection_pb2 import ServerReflectionRequest
 from grpc_reflection.v1alpha.reflection_pb2_grpc import ServerReflectionStub
-from google.protobuf.json_format import MessageToDict
+
 from grpcalchemy import Blueprint, Context, Server, grpcmethod
 from grpcalchemy.orm import Message
 from tests.test_grpcalchemy import TestGrpcalchemy
@@ -14,6 +16,7 @@ from tests.test_grpcalchemy import TestGrpcalchemy
 class ServerTestCase(TestGrpcalchemy):
     def setUp(unittest_self):
         super().setUp()
+
         server_start = Mock()
         server_stop = Mock()
         app_process_request = Mock()
@@ -67,7 +70,8 @@ class ServerTestCase(TestGrpcalchemy):
                 enter_context()
                 return super().app_context(current_service, current_method, context)
 
-            def get_blueprints(self) -> List[Type[Blueprint]]:
+            @classmethod
+            def get_blueprints(cls) -> List[Type[Blueprint]]:
                 return [BlueprintService]
 
         class BlueprintService(Blueprint):
@@ -127,8 +131,7 @@ class ServerTestCase(TestGrpcalchemy):
                 )
                 return response
 
-        unittest_self.app = AppService(unittest_self.config)
-        unittest_self.app.run(block=False)
+        unittest_self.app = AppService.run(config=unittest_self.config, block=False)
         unittest_self.assertEqual(1, server_start.call_count)
         unittest_self.server_stop = server_stop
 
@@ -143,7 +146,6 @@ class ServerTestCase(TestGrpcalchemy):
         self.assertEqual(1, self.server_stop.call_count)
 
     def test_server(self):
-        from grpc import insecure_channel
         from protos.blueprintservice_pb2_grpc import BlueprintServiceStub
         from protos.testmessage_pb2 import TestMessage
         from protos.user_pb2 import User

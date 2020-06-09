@@ -9,9 +9,9 @@ with open("HISTORY.rst") as history_file:
     history = history_file.read()
 
 requirements = [
-    "grpcio",
+    "grpcio>=1.29.0",
     "protobuf",
-    "grpcio-tools",
+    "grpcio-tools>=1.29.0",
     "jinja2",
     "configalchemy",
     "grpcio-reflection",

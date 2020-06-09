@@ -12,7 +12,11 @@ class DefaultConfig(BaseConfig):
     PROTO_TEMPLATE_PATH = "protos"
 
     #: Max workers in service thread pool
-    GPRC_SERVER_MAX_WORKERS = 10
+    GRPC_SERVER_MAX_WORKERS = 8
+    #: Multiple process support
+    #: Prefer to use `multiprocessing.cpu_count()` in production.
+    GRPC_SERVER_PROCESS_COUNT = 1
+
     #: An optional list of key-value pairs (channel args in gRPC runtime)
     #: to configure the channel.
     GRPC_SERVER_OPTIONS: List[Tuple[str, str]] = []
@@ -31,6 +35,7 @@ class DefaultConfig(BaseConfig):
 
     #: logger level
     GRPC_ALCHEMY_LOGGER_LEVEL = logging.INFO
+    GRPC_ALCHEMY_LOGGER_FORMATTER = "[PID %(process)d] %(message)s"
 
     #: Health Check
     GRPC_HEALTH_CHECKING_ENABLE = True

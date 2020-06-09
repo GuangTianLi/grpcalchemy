@@ -1,5 +1,5 @@
 import socket
-from importlib import import_module
+from importlib import import_module, reload
 from os import walk, path, mkdir
 from os.path import abspath, dirname, exists, join
 from typing import Union, Optional
@@ -71,7 +71,6 @@ def generate_proto_file(template_path_root: str = "", template_path: str = "prot
         env.get_template("README.md.tmpl").stream().dump(
             join(abs_template_path, "README.md")
         )
-
     template = env.get_template("rpc.proto.tmpl")
     for filename, meta in __meta__.items():
         template.stream(
@@ -103,6 +102,7 @@ def generate_proto_file(template_path_root: str = "", template_path: str = "prot
             gpr_message_module = import_module(
                 f"{join(abs_template_path, messageCls.__filename__).replace('/', '.')}_pb2"
             )
+            gpr_message_module = reload(gpr_message_module)
             gRPCMessageClass = getattr(
                 gpr_message_module, f"{messageCls.__type_name__}"
             )

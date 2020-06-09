@@ -57,7 +57,7 @@ Server
             return HelloMessage(text=f'Hello {request.text}')
 
     if __name__ == '__main__':
-        HelloService().run()
+        HelloService.run()
 
 Features
 ----------
@@ -73,11 +73,11 @@ Features
 - App Context Manger
 - Error Handler Support
 - Streaming Method Support
-- gRPC-Health Checking and Reflection Support
+- gRPC-Health Checking and Reflection Support (Alpha)
+- Multiple Processor Support
 
 TODO
 -------
 
 - Test Client Support
-- Multiple Processor Support
 - Async Server Support
