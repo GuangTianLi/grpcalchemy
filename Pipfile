@@ -4,7 +4,6 @@ url = "https://mirrors.aliyun.com/pypi/simple/"
 verify_ssl = true
 
 [dev-packages]
-bumpversion = "*"
 watchdog = "*"
 coverage = "*"
 sphinx = "*"
@@ -15,6 +14,7 @@ ipdb = "*"
 black = "*"
 mypy = "*"
 pytest = "*"
+bump2version = "*"
 
 [packages]
 grpcio = ">=1.29.0"
