@@ -36,7 +36,7 @@ class MultipleProcessServerTestCase(TestGrpcalchemy):
 
     def tearDown(self) -> None:
         for work in self.app.workers:
-            work.kill()
+            work.terminate()
 
     def _send_request(self):
         from protos.testservice_pb2_grpc import TestServiceStub

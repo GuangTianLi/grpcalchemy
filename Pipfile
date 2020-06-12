@@ -15,7 +15,6 @@ ipdb = "*"
 black = "*"
 mypy = "*"
 pytest = "*"
-tox = "*"
 
 [packages]
 grpcio = ">=1.29.0"

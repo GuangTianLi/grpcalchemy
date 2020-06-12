@@ -6,8 +6,8 @@ gRPCAlchemy
 .. image:: https://img.shields.io/pypi/v/grpcalchemy.svg
         :target: https://pypi.python.org/pypi/grpcalchemy
 
-.. image:: https://img.shields.io/travis/GuangTianLi/grpcalchemy.svg
-        :target: https://travis-ci.org/GuangTianLi/grpcalchemy
+.. image:: https://github.com/GuangTianLi/grpcalchemy/workflows/Python%20package/badge.svg
+        :target: https://github.com/GuangTianLi/grpcalchemy/actions
 
 .. image:: https://readthedocs.org/projects/grpcalchemy/badge/?version=latest
         :target: https://grpcalchemy.readthedocs.io/en/latest/?badge=latest
