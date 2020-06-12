@@ -2,6 +2,12 @@
 History
 =======
 
+0.6.0(2020-06-12)
+--------------------
+
+* gRPC-Health Checking and Reflection Support (Alpha)
+* Multiple Processor Support
+
 0.5.0(2020-04-27)
 --------------------
 

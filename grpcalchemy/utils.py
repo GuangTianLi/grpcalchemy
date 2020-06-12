@@ -97,8 +97,9 @@ def generate_proto_file(template_path_root: str = "", template_path: str = "prot
                     + ["-I{}".format(proto_include)]
                 )
     for meta in __meta__.values():
-        # populated exact gRPCMessageClass from pb2 file
+        reload(import_module(abs_template_path.split("/", 1)[0]))
         for messageCls in meta.messages:
+            # populated exact gRPCMessageClass from pb2 file
             gpr_message_module = import_module(
                 f"{join(abs_template_path, messageCls.__filename__).replace('/', '.')}_pb2"
             )
