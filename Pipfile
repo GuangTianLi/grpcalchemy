@@ -6,7 +6,6 @@ verify_ssl = true
 [dev-packages]
 bumpversion = "*"
 watchdog = "*"
-tox = "*"
 coverage = "*"
 sphinx = "*"
 twine = "*"
@@ -15,11 +14,13 @@ pre-commit = "*"
 ipdb = "*"
 black = "*"
 mypy = "*"
+pytest = "*"
+tox = "*"
 
 [packages]
-grpcio = "*"
+grpcio = ">=1.29.0"
 protobuf = "*"
-grpcio-tools = "*"
+grpcio-tools = ">=1.29.0"
 jinja2 = "*"
 configalchemy = "*"
 grpcio-reflection = "*"
