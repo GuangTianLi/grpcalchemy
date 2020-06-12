@@ -36,6 +36,8 @@ jobs:
         coverage run -m unittest discover tests/
         coverage report -m
         coverage html -i
-    - name: Test with coverage
+    - name: report coverage
+      env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       run: |
         codecov

@@ -59,6 +59,21 @@ Server
     if __name__ == '__main__':
         HelloService.run()
 
+
+Then Using gRPC channel to connect the server:
+
+.. code-block:: python
+
+    from grpc import insecure_channel
+
+    from protos.helloservice_pb2_grpc import HelloServiceStub
+    from protos.hellomessage_pb2 import HelloMessage
+
+    with insecure_channel("localhost:50051") as channel:
+        response = HelloServiceStub(channel).Hello(
+            HelloMessage(text="world")
+        )
+
 Features
 ----------
 
