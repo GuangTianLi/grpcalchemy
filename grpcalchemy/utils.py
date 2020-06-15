@@ -3,7 +3,7 @@ from importlib import import_module, reload
 from os import walk, path, mkdir
 from os.path import abspath, dirname, exists, join
 from typing import Union, Optional
-
+import sys
 import grpc_tools.protoc
 import pkg_resources
 from jinja2 import Environment, FileSystemLoader
@@ -14,6 +14,11 @@ except AttributeError:  # pragma: no cover
     af_unix = None  # type: ignore
 
 from .meta import __meta__
+
+if sys.platform == "win32":
+    FILE_SEPARATOR = "\\"
+else:
+    FILE_SEPARATOR = "/"
 
 curdir = "."
 
@@ -83,7 +88,7 @@ def generate_proto_file(template_path_root: str = "", template_path: str = "prot
     # copy from grpc_tools
     protoc_file = pkg_resources.resource_filename("grpc_tools", "protoc.py")
     proto_include = pkg_resources.resource_filename("grpc_tools", "_proto")
-    for root, dirs, files in walk(f"./{template_path}/"):
+    for root, dirs, files in walk(f"{template_path}"):
         for file in files:
             if file[-5:] == "proto":
                 grpc_tools.protoc.main(
@@ -92,16 +97,16 @@ def generate_proto_file(template_path_root: str = "", template_path: str = "prot
                         "-I.",
                         "--python_out=.",
                         "--grpc_python_out=.",
-                        f"./{template_path}/{file}",
+                        f".{FILE_SEPARATOR}{template_path}{FILE_SEPARATOR}{file}",
                     ]
                     + ["-I{}".format(proto_include)]
                 )
     for meta in __meta__.values():
-        reload(import_module(abs_template_path.split("/", 1)[0]))
+        reload(import_module(abs_template_path.split(FILE_SEPARATOR, 1)[0]))
         for messageCls in meta.messages:
             # populated exact gRPCMessageClass from pb2 file
             gpr_message_module = import_module(
-                f"{join(abs_template_path, messageCls.__filename__).replace('/', '.')}_pb2"
+                f"{join(abs_template_path, messageCls.__filename__).replace(FILE_SEPARATOR, '.')}_pb2"
             )
             gpr_message_module = reload(gpr_message_module)
             gRPCMessageClass = getattr(

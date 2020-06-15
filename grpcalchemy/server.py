@@ -145,7 +145,6 @@ class Server(Blueprint, grpc.Server):
                 sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
                 if sock.getsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT) == 0:
                     raise RuntimeError("Failed to set SO_REUSEPORT.")
-                print(server_address)
                 sock.bind(server_address)
                 config.GRPC_SERVER_OPTIONS.append(("grpc.so_reuseport", 1))
                 for _ in range(config.GRPC_SERVER_PROCESS_COUNT):
