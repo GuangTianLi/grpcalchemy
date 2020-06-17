@@ -67,6 +67,7 @@ def generate_proto_file(template_path_root: str = "", template_path: str = "prot
         loader=FileSystemLoader(
             searchpath=abspath(join(dirname(__file__), "templates"))
         ),
+        autoescape=False,
         trim_blocks=True,
         lstrip_blocks=True,
     )
@@ -88,7 +89,7 @@ def generate_proto_file(template_path_root: str = "", template_path: str = "prot
     # copy from grpc_tools
     protoc_file = pkg_resources.resource_filename("grpc_tools", "protoc.py")
     proto_include = pkg_resources.resource_filename("grpc_tools", "_proto")
-    for root, dirs, files in walk(f"{template_path}"):
+    for _, dirs, files in walk(f"{template_path}"):
         for file in files:
             if file[-5:] == "proto":
                 grpc_tools.protoc.main(

@@ -21,7 +21,7 @@ gRPCAlchemy
 
 
 
-The Python micro framework for building gPRC application.
+The Python micro framework for building gPRC application based on official `gRPC <https://github.com/grpc/grpc>`_ project.
 
 
 * Free software: MIT license

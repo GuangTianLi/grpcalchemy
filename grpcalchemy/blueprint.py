@@ -17,12 +17,17 @@ from typing import (
 
 from google.protobuf.message import Message as GeneratedProtocolMessageType
 from grpc._server import _Context as Context
-
+from grpc import ServicerContext
 from .meta import ServiceMeta, __meta__
 from .orm import Message
 
 if TYPE_CHECKING:  # pragma: no cover
     from .server import Server
+
+
+class _Context(ServicerContext):
+    # TODO use grpc._create_servicer_context to build our Context
+    ...
 
 
 class AbstractRpcMethod(ABC):
