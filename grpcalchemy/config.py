@@ -43,7 +43,7 @@ class DefaultConfig(BaseConfig):
     GRPC_HEALTH_CHECKING_THREAD_POOL_NUM = 1
 
     #: Server Reflection
-    GRPC_SEVER_REFLECTION_ENABLE = False
+    GRPC_SERVER_REFLECTION_ENABLE = False
 
     #: Server Interceptors
     GRPC_INTERCEPTORS: List[ServerInterceptor] = []

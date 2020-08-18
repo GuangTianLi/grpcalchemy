@@ -230,7 +230,7 @@ class Server(Blueprint, grpc.Server):
             )
             health_pb2_grpc.add_HealthServicer_to_server(health_service, self)
 
-        if self.config.GRPC_SEVER_REFLECTION_ENABLE:
+        if self.config.GRPC_SERVER_REFLECTION_ENABLE:
             reflection.enable_server_reflection(services, self)
 
         if block is None:

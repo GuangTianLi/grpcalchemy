@@ -6,7 +6,7 @@ from grpcalchemy.meta import __meta__
 
 
 class TestConfig(DefaultConfig):
-    GRPC_SEVER_REFLECTION_ENABLE = True
+    GRPC_SERVER_REFLECTION_ENABLE = True
 
 
 class TestGrpcalchemy(unittest.TestCase):
