@@ -90,7 +90,7 @@ class Server(Blueprint, grpc.Server):
             completion_queue,
             server,
             (),
-            None,
+            grpc._interceptor.service_pipeline(self.config.GRPC_INTERCEPTORS),
             thread_pool,
             self.config.GRPC_SERVER_MAXIMUM_CONCURRENT_RPCS,
         )

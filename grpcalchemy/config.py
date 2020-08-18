@@ -43,3 +43,6 @@ class DefaultConfig(BaseConfig):
 
     #: Server Reflection
     GRPC_SEVER_REFLECTION_ENABLE = False
+
+    #: Server Interceptors
+    GRPC_INTERCEPTORS = []
