@@ -1,7 +1,8 @@
 import logging
-from typing import Optional, Tuple, List, Union
+from typing import List, Optional, Tuple, Union
 
 from configalchemy import BaseConfig
+from grpc import ServerInterceptor
 
 
 class DefaultConfig(BaseConfig):
@@ -45,4 +46,4 @@ class DefaultConfig(BaseConfig):
     GRPC_SEVER_REFLECTION_ENABLE = False
 
     #: Server Interceptors
-    GRPC_INTERCEPTORS = []
+    GRPC_INTERCEPTORS: List[ServerInterceptor] = []
