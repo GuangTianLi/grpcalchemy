@@ -189,10 +189,22 @@ class Server(Blueprint, grpc.Server):
         services: Tuple[str, ...] = (reflection.SERVICE_NAME, health.SERVICE_NAME)
         for name, bp in self.blueprints.items():
             grpc_pb2_grpc_module = import_module(
-                "{}_pb2_grpc".format(os.path.join(self.config.PROTO_TEMPLATE_ROOT, self.config.PROTO_TEMPLATE_PATH, bp.access_file_name()).replace('\\', '.'))
+                "{}_pb2_grpc".format(
+                    os.path.join(
+                        self.config.PROTO_TEMPLATE_ROOT,
+                        self.config.PROTO_TEMPLATE_PATH,
+                        bp.access_file_name(),
+                    ).replace("\\", ".")
+                )
             )
             grpc_pb2_module = import_module(
-                "{}_pb2".format(os.path.join(self.config.PROTO_TEMPLATE_ROOT, self.config.PROTO_TEMPLATE_PATH, bp.access_file_name()).replace('\\', '.'))
+                "{}_pb2".format(
+                    os.path.join(
+                        self.config.PROTO_TEMPLATE_ROOT,
+                        self.config.PROTO_TEMPLATE_PATH,
+                        bp.access_file_name(),
+                    ).replace("\\", ".")
+                )
             )
             getattr(
                 grpc_pb2_grpc_module,
