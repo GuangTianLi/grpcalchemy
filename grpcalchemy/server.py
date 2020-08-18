@@ -194,7 +194,9 @@ class Server(Blueprint, grpc.Server):
                         self.config.PROTO_TEMPLATE_ROOT,
                         self.config.PROTO_TEMPLATE_PATH,
                         bp.access_file_name(),
-                    ).replace("\\", ".")
+                    )
+                    .replace("/", ".")
+                    .replace("\\", ".")
                 )
             )
             grpc_pb2_module = import_module(
@@ -203,7 +205,9 @@ class Server(Blueprint, grpc.Server):
                         self.config.PROTO_TEMPLATE_ROOT,
                         self.config.PROTO_TEMPLATE_PATH,
                         bp.access_file_name(),
-                    ).replace("\\", ".")
+                    )
+                    .replace("/", ".")
+                    .replace("\\", ".")
                 )
             )
             getattr(
