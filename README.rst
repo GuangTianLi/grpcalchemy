@@ -6,7 +6,7 @@ gRPCAlchemy
 .. image:: https://img.shields.io/pypi/v/grpcalchemy.svg
         :target: https://pypi.python.org/pypi/grpcalchemy
 
-.. image:: https://github.com/GuangTianLi/grpcalchemy/workflows/Python%20package/badge.svg
+.. image:: https://github.com/GuangTianLi/grpcalchemy/workflows/test/badge.svg
         :target: https://github.com/GuangTianLi/grpcalchemy/actions
 
 .. image:: https://readthedocs.org/projects/grpcalchemy/badge/?version=latest

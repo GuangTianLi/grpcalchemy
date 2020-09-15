@@ -43,3 +43,6 @@ class DefaultConfig(BaseConfig):
 
     #: Server Reflection
     GRPC_SEVER_REFLECTION_ENABLE = False
+
+    # ：gRPC Service Third-Part Package Support
+    GRPC_THIRD_PART_PACKAGES: List[str] = []

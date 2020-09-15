@@ -51,14 +51,14 @@ class UtilsTestCase(TestGrpcalchemy):
         class TestNestedPackage(Message):
             test: str
 
-        dir_name = "protos/v1"
+        dir_name = "../protos/v1"
         if os.path.exists(dir_name):
-            rmtree("protos")
+            rmtree("../protos")
         generate_proto_file(template_path=dir_name)
         self.assertTrue(os.path.exists(dir_name))
         self.assertTrue(os.path.exists(os.path.join(dir_name, "__init__.py")))
         self.assertTrue(os.path.exists(os.path.join(dir_name, "README.md")))
-        rmtree("protos")
+        rmtree("../protos")
 
 
 if __name__ == "__main__":
