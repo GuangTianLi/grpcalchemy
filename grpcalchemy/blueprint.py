@@ -265,7 +265,9 @@ gRPCFunctionType = Callable[
 F = TypeVar("F", bound=gRPCFunctionType)
 
 
-def _validate_rpc_method(funcobj: gRPCFunctionType,) -> AbstractRpcMethod:
+def _validate_rpc_method(
+    funcobj: gRPCFunctionType,
+) -> AbstractRpcMethod:
     sig = signature(funcobj)
 
     if len(sig.parameters) == 3:

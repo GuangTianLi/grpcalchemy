@@ -53,7 +53,9 @@ class MultipleProcessServerTestCase(TestGrpcalchemy):
         time.sleep(1)
         start = time.perf_counter()
         for _ in range(4):
-            worker = multiprocessing.Process(target=self._send_request,)
+            worker = multiprocessing.Process(
+                target=self._send_request,
+            )
             worker.start()
             workers.append(worker)
         for worker in workers:

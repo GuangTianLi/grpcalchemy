@@ -325,7 +325,7 @@ class Server(Blueprint, grpc.Server):
 
     def process_request(self, request: RequestType, context: Context) -> RequestType:
         """The code to be executed for each request before
-         the gRPC method are called. Only in **UnaryUnary** and **UnarySteam** method
+        the gRPC method are called. Only in **UnaryUnary** and **UnarySteam** method
         """
         return request
 
