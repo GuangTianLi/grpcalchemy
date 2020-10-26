@@ -42,6 +42,11 @@ from .utils import (
 
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
 
+if sys.platform == "win32":
+    FILE_SEPARATOR = "\\"
+else:
+    FILE_SEPARATOR = "/"
+
 
 class Server(Blueprint, grpc.Server):
     """The Server object implements a base application and acts as the central
@@ -69,12 +74,14 @@ class Server(Blueprint, grpc.Server):
         #: init logger
         self.logger = logging.getLogger(__name__)
         handler = logging.StreamHandler(sys.stdout)
-        formatter = logging.Formatter(self.config.GRPC_ALCHEMY_LOGGER_FORMATTER)
+        formatter = logging.Formatter(
+            self.config.GRPC_ALCHEMY_LOGGER_FORMATTER)
         handler.setFormatter(formatter)
         self.logger.setLevel(self.config.GRPC_ALCHEMY_LOGGER_LEVEL)
         self.logger.addHandler(handler)
 
-        self.logger.info(f"workers number: {self.config.GRPC_SERVER_MAX_WORKERS}")
+        self.logger.info(
+            f"workers number: {self.config.GRPC_SERVER_MAX_WORKERS}")
         thread_pool = futures.ThreadPoolExecutor(
             max_workers=self.config.GRPC_SERVER_MAX_WORKERS
         )
@@ -98,7 +105,8 @@ class Server(Blueprint, grpc.Server):
         #: all the attached blueprints in a dictionary by name.
         #:
         #: .. versionadded:: 0.1.6
-        self.blueprints: Dict[str, Blueprint] = {self.access_service_name(): self}
+        self.blueprints: Dict[str, Blueprint] = {
+            self.access_service_name(): self}
 
         super().__init__()
         self.current_app = self
@@ -186,13 +194,14 @@ class Server(Blueprint, grpc.Server):
         for bp_cls in self.get_blueprints():
             self.register_blueprint(bp_cls)
 
-        services: Tuple[str, ...] = (reflection.SERVICE_NAME, health.SERVICE_NAME)
+        services: Tuple[str, ...] = (
+            reflection.SERVICE_NAME, health.SERVICE_NAME)
         for name, bp in self.blueprints.items():
             grpc_pb2_grpc_module = import_module(
-                f"{os.path.join(self.config.PROTO_TEMPLATE_ROOT, self.config.PROTO_TEMPLATE_PATH, bp.access_file_name()).replace('/', '.')}_pb2_grpc"
+                f"{os.path.join(self.config.PROTO_TEMPLATE_ROOT, self.config.PROTO_TEMPLATE_PATH, bp.access_file_name()).replace(FILE_SEPARATOR, '.')}_pb2_grpc"
             )
             grpc_pb2_module = import_module(
-                f"{os.path.join(self.config.PROTO_TEMPLATE_ROOT, self.config.PROTO_TEMPLATE_PATH, bp.access_file_name()).replace('/', '.')}_pb2"
+                f"{os.path.join(self.config.PROTO_TEMPLATE_ROOT, self.config.PROTO_TEMPLATE_PATH, bp.access_file_name()).replace(FILE_SEPARATOR, '.')}_pb2"
             )
             getattr(
                 grpc_pb2_grpc_module,
