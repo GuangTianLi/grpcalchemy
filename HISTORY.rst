@@ -2,15 +2,11 @@
 History
 =======
 
-0.6.1(2020-06-15)
+0.6.*(2020-10-27)
 --------------------
 
+* fix [#36] compatibility in windows
 * fix [#34] compatibility in windows
-
-
-0.6.0(2020-06-12)
---------------------
-
 * gRPC-Health Checking and Reflection Support (Alpha)
 * Multiple Processor Support
 
