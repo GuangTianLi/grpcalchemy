@@ -2,11 +2,17 @@ import socket
 from importlib import import_module, reload
 from os import walk, path, mkdir
 from os.path import abspath, dirname, exists, join
-from typing import Union, Optional
+from typing import Union, Optional, TYPE_CHECKING, Tuple
 import sys
 import grpc_tools.protoc
 import pkg_resources
 from jinja2 import Environment, FileSystemLoader
+from grpcalchemy.config import DefaultConfig
+
+if TYPE_CHECKING:
+    from grpcalchemy.server import Server
+    from grpcalchemy.blueprint import Blueprint
+
 
 try:
     af_unix = socket.AF_UNIX
@@ -114,6 +120,24 @@ def generate_proto_file(template_path_root: str = "", template_path: str = "prot
                 gpr_message_module, f"{messageCls.__type_name__}"
             )
             messageCls.gRPCMessageClass = gRPCMessageClass
+
+
+def add_blueprint_to_server(
+    config: DefaultConfig, bp: "Blueprint", server: "Server"
+) -> Tuple[str, ...]:
+    grpc_pb2_grpc_module = import_module(
+        f"{join(config.PROTO_TEMPLATE_ROOT, config.PROTO_TEMPLATE_PATH, bp.access_file_name()).replace(FILE_SEPARATOR, '.')}_pb2_grpc"
+    )
+    grpc_pb2_module = import_module(
+        f"{join(config.PROTO_TEMPLATE_ROOT, config.PROTO_TEMPLATE_PATH, bp.access_file_name()).replace(FILE_SEPARATOR, '.')}_pb2"
+    )
+    getattr(grpc_pb2_grpc_module, f"add_{bp.access_service_name()}Servicer_to_server")(
+        bp, server
+    )
+    return tuple(
+        service.full_name
+        for service in getattr(grpc_pb2_module, "DESCRIPTOR").services_by_name.values()
+    )
 
 
 def select_address_family(host: str) -> int:

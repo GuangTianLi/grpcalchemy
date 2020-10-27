@@ -1,8 +1,7 @@
 import multiprocessing
-import os
+import sys
 import time
 import unittest
-from shutil import rmtree
 
 from grpc import insecure_channel
 
@@ -11,6 +10,7 @@ from grpcalchemy.orm import Message
 from tests.test_grpcalchemy import TestGrpcalchemy
 
 
+@unittest.skipIf(bool(sys.platform == "darwin"), "Need recompile grcpio in MacOS")
 class MultipleProcessServerTestCase(TestGrpcalchemy):
     def setUp(unittest_self):
         super().setUp()
@@ -53,9 +53,7 @@ class MultipleProcessServerTestCase(TestGrpcalchemy):
         time.sleep(1)
         start = time.perf_counter()
         for _ in range(4):
-            worker = multiprocessing.Process(
-                target=self._send_request,
-            )
+            worker = multiprocessing.Process(target=self._send_request)
             worker.start()
             workers.append(worker)
         for worker in workers:

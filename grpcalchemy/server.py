@@ -7,15 +7,7 @@ import time
 from concurrent import futures
 from importlib import import_module
 from threading import Event
-from typing import (
-    Callable,
-    Dict,
-    Optional,
-    Tuple,
-    Type,
-    ContextManager,
-    List,
-)
+from typing import Callable, Dict, Optional, Tuple, Type, ContextManager, List
 
 import grpc
 from grpc import GenericRpcHandler
@@ -31,13 +23,14 @@ from grpc_health.v1 import health
 from grpc_health.v1 import health_pb2_grpc
 from grpc_reflection.v1alpha import reflection
 
-from .blueprint import Blueprint, RequestType, ResponseType, Context
-from .config import DefaultConfig
-from .utils import (
+from grpcalchemy.blueprint import Blueprint, RequestType, ResponseType, Context
+from grpcalchemy.config import DefaultConfig
+from grpcalchemy.utils import (
     generate_proto_file,
     socket_bind_test,
     select_address_family,
     get_sockaddr,
+    add_blueprint_to_server,
 )
 
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
@@ -64,7 +57,7 @@ class Server(Blueprint, grpc.Server):
     workers: List[multiprocessing.Process] = []
 
     def __init__(self, config: DefaultConfig):
-        self.config = config
+        self.config: DefaultConfig = config
 
         #: init logger
         self.logger = logging.getLogger(__name__)
@@ -188,22 +181,7 @@ class Server(Blueprint, grpc.Server):
 
         services: Tuple[str, ...] = (reflection.SERVICE_NAME, health.SERVICE_NAME)
         for name, bp in self.blueprints.items():
-            grpc_pb2_grpc_module = import_module(
-                f"{os.path.join(self.config.PROTO_TEMPLATE_ROOT, self.config.PROTO_TEMPLATE_PATH, bp.access_file_name()).replace('/', '.')}_pb2_grpc"
-            )
-            grpc_pb2_module = import_module(
-                f"{os.path.join(self.config.PROTO_TEMPLATE_ROOT, self.config.PROTO_TEMPLATE_PATH, bp.access_file_name()).replace('/', '.')}_pb2"
-            )
-            getattr(
-                grpc_pb2_grpc_module,
-                f"add_{bp.access_service_name()}Servicer_to_server",
-            )(bp, self)
-            services += tuple(
-                service.full_name
-                for service in getattr(
-                    grpc_pb2_module, "DESCRIPTOR"
-                ).services_by_name.values()
-            )
+            services += add_blueprint_to_server(self.config, bp, self)
 
         if self.config.GRPC_HEALTH_CHECKING_ENABLE:
             health_service = health.HealthServicer(
