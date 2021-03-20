@@ -68,48 +68,53 @@ def make_packages(name, mode=0o777, exist_ok=False):
             open(init_file, "a").close()
 
 
-def generate_proto_file(template_path_root: str = "", template_path: str = "protos"):
+def generate_proto_file(
+    template_path_root: str = "",
+    template_path: str = "protos",
+    auto_generate: bool = True,
+):
     abs_template_path = join(template_path_root, template_path)
 
-    env = Environment(
-        loader=FileSystemLoader(
-            searchpath=abspath(join(dirname(__file__), "templates"))
-        ),
-        autoescape=False,
-        trim_blocks=True,
-        lstrip_blocks=True,
-    )
-
-    if not exists(abs_template_path):
-        make_packages(abs_template_path)
-        env.get_template("README.md.tmpl").stream().dump(
-            join(abs_template_path, "README.md")
+    if auto_generate:
+        env = Environment(
+            loader=FileSystemLoader(
+                searchpath=abspath(join(dirname(__file__), "templates"))
+            ),
+            autoescape=False,
+            trim_blocks=True,
+            lstrip_blocks=True,
         )
-    template = env.get_template("rpc.proto.tmpl")
-    for filename, meta in __meta__.items():
-        template.stream(
-            file_path=template_path,
-            import_files=sorted(meta.import_files),
-            messages=meta.messages,
-            services=meta.services,
-        ).dump(join(abs_template_path, f"{filename}.proto"))
 
-    # copy from grpc_tools
-    protoc_file = pkg_resources.resource_filename("grpc_tools", "protoc.py")
-    proto_include = pkg_resources.resource_filename("grpc_tools", "_proto")
-    for _, dirs, files in walk(f"{template_path}"):
-        for file in files:
-            if file[-5:] == "proto":
-                grpc_tools.protoc.main(
-                    [
-                        protoc_file,
-                        "-I.",
-                        "--python_out=.",
-                        "--grpc_python_out=.",
-                        f".{FILE_SEPARATOR}{template_path}{FILE_SEPARATOR}{file}",
-                    ]
-                    + ["-I{}".format(proto_include)]
-                )
+        if not exists(abs_template_path):
+            make_packages(abs_template_path)
+            env.get_template("README.md.tmpl").stream().dump(
+                join(abs_template_path, "README.md")
+            )
+        template = env.get_template("rpc.proto.tmpl")
+        for filename, meta in __meta__.items():
+            template.stream(
+                file_path=template_path,
+                import_files=sorted(meta.import_files),
+                messages=meta.messages,
+                services=meta.services,
+            ).dump(join(abs_template_path, f"{filename}.proto"))
+
+        # copy from grpc_tools
+        protoc_file = pkg_resources.resource_filename("grpc_tools", "protoc.py")
+        proto_include = pkg_resources.resource_filename("grpc_tools", "_proto")
+        for _, dirs, files in walk(f"{template_path}"):
+            for file in files:
+                if file[-5:] == "proto":
+                    grpc_tools.protoc.main(
+                        [
+                            protoc_file,
+                            "-I.",
+                            "--python_out=.",
+                            "--grpc_python_out=.",
+                            f".{FILE_SEPARATOR}{template_path}{FILE_SEPARATOR}{file}",
+                        ]
+                        + ["-I{}".format(proto_include)]
+                    )
     for meta in __meta__.values():
         reload(import_module(abs_template_path.split(FILE_SEPARATOR, 1)[0]))
         for messageCls in meta.messages:

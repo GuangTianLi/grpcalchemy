@@ -6,6 +6,7 @@ History
 --------------------
 
 * Support gRPC with xDS
+* Add `PROTO_AUTO_GENERATED` setting to make runtime proto generation optional
 
 0.6.*(2020-10-27)
 --------------------

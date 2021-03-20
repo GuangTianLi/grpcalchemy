@@ -45,7 +45,7 @@ class UtilsTestCase(TestGrpcalchemy):
             if os.path.exists(server_address):
                 os.remove(server_address)
 
-    def test_generate_proto_file(self):
+    def test_generate_proto_file_automatically(self):
         from grpcalchemy.orm import Message
 
         class TestNestedPackage(Message):
