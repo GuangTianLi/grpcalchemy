@@ -50,6 +50,6 @@ setup(
     tests_require=test_requirements,
     url="https://github.com/GuangTianLi/grpcalchemy",
     python_requires=">=3.6.0",
-    version="0.6.2",
+    version="0.7.0",
     zip_safe=False,
 )
