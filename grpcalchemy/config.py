@@ -44,5 +44,8 @@ class DefaultConfig(BaseConfig):
     #: Server Reflection
     GRPC_SEVER_REFLECTION_ENABLE = False
 
-    # ：gRPC Service Third-Part Package Support
+    #: gRPC Service Third-Part Package Support
     GRPC_THIRD_PART_PACKAGES: List[str] = []
+    #: If set to true, retrieves server configuration via xDS. This is an
+    #: EXPERIMENTAL option. Only for grpcio >= 1.36.0
+    GRPC_XDS_SUPPORT = False

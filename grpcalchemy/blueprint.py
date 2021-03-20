@@ -16,8 +16,9 @@ from typing import (
 )
 
 from google.protobuf.message import Message as GeneratedProtocolMessageType
-from grpc._server import _Context as Context
 from grpc import ServicerContext
+from grpc._server import _Context as Context
+
 from .meta import ServiceMeta, __meta__
 from .orm import Message
 

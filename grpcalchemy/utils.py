@@ -1,12 +1,14 @@
 import socket
+import sys
 from importlib import import_module, reload
 from os import walk, path, mkdir
 from os.path import abspath, dirname, exists, join
 from typing import Union, Optional, TYPE_CHECKING, Tuple
-import sys
+
 import grpc_tools.protoc
 import pkg_resources
 from jinja2 import Environment, FileSystemLoader
+
 from grpcalchemy.config import DefaultConfig
 
 if TYPE_CHECKING:

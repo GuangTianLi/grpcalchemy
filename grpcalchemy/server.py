@@ -1,16 +1,15 @@
 import logging
 import multiprocessing
-import os.path
 import socket
 import sys
 import time
 from concurrent import futures
-from importlib import import_module
 from threading import Event
 from typing import Callable, Dict, Optional, Tuple, Type, ContextManager, List
 
 import grpc
 from grpc import GenericRpcHandler
+from grpc import __version__ as GRPC_VERSION
 from grpc._cython import cygrpc
 from grpc._server import (
     _add_generic_handlers,
@@ -73,7 +72,12 @@ class Server(Blueprint, grpc.Server):
         )
         completion_queue = cygrpc.CompletionQueue()
         self.logger.info(f"server options: {self.config.GRPC_SERVER_OPTIONS}")
-        server = cygrpc.Server(tuple(self.config.GRPC_SERVER_OPTIONS))
+        if tuple(map(int, GRPC_VERSION.split("."))) >= (1, 36, 0):
+            server = cygrpc.Server(
+                tuple(self.config.GRPC_SERVER_OPTIONS), self.config.GRPC_XDS_SUPPORT
+            )
+        else:
+            server = cygrpc.Server(tuple(self.config.GRPC_SERVER_OPTIONS))
         server.register_completion_queue(completion_queue)
 
         #: gRPC Server State
