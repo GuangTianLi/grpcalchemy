@@ -7,11 +7,11 @@ from grpc import insecure_channel
 
 from grpcalchemy import grpcmethod, Server, DefaultConfig, Context
 from grpcalchemy.orm import Message
-from tests.test_grpcalchemy import TestGrpcalchemy
+from tests.test_grpcalchemy import TestGRPCAlchemy
 
 
 @unittest.skipIf(bool(sys.platform == "darwin"), "Need recompile grcpio in MacOS")
-class MultipleProcessServerTestCase(TestGrpcalchemy):
+class MultipleProcessServerTestCase(TestGRPCAlchemy):
     def setUp(unittest_self):
         super().setUp()
 

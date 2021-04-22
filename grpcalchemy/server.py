@@ -111,6 +111,14 @@ class Server(Blueprint, grpc.Server):
         self.blueprints[bp.access_service_name()] = bp
 
     @classmethod
+    def generate_proto_file(cls, config: DefaultConfig):
+        generate_proto_file(
+            template_path_root=config.PROTO_TEMPLATE_ROOT,
+            template_path=config.PROTO_TEMPLATE_PATH,
+            auto_generate=config.PROTO_AUTO_GENERATED,
+        )
+
+    @classmethod
     def run(
         cls,
         config: Optional[DefaultConfig] = None,
@@ -130,10 +138,7 @@ class Server(Blueprint, grpc.Server):
         for bp_cls in cls.get_blueprints():
             bp_cls.as_view()
 
-        generate_proto_file(
-            template_path_root=config.PROTO_TEMPLATE_ROOT,
-            template_path=config.PROTO_TEMPLATE_PATH,
-        )
+        cls.generate_proto_file(config)
 
         if config.GRPC_SERVER_PROCESS_COUNT > 1:
             address_family = select_address_family(host)

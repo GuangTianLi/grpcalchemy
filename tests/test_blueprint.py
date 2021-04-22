@@ -10,18 +10,21 @@ from grpcalchemy.blueprint import (
     StreamStreamRpcMethod,
 )
 from grpcalchemy.orm import Message, StringField
-from tests.test_grpcalchemy import TestGrpcalchemy
+from tests.test_grpcalchemy import TestGRPCAlchemy
 
 
-class TestMessage(Message):
+class TestBlueprintMessage(Message):
+    __filename__ = "test_blueprint"
     name = StringField()
 
 
-class BlueprintTestCase(TestGrpcalchemy):
+class BlueprintTestCase(TestGRPCAlchemy):
     def test_init_blueprint(self):
         class FooService(Blueprint):
             @grpcmethod
-            def GetSomething(self, request: TestMessage, context) -> TestMessage:
+            def GetSomething(
+                self, request: TestBlueprintMessage, context
+            ) -> TestBlueprintMessage:
                 ...
 
         test = FooService()
@@ -70,21 +73,27 @@ class BlueprintTestCase(TestGrpcalchemy):
 
     def test_unary_unary_grpcmethod(self):
         @grpcmethod
-        def UnaryUnary(self, request: TestMessage, context) -> TestMessage:
+        def UnaryUnary(
+            self, request: TestBlueprintMessage, context
+        ) -> TestBlueprintMessage:
             pass
 
         self.assertIsInstance(UnaryUnary.__rpc_method__, UnaryUnaryRpcMethod)
 
     def test_unary_stream_grpcmethod(self):
         @grpcmethod
-        def UnaryStream(self, request: TestMessage, context) -> Iterator[TestMessage]:
+        def UnaryStream(
+            self, request: TestBlueprintMessage, context
+        ) -> Iterator[TestBlueprintMessage]:
             pass
 
         self.assertIsInstance(UnaryStream.__rpc_method__, UnaryStreamRpcMethod)
 
     def test_stream_unary_grpcmethod(self):
         @grpcmethod
-        def StreamUnary(self, request: Iterator[TestMessage], context) -> TestMessage:
+        def StreamUnary(
+            self, request: Iterator[TestBlueprintMessage], context
+        ) -> TestBlueprintMessage:
             pass
 
         self.assertIsInstance(StreamUnary.__rpc_method__, StreamUnaryRpcMethod)
@@ -92,8 +101,8 @@ class BlueprintTestCase(TestGrpcalchemy):
     def test_stream_stream_grpcmethod(self):
         @grpcmethod
         def StreamStream(
-            self, request: Iterator[TestMessage], context
-        ) -> Iterator[TestMessage]:
+            self, request: Iterator[TestBlueprintMessage], context
+        ) -> Iterator[TestBlueprintMessage]:
             pass
 
         self.assertIsInstance(StreamStream.__rpc_method__, StreamStreamRpcMethod)

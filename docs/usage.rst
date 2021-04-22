@@ -99,11 +99,11 @@ within the post. Let's take a look at the code of our modified :class:`Post` cla
 .. code-block:: python
 
     from typing import List
-    from grpcalchemy.orm import Message
+    from grpcalchemy.orm import Message, Repeated
     class Post(Message):
         title: str
         author: User
-        tags: List[str]
+        tags: Repeated[str]
 
 The :class:`~grpcalchemy.orm.ListField` object that is used to define a Post's tags
 takes a field object as its first argument --- this means that you can have
@@ -130,12 +130,12 @@ We can then define a list of comment documents in our post message:
 .. code-block:: python
 
     from typing import List
-    from grpcalchemy.orm import Message
+    from grpcalchemy.orm import Message, Repeated
     class Post(Message):
         title: str
         author: User
-        tags: List[str]
-        comments: List[Comment]
+        tags: Repeated[str]
+        comments: Repeated[Comment]
 
 Defining our gRPC Method
 ===================================
@@ -167,7 +167,7 @@ Using Iterator to define Stream gRPC Method:
                 pass
             return HelloMessage(text=f'Hello {r.text}')
 
-        @StreamStream
+        @grpcmethod
         def StreamStream(self, request: Iterator[HelloMessage], context: Context) -> Iterator[HelloMessage]:
             for r in request:
                 yield HelloMessage(text=f'Hello {r.text}')

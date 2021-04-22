@@ -1,6 +1,6 @@
 import socket
 import sys
-from importlib import import_module, reload
+from importlib import import_module
 from os import walk, path, mkdir
 from os.path import abspath, dirname, exists, join
 from typing import Union, Optional, TYPE_CHECKING, Tuple
@@ -11,7 +11,7 @@ from jinja2 import Environment, FileSystemLoader
 
 from grpcalchemy.config import DefaultConfig
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from grpcalchemy.server import Server
     from grpcalchemy.blueprint import Blueprint
 
@@ -116,13 +116,12 @@ def generate_proto_file(
                         + ["-I{}".format(proto_include)]
                     )
     for meta in __meta__.values():
-        reload(import_module(abs_template_path.split(FILE_SEPARATOR, 1)[0]))
+        import_module(abs_template_path.split(FILE_SEPARATOR, 1)[0])
         for messageCls in meta.messages:
             # populated exact gRPCMessageClass from pb2 file
             gpr_message_module = import_module(
                 f"{join(abs_template_path, messageCls.__filename__).replace(FILE_SEPARATOR, '.')}_pb2"
             )
-            gpr_message_module = reload(gpr_message_module)
             gRPCMessageClass = getattr(
                 gpr_message_module, f"{messageCls.__type_name__}"
             )

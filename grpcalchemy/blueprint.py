@@ -21,6 +21,7 @@ from grpc._server import _Context as Context
 
 from .meta import ServiceMeta, __meta__
 from .orm import Message
+from .types import Streaming
 
 if TYPE_CHECKING:  # pragma: no cover
     from .server import Server
@@ -280,13 +281,13 @@ def _validate_rpc_method(
 
         request_origin = getattr(request_type, "__origin__", None)
         if request_origin:
-            if issubclass(request_origin, Iterable):
+            if issubclass(request_origin, Streaming):
                 request_type = request_type.__args__[0]
                 request_streaming = True
 
         response_origin = getattr(response_type, "__origin__", None)
         if response_origin:
-            if issubclass(response_origin, Iterable):
+            if issubclass(response_origin, Streaming):
                 response_type = response_type.__args__[0]
                 response_streaming = True
         if all(

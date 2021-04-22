@@ -1,4 +1,4 @@
-from typing import Callable, ContextManager, List, Type, Dict, Iterator
+from typing import Callable, ContextManager, List, Type
 from unittest.mock import Mock
 
 from google.protobuf.json_format import MessageToDict
@@ -8,12 +8,13 @@ from grpc_health.v1.health_pb2_grpc import HealthStub
 from grpc_reflection.v1alpha.reflection_pb2 import ServerReflectionRequest
 from grpc_reflection.v1alpha.reflection_pb2_grpc import ServerReflectionStub
 
-from grpcalchemy import Blueprint, Context, Server, grpcmethod
+from grpcalchemy import Blueprint, Context, Server, grpcmethod, DefaultConfig, Streaming
 from grpcalchemy.orm import Message
-from tests.test_grpcalchemy import TestGrpcalchemy
+from grpcalchemy.types import Map, Repeated
+from tests.test_grpcalchemy import TestGRPCAlchemy
 
 
-class ServerTestCase(TestGrpcalchemy):
+class ServerTestCase(TestGRPCAlchemy):
     def setUp(unittest_self):
         super().setUp()
 
@@ -25,16 +26,19 @@ class ServerTestCase(TestGrpcalchemy):
         blueprint_after_request = Mock()
         enter_context = Mock()
 
-        class User(Message):
+        class ServerTestMessage(Message):
+            __filename__ = "test_server"
+
+        class User(ServerTestMessage):
             name: str
 
-        class Post(Message):
+        class Post(ServerTestMessage):
             content: str
 
-        class TestMessage(Message):
+        class TestServerMessage(ServerTestMessage):
             user: User
-            posts: List[Post]
-            tag: Dict[str, Post]
+            posts: Repeated[Post]
+            tag: Map[str, Post]
 
         class AppService(Server):
             def before_server_start(self):
@@ -44,8 +48,8 @@ class ServerTestCase(TestGrpcalchemy):
                 server_stop()
 
             def process_request(
-                self, request: TestMessage, context: Context
-            ) -> TestMessage:
+                self, request: TestServerMessage, context: Context
+            ) -> TestServerMessage:
                 unittest_self.assertIn(
                     request.user.name, {"unary_unary", "unary_stream"}
                 )
@@ -53,8 +57,8 @@ class ServerTestCase(TestGrpcalchemy):
                 return request
 
             def process_response(
-                self, response: TestMessage, context: Context
-            ) -> TestMessage:
+                self, response: TestServerMessage, context: Context
+            ) -> TestServerMessage:
                 unittest_self.assertIn(
                     response.user.name, {"unary_unary", "stream_unary"}
                 )
@@ -76,8 +80,10 @@ class ServerTestCase(TestGrpcalchemy):
 
         class BlueprintService(Blueprint):
             @grpcmethod
-            def UnaryUnary(self, request: TestMessage, context: Context) -> TestMessage:
-                return TestMessage(
+            def UnaryUnary(
+                self, request: TestServerMessage, context: Context
+            ) -> TestServerMessage:
+                return TestServerMessage(
                     user={"name": "unary_unary"},
                     posts=[dict(content=request.user.name)],
                     tag={"test": Post(content="")},
@@ -85,9 +91,9 @@ class ServerTestCase(TestGrpcalchemy):
 
             @grpcmethod
             def UnaryStream(
-                self, request: TestMessage, context: Context
-            ) -> Iterator[TestMessage]:
-                yield TestMessage(
+                self, request: TestServerMessage, context: Context
+            ) -> Streaming[TestServerMessage]:
+                yield TestServerMessage(
                     user={"name": "unary_stream"},
                     posts=[dict(content=request.user.name)],
                     tag={"test": Post(content="")},
@@ -95,9 +101,9 @@ class ServerTestCase(TestGrpcalchemy):
 
             @grpcmethod
             def StreamUnary(
-                self, request: Iterator[TestMessage], context: Context
-            ) -> TestMessage:
-                return TestMessage(
+                self, request: Streaming[TestServerMessage], context: Context
+            ) -> TestServerMessage:
+                return TestServerMessage(
                     user={"name": "stream_unary"},
                     posts=[dict(content=r.user.name) for r in request],
                     tag={"test": Post(content="")},
@@ -105,17 +111,17 @@ class ServerTestCase(TestGrpcalchemy):
 
             @grpcmethod
             def StreamStream(
-                self, request: Iterator[TestMessage], context: Context
-            ) -> Iterator[TestMessage]:
-                yield TestMessage(
+                self, request: Streaming[TestServerMessage], context: Context
+            ) -> Streaming[TestServerMessage]:
+                yield TestServerMessage(
                     user={"name": "stream_stream"},
                     posts=[dict(content=r.user.name) for r in request],
                     tag={"test": Post(content="")},
                 )
 
             def before_request(
-                self, request: TestMessage, context: Context
-            ) -> TestMessage:
+                self, request: TestServerMessage, context: Context
+            ) -> TestServerMessage:
                 blueprint_before_request()
                 unittest_self.assertIn(
                     request.user.name, {"unary_unary", "unary_stream"}
@@ -123,8 +129,8 @@ class ServerTestCase(TestGrpcalchemy):
                 return request
 
             def after_request(
-                self, response: TestMessage, context: Context
-            ) -> TestMessage:
+                self, response: TestServerMessage, context: Context
+            ) -> TestServerMessage:
                 blueprint_after_request()
                 unittest_self.assertIn(
                     response.user.name, {"unary_unary", "stream_unary"}
@@ -147,12 +153,11 @@ class ServerTestCase(TestGrpcalchemy):
 
     def test_server(self):
         from protos.blueprintservice_pb2_grpc import BlueprintServiceStub
-        from protos.testmessage_pb2 import TestMessage
-        from protos.user_pb2 import User
+        from protos.test_server_pb2 import TestServerMessage, User
 
         with insecure_channel("0.0.0.0:50051") as channel:
             response = BlueprintServiceStub(channel).UnaryUnary(
-                TestMessage(user=User(name="unary_unary"))
+                TestServerMessage(user=User(name="unary_unary"))
             )
             self.assertEqual("unary_unary", response.user.name)
             self.assertEqual(1, self.app_process_request.call_count)
@@ -161,7 +166,7 @@ class ServerTestCase(TestGrpcalchemy):
             self.assertEqual(1, self.blueprint_before_request.call_count)
 
             for response in BlueprintServiceStub(channel).UnaryStream(
-                TestMessage(user=User(name="unary_stream"))
+                TestServerMessage(user=User(name="unary_stream"))
             ):
                 pass
             self.assertEqual("unary_stream", response.user.name)
@@ -171,7 +176,7 @@ class ServerTestCase(TestGrpcalchemy):
             self.assertEqual(2, self.blueprint_before_request.call_count)
 
             response = BlueprintServiceStub(channel).StreamUnary(
-                iter([TestMessage(user=User(name="stream_unary"))])
+                iter([TestServerMessage(user=User(name="stream_unary"))])
             )
             self.assertEqual("stream_unary", response.user.name)
             self.assertEqual(2, self.app_process_request.call_count)
@@ -180,7 +185,7 @@ class ServerTestCase(TestGrpcalchemy):
             self.assertEqual(2, self.blueprint_before_request.call_count)
 
             for response in BlueprintServiceStub(channel).StreamStream(
-                iter([TestMessage(user=User(name="stream_stream"))])
+                iter([TestServerMessage(user=User(name="stream_stream"))])
             ):
                 pass
             self.assertEqual("stream_stream", response.user.name)
@@ -206,3 +211,39 @@ class ServerTestCase(TestGrpcalchemy):
                 )
 
         self.assertEqual(4, self.enter_context.call_count)
+
+
+class InstalledProtoServerTestCase(TestGRPCAlchemy):
+    def setUp(self) -> None:
+        class SimpleAPIleMessage(Message):
+            __filename__ = "api"
+            name: str
+
+        class APIService(Server):
+            @classmethod
+            def access_file_name(cls) -> str:
+                return "api"
+
+            @grpcmethod
+            def GetSomething(
+                self, request: SimpleAPIleMessage, context: Context
+            ) -> SimpleAPIleMessage:
+                return request
+
+        class InstalledProtoConfig(DefaultConfig):
+            PROTO_AUTO_GENERATED = False
+            PROTO_TEMPLATE_PATH = "installed_protos/v1"
+
+        self.app = APIService.run(config=InstalledProtoConfig(), block=False)
+
+    def tearDown(self):
+        self.app.stop(0)
+
+    def test_server_with_installed_proto(self):
+        from installed_protos.v1.api_pb2_grpc import APIServiceStub
+        from installed_protos.v1.api_pb2 import SimpleAPIleMessage
+
+        with insecure_channel("0.0.0.0:50051") as channel:
+            request = SimpleAPIleMessage(name="test")
+            response = APIServiceStub(channel).GetSomething(request)
+            self.assertEqual(request, response)

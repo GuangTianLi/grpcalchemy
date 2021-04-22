@@ -9,10 +9,10 @@ from grpcalchemy.utils import (
     get_sockaddr,
     generate_proto_file,
 )
-from tests.test_grpcalchemy import TestGrpcalchemy
+from tests.test_grpcalchemy import TestGRPCAlchemy
 
 
-class UtilsTestCase(TestGrpcalchemy):
+class UtilsTestCase(TestGRPCAlchemy):
     def test_socket_bind_test_INET(self):
         host = "0.0.0.0"
         address_family = select_address_family(host)
@@ -49,16 +49,20 @@ class UtilsTestCase(TestGrpcalchemy):
         from grpcalchemy.orm import Message
 
         class TestNestedPackage(Message):
+            __filename__ = "nested"
             test: str
 
-        dir_name = "protos/v1"
+        dir_name = "nested/protos/v1"
         if os.path.exists(dir_name):
-            rmtree("protos")
+            rmtree("nested")
         generate_proto_file(template_path=dir_name)
         self.assertTrue(os.path.exists(dir_name))
         self.assertTrue(os.path.exists(os.path.join(dir_name, "__init__.py")))
         self.assertTrue(os.path.exists(os.path.join(dir_name, "README.md")))
-        rmtree("protos")
+        self.assertTrue(os.path.exists(os.path.join(dir_name, "nested.proto")))
+        self.assertTrue(os.path.exists(os.path.join(dir_name, "nested_pb2.py")))
+        self.assertTrue(os.path.exists(os.path.join(dir_name, "nested_pb2_grpc.py")))
+        rmtree("nested")
 
 
 if __name__ == "__main__":

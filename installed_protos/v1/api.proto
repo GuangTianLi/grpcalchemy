@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+message SimpleAPIleMessage {
+    string name = 1;
+}
+
+service APIService {
+  rpc GetSomething(SimpleAPIleMessage) returns (SimpleAPIleMessage);
+}

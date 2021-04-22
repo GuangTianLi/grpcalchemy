@@ -51,7 +51,3 @@ class DefaultConfig(BaseConfig):
     #: If set to true, retrieves server configuration via xDS. This is an
     #: EXPERIMENTAL option. Only for grpcio >= 1.36.0
     GRPC_XDS_SUPPORT = False
-
-    #: If set to true, retrieves server configuration via xDS. This is an
-    #: EXPERIMENTAL option. Only for grpcio >= 1.36.0
-    GRPC_XDS_SUPPORT = False
