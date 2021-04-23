@@ -98,18 +98,12 @@ class Message(metaclass=DeclarativeMeta):
 
     def __init__(__message_self__, **kwargs):
         # Uses something other than `self` the first arg to allow "self" as a settable attribute
-        for key, item in kwargs.items():
-            if isinstance(__message_self__.__meta__[key], ReferenceField):
-                kwargs[key] = getattr(item, "__message__", item)
-            elif isinstance(__message_self__.__meta__[key], RepeatedField):
-                kwargs[key] = map(lambda item: getattr(item, "__message__", item), item)
-            elif isinstance(__message_self__.__meta__[key], MapField) and isinstance(
-                __message_self__.__meta__[key].__value_type__, ReferenceField
-            ):
-                for key, tmp in item.items():
-                    item[key] = getattr(tmp, "__message__", tmp)
-
-        __message_self__.__message__ = __message_self__.gRPCMessageClass(**kwargs)
+        __message_self__.__message__ = __message_self__.gRPCMessageClass(
+            **{
+                k: __message_self__.__meta__[k].to_message_field(v)
+                for k, v in kwargs.items()
+            }
+        )
 
     def init_grpc_message(self, grpc_message: GeneratedProtocolMessageType):
         self.__message__ = grpc_message
@@ -185,6 +179,10 @@ class Message(metaclass=DeclarativeMeta):
             use_integers_for_enums=use_integers_for_enums,
         )
 
+    @classmethod
+    def from_dict(cls, value: dict):
+        return cls(**value)
+
 
 M = TypeVar("M", bound=Message)
 
@@ -210,6 +208,9 @@ class BaseField:
 
     def __set_name__(self, owner, name: str):
         self.__field_name__ = name
+
+    def to_message_field(self, value):
+        return value
 
 
 class StringField(BaseField):
@@ -254,6 +255,11 @@ class ReferenceField(BaseField):
     def type(self) -> Type[ReferenceFieldType]:
         return type(self.__key_type__)
 
+    def to_message_field(self, value):
+        if isinstance(value, dict):
+            value = self.__key_type__.from_dict(value)
+        return getattr(value, "__message__", value)
+
 
 class RepeatedField(BaseField):
     def __init__(self, key_type: ReferenceKeyFieldType):
@@ -262,6 +268,9 @@ class RepeatedField(BaseField):
 
     def __str__(self):
         return f"repeated {super().__str__()}"
+
+    def to_message_field(self, value):
+        return map(lambda v: self.__key_type__.to_message_field(v), value)
 
 
 class MapField(BaseField):
@@ -276,6 +285,9 @@ class MapField(BaseField):
 
     def __str__(self):
         return f"map<{self.__type_name__}, {self.__value_type_name__}> {self.__field_name__}"
+
+    def to_message_field(self, value: dict):
+        return {k: self.__value_type__.to_message_field(v) for k, v in value.items()}
 
 
 _TYPE_FIELD_MAP: Dict[type, Type[BaseField]] = {

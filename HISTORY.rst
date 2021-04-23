@@ -5,8 +5,9 @@ History
 0.7.*(2021-03-20)
 --------------------
 
-* Remove Default Feature in Message
-* Refactor Composite Message Type
+* Improve initialize function of message
+* Remove default feature in message
+* Refactor composite message Type
 * Support gRPC with xDS
 * Add `PROTO_AUTO_GENERATED` setting to make runtime proto generation optional
 

@@ -130,5 +130,6 @@ class ORMTestCase(TestGRPCAlchemy):
                 "list_int_field": [0],
                 "map_field": {"test": {"name": "Test"}},
             }
+            self.assertEqual(message.__message__, message_cls(**dict_test).__message__)
             self.assertDictEqual(dict_test, message.message_to_dict())
             self.assertDictEqual(dict_test, json.loads(message.message_to_json()))
