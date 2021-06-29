@@ -8,16 +8,8 @@ from threading import Event
 from typing import Callable, Dict, Optional, Tuple, Type, ContextManager, List
 
 import grpc
-from grpc import GenericRpcHandler
 from grpc import __version__ as GRPC_VERSION
-from grpc._cython import cygrpc
-from grpc._server import (
-    _add_generic_handlers,
-    _ServerState,
-    _start,
-    _stop,
-    _validate_generic_rpc_handlers,
-)
+from grpc._server import _Server as BaseServer
 from grpc_health.v1 import health
 from grpc_health.v1 import health_pb2_grpc
 from grpc_reflection.v1alpha import reflection
@@ -25,7 +17,6 @@ from grpc_reflection.v1alpha import reflection
 from grpcalchemy.blueprint import Blueprint, RequestType, ResponseType, Context
 from grpcalchemy.config import DefaultConfig
 from grpcalchemy.utils import (
-    generate_proto_file,
     socket_bind_test,
     select_address_family,
     get_sockaddr,
@@ -35,7 +26,7 @@ from grpcalchemy.utils import (
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
 
 
-class Server(Blueprint, grpc.Server):
+class Server(BaseServer, Blueprint):
     """The Server object implements a base application and acts as the central
     object. It is passed the name of gRPC Service of the application. Once it is
     created it will act as a central registry for the gRPC Service.
@@ -67,37 +58,35 @@ class Server(Blueprint, grpc.Server):
         self.logger.addHandler(handler)
 
         self.logger.info(f"workers number: {self.config.GRPC_SERVER_MAX_WORKERS}")
+
         thread_pool = futures.ThreadPoolExecutor(
             max_workers=self.config.GRPC_SERVER_MAX_WORKERS
         )
-        completion_queue = cygrpc.CompletionQueue()
         self.logger.info(f"server options: {self.config.GRPC_SERVER_OPTIONS}")
         if tuple(map(int, GRPC_VERSION.split("."))) >= (1, 36, 0):
-            server = cygrpc.Server(
-                tuple(self.config.GRPC_SERVER_OPTIONS), self.config.GRPC_XDS_SUPPORT
+            super().__init__(
+                thread_pool=thread_pool,
+                generic_handlers=(),
+                interceptors=None,
+                options=self.config.GRPC_SERVER_OPTIONS,
+                maximum_concurrent_rpcs=self.config.GRPC_SERVER_MAXIMUM_CONCURRENT_RPCS,
+                compression=None,
+                xds=self.config.GRPC_XDS_SUPPORT,
             )
         else:
-            server = cygrpc.Server(tuple(self.config.GRPC_SERVER_OPTIONS))
-        server.register_completion_queue(completion_queue)
-
-        #: gRPC Server State
-        #:
-        #: .. versionadded:: 0.2.1
-        self._state = _ServerState(
-            completion_queue,
-            server,
-            (),
-            None,
-            thread_pool,
-            self.config.GRPC_SERVER_MAXIMUM_CONCURRENT_RPCS,
-        )
+            super().__init__(
+                thread_pool=thread_pool,
+                generic_handlers=(),
+                interceptors=None,
+                options=self.config.GRPC_SERVER_OPTIONS,
+                maximum_concurrent_rpcs=self.config.GRPC_SERVER_MAXIMUM_CONCURRENT_RPCS,
+                compression=None,
+            )
 
         #: all the attached blueprints in a dictionary by name.
         #:
         #: .. versionadded:: 0.1.6
         self.blueprints: Dict[str, Blueprint] = {self.access_service_name(): self}
-
-        super().__init__()
         self.current_app = self
 
     def register_blueprint(self, bp_cls: Type[Blueprint]) -> None:
@@ -111,21 +100,13 @@ class Server(Blueprint, grpc.Server):
         self.blueprints[bp.access_service_name()] = bp
 
     @classmethod
-    def generate_proto_file(cls, config: DefaultConfig):
-        generate_proto_file(
-            template_path_root=config.PROTO_TEMPLATE_ROOT,
-            template_path=config.PROTO_TEMPLATE_PATH,
-            auto_generate=config.PROTO_AUTO_GENERATED,
-        )
-
-    @classmethod
     def run(
         cls,
         config: Optional[DefaultConfig] = None,
         host: Optional[str] = None,
         port: Optional[int] = None,
         server_credentials: Optional[grpc.ServerCredentials] = None,
-        block: Optional[bool] = None,
+        forever: Optional[bool] = None,
     ):
         if config is None:
             config = DefaultConfig()
@@ -164,7 +145,7 @@ class Server(Blueprint, grpc.Server):
                     )
                     worker.start()
                     cls.workers.append(worker)
-                if block:
+                if forever:
                     for worker in cls.workers:
                         worker.join()
         else:
@@ -172,7 +153,7 @@ class Server(Blueprint, grpc.Server):
                 config=config,
                 target=f"{host}:{port}",
                 server_credentials=server_credentials,
-                block=block,
+                forever=forever,
             )
 
     @classmethod
@@ -181,7 +162,7 @@ class Server(Blueprint, grpc.Server):
         config: DefaultConfig,
         target: str,
         server_credentials: Optional[grpc.ServerCredentials] = None,
-        block: Optional[bool] = None,
+        forever: Optional[bool] = None,
     ):
         self = cls(config)
 
@@ -204,8 +185,8 @@ class Server(Blueprint, grpc.Server):
         if self.config.GRPC_SEVER_REFLECTION_ENABLE:
             reflection.enable_server_reflection(services, self)
 
-        if block is None:
-            block = self.config.GRPC_SERVER_RUN_WITH_BLOCK
+        if forever is None:
+            forever = self.config.GRPC_SERVER_RUN_WITH_BLOCK
 
         self.before_server_start()
 
@@ -220,7 +201,7 @@ class Server(Blueprint, grpc.Server):
 
         self.logger.info(f"gRPC server is running on {target}")
 
-        if block:  # pragma: no cover
+        if forever:  # pragma: no cover
             try:
                 while True:
                     time.sleep(_ONE_DAY_IN_SECONDS)
@@ -236,79 +217,10 @@ class Server(Blueprint, grpc.Server):
     def after_server_stop(self):
         pass
 
-    def start(self) -> None:
-        """Starts this Server.
-
-        This method may only be called once. (i.e. it is not idempotent).
-        .. versionadded:: 0.2.1
-        """
-        _start(self._state)
-
     def stop(self, grace: int) -> Event:
-        """Stops this Server.
-
-        This method immediately stop service of new RPCs in all cases.
-
-        If a grace period is specified, this method returns immediately
-        and all RPCs active at the end of the grace period are aborted.
-        If a grace period is not specified (by passing None for `grace`),
-        all existing RPCs are aborted immediately and this method
-        blocks until the last RPC handler terminates.
-
-        This method is idempotent and may be called at any time.
-        Passing a smaller grace value in a subsequent call will have
-        the effect of stopping the Server sooner (passing None will
-        have the effect of stopping the server immediately). Passing
-        a larger grace value in a subsequent call *will not* have the
-        effect of stopping the server later (i.e. the most restrictive
-        grace value is used).
-
-        :param int grace: A duration of time in seconds or None.
-
-        :return:
-          A threading.Event that will be set when this Server has completely
-          stopped, i.e. when running RPCs either complete or are aborted and
-          all handlers have terminated.
-        :rtype: Event
-
-        .. versionadded:: 0.2.1
-        """
-        event = _stop(self._state, grace)
+        event = super().stop(grace)
         self.after_server_stop()
         return event
-
-    def add_generic_rpc_handlers(
-        self, generic_rpc_handlers: Tuple[GenericRpcHandler]
-    ) -> None:
-        """Registers GenericRpcHandlers with this Server.
-
-        This method is only safe to call before the server is started.
-
-        Args:
-          generic_rpc_handlers: An iterable of GenericRpcHandlers that will be
-          used to service RPCs.
-
-        :param generic_rpc_handlers: An Tuple of GenericRpcHandlers that will be
-          used to service RPCs.
-        :type generic_rpc_handlers: Tuple[GenericRpcHandler]
-        :rtype: None
-
-        .. versionadded:: 0.2.1
-        """
-        _validate_generic_rpc_handlers(generic_rpc_handlers)
-        _add_generic_handlers(self._state, generic_rpc_handlers)
-
-    def add_insecure_port(self, address: bytes):
-        with self._state.lock:
-            return self._state.server.add_http2_port(address)
-
-    def add_secure_port(
-        self, address: bytes, server_credentials: grpc.ServerCredentials
-    ):
-        with self._state.lock:
-            return self._state.server.add_http2_port(
-                address, server_credentials._credentials
-            )
 
     def process_request(self, request: RequestType, context: Context) -> RequestType:
         """The code to be executed for each request before
@@ -323,15 +235,6 @@ class Server(Blueprint, grpc.Server):
         the gRPC method are called. Only in **UnaryUnary** and **StreamUnary** method
         """
         return response
-
-    def __del__(self):
-        """
-        .. versionadded:: 0.2.1
-        """
-        if hasattr(self, "_state"):
-            # We can not grab a lock in __del__(), so set a flag to signal the
-            # serving daemon thread (if it exists) to initiate shutdown.
-            self._state.server_deallocated = True
 
     def __enter__(self):
         pass

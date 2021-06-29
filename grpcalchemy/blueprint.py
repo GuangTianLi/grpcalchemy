@@ -19,9 +19,11 @@ from google.protobuf.message import Message as GeneratedProtocolMessageType
 from grpc import ServicerContext
 from grpc._server import _Context as Context
 
+from .config import DefaultConfig
 from .meta import ServiceMeta, __meta__
 from .orm import Message
 from .types import Streaming
+from .utils import generate_proto_file
 
 if TYPE_CHECKING:  # pragma: no cover
     from .server import Server
@@ -258,6 +260,14 @@ class Blueprint:
                 if response_cls.__filename__ != file_name:
                     __meta__[file_name].import_files.add(response_cls.__filename__)
         return service_meta.rpcs
+
+    @staticmethod
+    def generate_proto_file(config: DefaultConfig):
+        generate_proto_file(
+            template_path_root=config.PROTO_TEMPLATE_ROOT,
+            template_path=config.PROTO_TEMPLATE_PATH,
+            auto_generate=config.PROTO_AUTO_GENERATED,
+        )
 
 
 gRPCFunctionType = Callable[

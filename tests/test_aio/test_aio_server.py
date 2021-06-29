@@ -1,3 +1,4 @@
+import unittest
 from typing import Callable, ContextManager, List, Type
 from unittest.mock import Mock
 
@@ -8,13 +9,14 @@ from grpc_health.v1.health_pb2_grpc import HealthStub
 from grpc_reflection.v1alpha.reflection_pb2 import ServerReflectionRequest
 from grpc_reflection.v1alpha.reflection_pb2_grpc import ServerReflectionStub
 
-from grpcalchemy import Blueprint, Context, Server, grpcmethod, DefaultConfig, Streaming
+from grpcalchemy import Blueprint, Context, grpcmethod, DefaultConfig, Streaming
+from grpcalchemy.aio import Server
 from grpcalchemy.orm import Message
 from grpcalchemy.types import Map, Repeated
 from tests.test_grpcalchemy import TestGRPCAlchemy
 
 
-class ServerTestCase(TestGRPCAlchemy):
+class AioServerTestCase(TestGRPCAlchemy):
     def setUp(unittest_self):
         super().setUp()
 
@@ -137,7 +139,7 @@ class ServerTestCase(TestGRPCAlchemy):
                 )
                 return response
 
-        unittest_self.app = AppService.run(config=unittest_self.config, forever=False)
+        unittest_self.app = AppService.run(config=unittest_self.config, block=False)
         unittest_self.assertEqual(1, server_start.call_count)
         unittest_self.server_stop = server_stop
 
@@ -147,103 +149,9 @@ class ServerTestCase(TestGRPCAlchemy):
         unittest_self.blueprint_before_request = blueprint_before_request
         unittest_self.enter_context = enter_context
 
-    def tearDown(self):
-        self.app.stop(0)
-        self.assertEqual(1, self.server_stop.call_count)
-
-    def test_server(self):
-        from protos.blueprintservice_pb2_grpc import BlueprintServiceStub
-        from protos.test_server_pb2 import TestServerMessage, User
-
-        with insecure_channel("0.0.0.0:50051") as channel:
-            response = BlueprintServiceStub(channel).UnaryUnary(
-                TestServerMessage(user=User(name="unary_unary"))
-            )
-            self.assertEqual("unary_unary", response.user.name)
-            self.assertEqual(1, self.app_process_request.call_count)
-            self.assertEqual(1, self.app_process_response.call_count)
-            self.assertEqual(1, self.blueprint_after_request.call_count)
-            self.assertEqual(1, self.blueprint_before_request.call_count)
-
-            for response in BlueprintServiceStub(channel).UnaryStream(
-                TestServerMessage(user=User(name="unary_stream"))
-            ):
-                pass
-            self.assertEqual("unary_stream", response.user.name)
-            self.assertEqual(2, self.app_process_request.call_count)
-            self.assertEqual(1, self.app_process_response.call_count)
-            self.assertEqual(1, self.blueprint_after_request.call_count)
-            self.assertEqual(2, self.blueprint_before_request.call_count)
-
-            response = BlueprintServiceStub(channel).StreamUnary(
-                iter([TestServerMessage(user=User(name="stream_unary"))])
-            )
-            self.assertEqual("stream_unary", response.user.name)
-            self.assertEqual(2, self.app_process_request.call_count)
-            self.assertEqual(2, self.app_process_response.call_count)
-            self.assertEqual(2, self.blueprint_after_request.call_count)
-            self.assertEqual(2, self.blueprint_before_request.call_count)
-
-            for response in BlueprintServiceStub(channel).StreamStream(
-                iter([TestServerMessage(user=User(name="stream_stream"))])
-            ):
-                pass
-            self.assertEqual("stream_stream", response.user.name)
-            self.assertEqual(2, self.app_process_request.call_count)
-            self.assertEqual(2, self.app_process_response.call_count)
-            self.assertEqual(2, self.blueprint_after_request.call_count)
-            self.assertEqual(2, self.blueprint_before_request.call_count)
-
-            self.assertEqual(1, HealthStub(channel).Check(HealthCheckRequest()).status)
-            for response in ServerReflectionStub(channel).ServerReflectionInfo(
-                iter([ServerReflectionRequest(list_services="")])
-            ):
-                self.assertEqual(
-                    {
-                        "service": [
-                            {"name": "AppService"},
-                            {"name": "BlueprintService"},
-                            {"name": "grpc.health.v1.Health"},
-                            {"name": "grpc.reflection.v1alpha.ServerReflection"},
-                        ]
-                    },
-                    MessageToDict(response.list_services_response),
-                )
-
-        self.assertEqual(4, self.enter_context.call_count)
+    def test_something(self):
+        self.assertEqual(True, False)
 
 
-class InstalledProtoServerTestCase(TestGRPCAlchemy):
-    def setUp(self) -> None:
-        class SimpleAPIleMessage(Message):
-            __filename__ = "api"
-            name: str
-
-        class APIService(Server):
-            @classmethod
-            def access_file_name(cls) -> str:
-                return "api"
-
-            @grpcmethod
-            def GetSomething(
-                self, request: SimpleAPIleMessage, context: Context
-            ) -> SimpleAPIleMessage:
-                return request
-
-        class InstalledProtoConfig(DefaultConfig):
-            PROTO_AUTO_GENERATED = False
-            PROTO_TEMPLATE_PATH = "installed_protos/v1"
-
-        self.app = APIService.run(config=InstalledProtoConfig(), forever=False)
-
-    def tearDown(self):
-        self.app.stop(0)
-
-    def test_server_with_installed_proto(self):
-        from installed_protos.v1.api_pb2_grpc import APIServiceStub
-        from installed_protos.v1.api_pb2 import SimpleAPIleMessage
-
-        with insecure_channel("0.0.0.0:50051") as channel:
-            request = SimpleAPIleMessage(name="test")
-            response = APIServiceStub(channel).GetSomething(request)
-            self.assertEqual(request, response)
+if __name__ == "__main__":
+    unittest.main()
